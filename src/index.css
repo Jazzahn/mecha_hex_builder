@@ -1,0 +1,89 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Light theme – OPR Army Forge inspired */
+  --bg:       #f0f2f5;   /* page background */
+  --bg2:      #ffffff;   /* sidebar / panels */
+  --bg3:      #f5f6f8;   /* subtle inset */
+  --surface:  #ffffff;   /* cards */
+  --surface2: #f7f8fa;   /* card sub-sections */
+  --border:   #dde1e7;   /* general borders */
+  --border2:  #c8cdd6;   /* stronger borders */
+
+  /* Brand / accents */
+  --accent:   #e65100;   /* OPR orange */
+  --accent-h: #bf360c;   /* hover */
+  --accent2:  #2e7d32;   /* valid-drop green */
+  --accent2-h:#1b5e20;
+  --error:    #c62828;   /* invalid / over budget */
+
+  /* Text */
+  --text:        #424242;
+  --text-dim:    #9e9e9e;
+  --text-bright: #212121;
+
+  /* Nav bar */
+  --nav-bg:   #212121;
+  --nav-text: #ffffff;
+  --nav-dim:  #9e9e9e;
+
+  /* Unit type accent colours (left border of card) */
+  --assault:  #6a1b9a;
+  --heavy:    #b71c1c;
+  --medium:   #1565c0;
+  --light:    #2e7d32;
+  --vehicle:  #e65100;
+  --structure:#546e7a;
+
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 4px 12px;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+button:hover:not(:disabled) {
+  background: var(--bg3);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+input, select {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  background: var(--surface);
+  color: var(--text-bright);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+input:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+@media print {
+  .screen-only { display: none !important; }
+  .print-only  { display: block !important; }
+  body { background: white; color: black; font-size: 11pt; }
+}
+@media screen {
+  .print-only { display: none; }
+}
