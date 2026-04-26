@@ -3,6 +3,7 @@ import { UNIT_TYPES, HEROES, TITLES } from '../data/gameData';
 import { useArmy } from '../store/armyStore';
 import { calcUnitPoints } from '../utils/validation';
 import LocationZone from './LocationZone';
+import DescriptionPicker from './DescriptionPicker';
 
 export default function UnitCard({ unit }) {
   const { army, dispatch } = useArmy();
@@ -59,30 +60,18 @@ export default function UnitCard({ unit }) {
 
           {isMecha && (
             <div className="hero-title-row">
-              <label>
-                Hero:
-                <select
-                  value={unit.heroId ?? ''}
-                  onChange={e => dispatch({ type: 'SET_HERO', unitId: unit.id, heroId: e.target.value || null })}
-                >
-                  <option value="">— none —</option>
-                  {Object.values(HEROES).map(h => (
-                    <option key={h.id} value={h.id}>{h.name} ({h.pts}pts)</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Title:
-                <select
-                  value={unit.titleId ?? ''}
-                  onChange={e => dispatch({ type: 'SET_TITLE', unitId: unit.id, titleId: e.target.value || null })}
-                >
-                  <option value="">— none —</option>
-                  {Object.values(TITLES).map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.pts}pts)</option>
-                  ))}
-                </select>
-              </label>
+              <DescriptionPicker
+                label="Hero"
+                value={unit.heroId ?? null}
+                onChange={heroId => dispatch({ type: 'SET_HERO', unitId: unit.id, heroId })}
+                options={Object.values(HEROES)}
+              />
+              <DescriptionPicker
+                label="Title"
+                value={unit.titleId ?? null}
+                onChange={titleId => dispatch({ type: 'SET_TITLE', unitId: unit.id, titleId })}
+                options={Object.values(TITLES)}
+              />
               {unit.heroId === 'aceCustom' && (
                 <label>
                   Ace Custom Slot:
