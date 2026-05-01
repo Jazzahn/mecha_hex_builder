@@ -2,7 +2,7 @@ import { useArmy } from '../store/armyStore';
 import { useBuilder } from '../store/builderContext';
 import { calcPoints } from '../utils/validation';
 
-export default function ArmyHeader() {
+export default function ArmyHeader({ onPlayClick }) {
   const { army, dispatch, save, load } = useArmy();
   const { printLegend, setPrintLegend } = useBuilder();
   const spent = calcPoints(army);
@@ -41,6 +41,14 @@ export default function ArmyHeader() {
         <div className="header-actions">
           <button onClick={save} title="Save to browser storage">Save</button>
           <button onClick={load} title="Load from browser storage">Load</button>
+          <button
+            onClick={() => localStorage.setItem('mechaArmy_p1', JSON.stringify(army))}
+            title="Save as Player 1's army for the game client"
+          >Save as P1</button>
+          <button
+            onClick={() => localStorage.setItem('mechaArmy_p2', JSON.stringify(army))}
+            title="Save as Player 2's army for the game client"
+          >Save as P2</button>
           <label className="legend-toggle" title="Include a special rules reference on the printed sheet">
             <input
               type="checkbox"
@@ -50,6 +58,13 @@ export default function ArmyHeader() {
             Print legend
           </label>
           <button onClick={() => window.print()} title="Print roster">Print</button>
+          <button
+            className="play-btn"
+            onClick={onPlayClick}
+            title="Launch game client"
+          >
+            ▶ Play
+          </button>
         </div>
       </div>
     </header>

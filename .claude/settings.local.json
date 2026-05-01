@@ -6,7 +6,8 @@
       "WebFetch(domain:army-forge.onepagerules.com)",
       "Bash(git --version)",
       "Bash(vercel --version)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174)"
     ]
   }
 }

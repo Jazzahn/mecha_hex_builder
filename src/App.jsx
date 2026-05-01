@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { ArmyProvider, useArmy } from './store/armyStore';
 import { BuilderProvider, useBuilder } from './store/builderContext';
@@ -8,10 +8,12 @@ import UnitCard from './components/UnitCard';
 import ValidationPanel from './components/ValidationPanel';
 import UpgradeLibrary from './components/UpgradeLibrary';
 import PrintView from './components/PrintView';
+import GameClient from './components/GameClient/index.jsx';
 import { ALL_UPGRADES, KEYWORDS, getSlotCost } from './data/gameData';
 import { canAddToZone } from './utils/validation';
 import Tooltip from './components/Tooltip';
 import './App.css';
+import './game.css';
 
 const PHASE_ORDER = [
   { label: 'Vehicles', filter: u => ['groundVehicle', 'heavyVehicle'].includes(u.typeId) },
@@ -54,7 +56,7 @@ function DragPreview({ upgradeId }) {
   );
 }
 
-function ArmyBuilderInner() {
+function ArmyBuilderInner({ onPlayClick }) {
   const { army, dispatch, load } = useArmy();
   const { setActiveDragId } = useBuilder();
 
@@ -88,7 +90,7 @@ function ArmyBuilderInner() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <div className="screen-only">
-        <ArmyHeader />
+        <ArmyHeader onPlayClick={onPlayClick} />
         <div className="main-layout">
           <aside className="sidebar">
             <AddUnitPanel />
@@ -132,10 +134,16 @@ function ActiveDragOverlay() {
 }
 
 export default function App() {
+  const [page, setPage] = useState('builder'); // 'builder' | 'game'
+
+  if (page === 'game') {
+    return <GameClient onExit={() => setPage('builder')} />;
+  }
+
   return (
     <ArmyProvider>
       <BuilderProvider>
-        <ArmyBuilderInner />
+        <ArmyBuilderInner onPlayClick={() => setPage('game')} />
       </BuilderProvider>
     </ArmyProvider>
   );

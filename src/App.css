@@ -79,6 +79,14 @@
 .pts-unit { color: var(--nav-dim); font-size: 0.78rem; margin-left: 2px; }
 
 .header-actions { display: flex; align-items: center; gap: 6px; }
+.play-btn {
+  background: #e65100 !important;
+  border-color: #e65100 !important;
+  color: #fff !important;
+  font-weight: 700;
+  padding: 4px 14px !important;
+}
+.play-btn:hover:not(:disabled) { background: #bf360c !important; border-color: #bf360c !important; }
 
 .header-actions button {
   background: rgba(255,255,255,0.1);
