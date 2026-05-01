@@ -1,5 +1,5 @@
 import { UNIT_TYPES, ALL_UPGRADES } from '../data/gameData';
-import { hexKey, hexDistance, isDeployZone, hexNeighborAt, inBounds } from './hexMath';
+import { hexKey, hexDistance, isDeployZone, hexNeighborAt, hexNeighbors, inBounds, BOARD_COLS, BOARD_ROWS } from './hexMath';
 import {
   getEquippedWeapons, canWeaponTarget, rollDice,
   countSuccesses, countOverheats, parseStatValue,
@@ -195,6 +195,52 @@ export function gameReducer(state, action) {
 
     case 'CLEAR_ALL_TERRAIN':
       return { ...state, terrain: {} };
+
+    case 'RANDOMIZE_TERRAIN': {
+      const newTerrain = {};
+      const types = ['cover', 'difficult', 'blocking', 'dangerous'];
+
+      function growCluster(size) {
+        // Seed anywhere except the outermost border ring
+        const seedQ = 1 + Math.floor(Math.random() * (BOARD_COLS - 2));
+        const seedR = 1 + Math.floor(Math.random() * (BOARD_ROWS - 2));
+        const cluster = [{ q: seedQ, r: seedR }];
+        const inCluster = new Set([hexKey(seedQ, seedR)]);
+        while (cluster.length < size) {
+          const base = cluster[Math.floor(Math.random() * cluster.length)];
+          const candidates = hexNeighbors(base.q, base.r).filter(n => !inCluster.has(hexKey(n.q, n.r)));
+          if (!candidates.length) break;
+          const next = candidates[Math.floor(Math.random() * candidates.length)];
+          cluster.push(next);
+          inCluster.add(hexKey(next.q, next.r));
+        }
+        return cluster;
+      }
+
+      // 5-10 terrain patches
+      const patchCount = 5 + Math.floor(Math.random() * 6);
+      for (let p = 0; p < patchCount; p++) {
+        const type = types[Math.floor(Math.random() * types.length)];
+        const size = 2 + Math.floor(Math.random() * 4); // 2-5 hexes
+        for (const hex of growCluster(size)) {
+          const hk = hexKey(hex.q, hex.r);
+          newTerrain[hk] = { type, elevation: newTerrain[hk]?.elevation ?? 0 };
+        }
+      }
+
+      // 2-4 elevation patches (layer on top, preserve any terrain type)
+      const elevCount = 2 + Math.floor(Math.random() * 3);
+      for (let e = 0; e < elevCount; e++) {
+        const elevation = 1 + Math.floor(Math.random() * 2); // 1 or 2
+        const size = 2 + Math.floor(Math.random() * 3); // 2-4 hexes
+        for (const hex of growCluster(size)) {
+          const hk = hexKey(hex.q, hex.r);
+          newTerrain[hk] = { ...(newTerrain[hk] ?? {}), elevation };
+        }
+      }
+
+      return { ...state, terrain: newTerrain };
+    }
 
     case 'FINISH_TERRAIN': {
       const count = Math.ceil(Math.random() * 3) + 1; // D3+1 objectives
@@ -620,7 +666,8 @@ export function gameReducer(state, action) {
       }
 
       const updatedTarget = newUnits.find(u => u.id === target.id);
-      if (isUnitDestroyed(updatedTarget.armyUnit, updatedTarget.slotDamage)) {
+      const unitDestroyed = isUnitDestroyed(updatedTarget.armyUnit, updatedTarget.slotDamage);
+      if (unitDestroyed) {
         newUnits = newUnits.map(u => u.id === target.id ? { ...u, destroyed: true } : u);
         newState = addLog(newState, `${target.name} is destroyed!`);
         const dropLogs = [];
@@ -640,7 +687,8 @@ export function gameReducer(state, action) {
           ...newState.pendingCombat,
           remainingDamage: newRemaining,
           lockedUpgradeKey: newLocked,
-          step: newRemaining <= 0 ? 'done' : 'damage-assign',
+          // If the unit is fully destroyed, end assignment regardless of remaining damage
+          step: (newRemaining <= 0 || unitDestroyed) ? 'done' : 'damage-assign',
         },
       };
     }

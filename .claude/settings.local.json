@@ -7,7 +7,8 @@
       "Bash(git --version)",
       "Bash(vercel --version)",
       "Bash(npm install *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174)",
+      "Bash(node -e ' *)"
     ]
   }
 }

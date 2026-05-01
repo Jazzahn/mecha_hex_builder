@@ -2,20 +2,18 @@ import { useGame } from '../../store/gameContext';
 import HexBoard from './HexBoard';
 import { hexKey, hexDistance, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 
+// Objectives must be more than 5 hexes from the deployment edges (top row 0 / bottom row 16).
+// No column restriction. Minimum 3-hex separation between objectives.
+// Gives 75 valid hexes; worst-case 4 remain after placing 3 objs — safe for D3+1 (2-4).
+const OBJ_MIN_ROW  = 6;               // >5 from row 0
+const OBJ_MAX_ROW  = BOARD_ROWS - 7;  // >5 from row 16 → row 10
+const OBJ_MIN_DIST = 3;
+
 function isValidPlacement(q, r, objectives, terrain) {
   if (terrain[hexKey(q, r)]?.type === 'blocking') return false;
-  // More than 5 hexes from every board-edge hex (top/bottom rows, left/right cols)
-  for (let eq = 0; eq < BOARD_COLS; eq++) {
-    if (hexDistance(q, r, eq, 0) <= 5) return false;
-    if (hexDistance(q, r, eq, BOARD_ROWS - 1) <= 5) return false;
-  }
-  for (let er = 1; er < BOARD_ROWS - 1; er++) {
-    if (hexDistance(q, r, 0, er) <= 5) return false;
-    if (hexDistance(q, r, BOARD_COLS - 1, er) <= 5) return false;
-  }
-  // More than 5 hexes from any already-placed objective
+  if (r < OBJ_MIN_ROW || r > OBJ_MAX_ROW) return false;
   for (const obj of objectives) {
-    if (hexDistance(q, r, obj.q, obj.r) <= 5) return false;
+    if (hexDistance(q, r, obj.q, obj.r) <= OBJ_MIN_DIST) return false;
   }
   return true;
 }

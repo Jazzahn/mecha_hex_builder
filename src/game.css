@@ -135,6 +135,12 @@
   border: 1px solid #555;
 }
 .sidebar-btn--secondary:hover { background: #444; }
+.sidebar-btn--accent {
+  background: #1a3a1a;
+  color: #76ff03;
+  border: 1px solid #558b2f;
+}
+.sidebar-btn--accent:hover { background: #244d24; }
 
 /* ── Terrain tools ────────────────────────────────────── */
 .terrain-tools {
@@ -441,6 +447,40 @@
   padding: 40px;
 }
 .game-over h1 { font-size: 2rem; color: #e65100; }
+.game-over-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+}
+.game-over-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e1e24;
+  border: 1.5px solid #333;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 1rem;
+}
+.game-over-score--winner {
+  border-color: #ffd600;
+  background: #1e1a00;
+}
+.score-name { font-weight: 700; color: #ccc; }
+.score-count { color: #90caf9; font-size: 0.9rem; }
+.game-over-score--winner .score-name { color: #ffd600; }
+.game-over-result {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffeb3b;
+}
+.game-over-unclaimed {
+  font-size: 0.82rem;
+  color: #888;
+  text-align: center;
+}
 .game-over-log {
   background: #222;
   border-radius: 8px;
@@ -452,6 +492,28 @@
   color: #ccc;
   width: 100%;
   max-width: 500px;
+}
+
+/* ── Objective setup sidebar ──────────────────────────── */
+.obj-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.obj-progress-label { font-size: 0.82rem; color: #90a4ae; }
+.obj-progress-count { font-size: 0.95rem; font-weight: 700; color: #ffd600; }
+.obj-placed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.obj-placed-item {
+  font-size: 0.8rem;
+  color: #aaa;
+  background: #1a1a1e;
+  border-radius: 4px;
+  padding: 3px 8px;
 }
 
 /* ── Game setup ───────────────────────────────────────── */

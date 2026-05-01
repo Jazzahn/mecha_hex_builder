@@ -53,8 +53,15 @@ export default function TerrainEditor() {
         <div className="sidebar-section">
           <div className="terrain-count">{terrainCount} hex{terrainCount !== 1 ? 'es' : ''} painted</div>
           <button
+            className="sidebar-btn sidebar-btn--accent"
+            onClick={() => dispatch({ type: 'RANDOMIZE_TERRAIN' })}
+          >
+            Randomize Terrain
+          </button>
+          <button
             className="sidebar-btn sidebar-btn--secondary"
             onClick={() => dispatch({ type: 'CLEAR_ALL_TERRAIN' })}
+            style={{ marginTop: 6 }}
           >
             Clear All
           </button>

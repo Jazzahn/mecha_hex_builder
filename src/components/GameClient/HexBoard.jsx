@@ -20,7 +20,7 @@ const TYPE_ABBREV = {
   armedStructure: 'S', unarmedStructure: 'S', fortifiedStructure: 'S',
 };
 
-function UnitToken({ unit, selected, onUnitClick }) {
+function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
   const { x, y } = hexToPixel(unit.q, unit.r);
   const color = PLAYER_COLORS[unit.playerIndex];
   const lightColor = PLAYER_LIGHT[unit.playerIndex];
@@ -43,6 +43,13 @@ function UnitToken({ unit, selected, onUnitClick }) {
       </text>
       <polygon points={arrowStr} fill={unit.activated ? '#aaa' : color} opacity={0.85} style={{ pointerEvents: 'none' }} />
       {selected && <circle cx={x} cy={y} r={r + 3} fill="none" stroke="#ffeb3b" strokeWidth={2} strokeDasharray="4 2" />}
+      {hasObjective && (
+        <text x={x + r * 0.62} y={y - r * 0.62} textAnchor="middle" dominantBaseline="middle"
+          fontSize={HEX_SIZE * 0.38} fill="#ffd600" stroke="#333" strokeWidth={0.5}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}>
+          ★
+        </text>
+      )}
     </g>
   );
 }
@@ -106,7 +113,9 @@ export default function HexBoard({
   onTurnRight,
 }) {
   const svgRef = useRef(null);
-  const { units = [], terrain = {}, objectives = [], selectedUnitId, phase } = gameState;
+  const { units = [], terrain = {}, objectives = [], selectedUnitId } = gameState;
+
+  const carryingIds = new Set(objectives.map(o => o.carrierId).filter(Boolean));
 
   function handleSvgClick(e) {
     if (!onHexClick) return;
@@ -186,6 +195,7 @@ export default function HexBoard({
             key={u.id}
             unit={u}
             selected={u.id === selectedUnitId}
+            hasObjective={carryingIds.has(u.id)}
             onUnitClick={onUnitClick ?? (() => {})}
           />
         ))}
