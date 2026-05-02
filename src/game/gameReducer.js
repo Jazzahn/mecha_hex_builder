@@ -86,6 +86,14 @@ function addLog(state, text) {
   return { ...state, log: [...state.log, { round: state.round, text }] };
 }
 
+function checkAnnihilation(state) {
+  if (state.phase !== 'playing') return state;
+  const alive = [0, 1].map(pi => state.units.some(u => !u.destroyed && !u.surrendered && u.playerIndex === pi));
+  if (!alive[0]) return addLog({ ...state, phase: 'over' }, `All of ${state.playerNames[0]}'s units destroyed — ${state.playerNames[1]} wins!`);
+  if (!alive[1]) return addLog({ ...state, phase: 'over' }, `All of ${state.playerNames[1]}'s units destroyed — ${state.playerNames[0]} wins!`);
+  return state;
+}
+
 function dropCarriedObjectives(objectives, unitId, q, r, logs) {
   const carried = objectives.filter(o => o.carrierId === unitId);
   if (carried.length === 0) return objectives;
@@ -132,6 +140,9 @@ function advancePhaseIfDone(state) {
     phase.types.includes(u.typeId) && !u.destroyed && !u.surrendered
   );
   const allActivated = phaseUnits.every(u => u.activated);
+
+  const annihilated = checkAnnihilation(state);
+  if (annihilated.phase === 'over') return annihilated;
 
   if (!allActivated) {
     const nextPlayer = 1 - state.activePlayer;
@@ -545,9 +556,18 @@ export function gameReducer(state, action) {
           }
           if (wounds > 0) {
             newState = addLog(newState, `${attacker.name} suffers ${wounds} overheat wound${wounds > 1 ? 's' : ''}!`);
-            const { units: wu, objectives: wo, logs: wl } = autoAssignDamage(newState.units, newState.objectives, attacker.id, wounds);
-            newState = { ...newState, units: wu, objectives: wo };
-            for (const l of wl) newState = addLog(newState, l);
+            return {
+              ...newState,
+              pendingCombat: {
+                ...pc,
+                step: 'overheat-assign',
+                hitRolls: rolls,
+                coverPenalty,
+                overheatRemaining: wounds,
+                lockedUpgradeKey: null,
+                lastExpArmorSave: null,
+              },
+            };
           }
         }
       }
@@ -609,10 +629,10 @@ export function gameReducer(state, action) {
 
       if (available.length === 0) {
         const newUnits = state.units.map(u => u.id === target.id ? { ...u, destroyed: true } : u);
-        return addLog(
+        return checkAnnihilation(addLog(
           { ...state, units: newUnits, pendingCombat: { ...pc, step: 'done', blocks, netDamage: totalDamage, remainingDamage: 0, blastTargetIds } },
           `${target.name} is destroyed by ${attacker.name}'s ${weapon.name}!`
-        );
+        ));
       }
 
       return addLog(
@@ -623,7 +643,53 @@ export function gameReducer(state, action) {
 
     case 'ASSIGN_DAMAGE': {
       const pc = state.pendingCombat;
-      if (!pc || pc.step !== 'damage-assign') return state;
+      if (!pc || (pc.step !== 'damage-assign' && pc.step !== 'overheat-assign')) return state;
+
+      // Overheat: player assigns damage to their own attacker
+      if (pc.step === 'overheat-assign') {
+        const attacker = state.units.find(u => u.id === pc.attackerId);
+        if (!attacker) return state;
+        const { slotKey } = action;
+        if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
+        const [loc, idxStr] = slotKey.split(':');
+        const upgradeId = attacker.armyUnit.slots[loc]?.[Number(idxStr)];
+        if (!upgradeId) return state;
+        const threshold = damageThreshold(upgradeId, attacker.typeId);
+        const currentDmg = attacker.slotDamage[slotKey] ?? 0;
+        if (currentDmg >= threshold) return state;
+        const newDmg = Math.min(currentDmg + 1, threshold);
+        const upgradeDestroyed = newDmg >= threshold;
+        const newSlotDamage = { ...attacker.slotDamage, [slotKey]: newDmg };
+        let newUnits = state.units.map(u =>
+          u.id === attacker.id ? { ...u, slotDamage: newSlotDamage } : u
+        );
+        let newState = state;
+        if (upgradeDestroyed) {
+          newState = addLog(newState, `${attacker.name}'s ${ALL_UPGRADES[upgradeId]?.name ?? upgradeId} is destroyed by overheat!`);
+        }
+        const updatedAttacker = newUnits.find(u => u.id === attacker.id);
+        const unitDestroyed = isUnitDestroyed(updatedAttacker.armyUnit, updatedAttacker.slotDamage);
+        if (unitDestroyed) {
+          newUnits = newUnits.map(u => u.id === attacker.id ? { ...u, destroyed: true } : u);
+          newState = addLog(newState, `${attacker.name} is destroyed by overheat!`);
+          const dropLogs = [];
+          const droppedObjs = dropCarriedObjectives(newState.objectives, attacker.id, attacker.q, attacker.r, dropLogs);
+          newState = { ...newState, objectives: droppedObjs };
+          for (const l of dropLogs) newState = addLog(newState, l);
+        }
+        const newRemaining = pc.overheatRemaining - 1;
+        const newLocked = upgradeDestroyed ? null : slotKey;
+        return checkAnnihilation({
+          ...newState,
+          units: newUnits,
+          pendingCombat: {
+            ...pc,
+            overheatRemaining: newRemaining,
+            lockedUpgradeKey: newLocked,
+            step: (newRemaining <= 0 || unitDestroyed) ? 'hit-roll' : 'overheat-assign',
+          },
+        });
+      }
 
       const target = state.units.find(u => u.id === pc.targetId);
       if (!target) return state;
@@ -699,7 +765,7 @@ export function gameReducer(state, action) {
       // Lock clears when the upgrade is destroyed so player can pick a new one
       const newLocked = upgradeDestroyed ? null : slotKey;
 
-      return {
+      return checkAnnihilation({
         ...newState,
         units: newUnits,
         pendingCombat: {
@@ -709,7 +775,7 @@ export function gameReducer(state, action) {
           // If the unit is fully destroyed, end assignment regardless of remaining damage
           step: (newRemaining <= 0 || unitDestroyed) ? 'done' : 'damage-assign',
         },
-      };
+      });
     }
 
     case 'FINISH_COMBAT': {
@@ -773,7 +839,7 @@ export function gameReducer(state, action) {
         }
       }
 
-      return newState;
+      return checkAnnihilation(newState);
     }
 
     default:

@@ -227,6 +227,63 @@ function DamageAssign({ pc, units, dispatch }) {
   );
 }
 
+function OverheatAssign({ pc, units, dispatch }) {
+  const attacker = units.find(u => u.id === pc.attackerId);
+  if (!attacker) return null;
+
+  const slots = getAllSlots(attacker.armyUnit, attacker.slotDamage);
+  const hasAvailable = slots.some(s => !s.disabled);
+  const { lockedUpgradeKey } = pc;
+
+  return (
+    <div className="combat-step">
+      <div className="combat-assign-header">
+        Assign <strong>{pc.overheatRemaining}</strong> overheat damage to {attacker.name}
+      </div>
+
+      {!hasAvailable ? (
+        <div className="combat-no-slots">No slots remaining — unit will be destroyed.</div>
+      ) : (
+        <div className="combat-slot-list">
+          {slots.map(s => {
+            const isLocked = lockedUpgradeKey === s.key;
+            const isBlocked = !s.disabled && lockedUpgradeKey && !isLocked;
+            const clickable = !s.disabled && !isBlocked;
+            return (
+              <button
+                key={s.key}
+                className={[
+                  'combat-slot-btn',
+                  s.disabled ? 'combat-slot-btn--disabled' : '',
+                  isLocked ? 'combat-slot-btn--locked' : '',
+                  isBlocked ? 'combat-slot-btn--blocked' : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => clickable && dispatch({ type: 'ASSIGN_DAMAGE', slotKey: s.key })}
+                disabled={!clickable}
+              >
+                <div className="dup-header">
+                  <span className="slot-name">{s.upgrade.name}</span>
+                  <span className="slot-loc">[{s.location}]</span>
+                  {s.disabled && <span className="slot-destroyed-tag">✗ Destroyed</span>}
+                  {isLocked && <span className="slot-locked-tag">assign here</span>}
+                </div>
+                <div className="dup-slots">
+                  {Array.from({ length: s.threshold }).map((_, boxIdx) => (
+                    <span
+                      key={boxIdx}
+                      className={`dup-slot${boxIdx < s.dmg ? ' dup-slot--damaged' : ''}`}
+                    />
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CombatDone({ pc, units, dispatch }) {
   const target = units.find(u => u.id === pc.targetId);
   const weapon = pc.weaponList[pc.selectedWeaponIdx]?.weapon;
@@ -267,12 +324,13 @@ export default function CombatPanel({ pendingCombat, units, dispatch, hasMoved, 
           <span className="combat-step-indicator">{pendingCombat.step.replace(/-/g, ' ')}</span>
         </div>
         <div className="combat-panel-body">
-          {pendingCombat.step === 'weapon-select'  && <WeaponSelect pc={pendingCombat} dispatch={dispatch} onWeaponHover={onWeaponHover} />}
-          {pendingCombat.step === 'target-select'  && <TargetSelect pc={pendingCombat} dispatch={dispatch} />}
-          {pendingCombat.step === 'hit-roll'       && <HitRoll     pc={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
-          {pendingCombat.step === 'block-roll'     && <BlockRoll   pc={pendingCombat} units={units} dispatch={dispatch} />}
-          {pendingCombat.step === 'damage-assign'  && <DamageAssign pc={pendingCombat} units={units} dispatch={dispatch} />}
-          {pendingCombat.step === 'done'           && <CombatDone  pc={pendingCombat} units={units} dispatch={dispatch} />}
+          {pendingCombat.step === 'weapon-select'   && <WeaponSelect    pc={pendingCombat} dispatch={dispatch} onWeaponHover={onWeaponHover} />}
+          {pendingCombat.step === 'target-select'   && <TargetSelect    pc={pendingCombat} dispatch={dispatch} />}
+          {pendingCombat.step === 'hit-roll'        && <HitRoll         pc={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
+          {pendingCombat.step === 'block-roll'      && <BlockRoll       pc={pendingCombat} units={units} dispatch={dispatch} />}
+          {pendingCombat.step === 'overheat-assign' && <OverheatAssign  pc={pendingCombat} units={units} dispatch={dispatch} />}
+          {pendingCombat.step === 'damage-assign'   && <DamageAssign    pc={pendingCombat} units={units} dispatch={dispatch} />}
+          {pendingCombat.step === 'done'            && <CombatDone      pc={pendingCombat} units={units} dispatch={dispatch} />}
         </div>
       </div>
     </div>

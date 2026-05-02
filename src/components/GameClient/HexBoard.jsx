@@ -26,6 +26,12 @@ import overlayElev2NW from '../../assets/terrain/overlay_elevation_2_nw.png';
 import overlayElev2W  from '../../assets/terrain/overlay_elevation_2_w.png';
 import overlayElev2SW from '../../assets/terrain/overlay_elevation_2_sw.png';
 import overlayElev2SE from '../../assets/terrain/overlay_elevation_2_se.png';
+import overlayElev3E  from '../../assets/terrain/overlay_elevation_3_e.png';
+import overlayElev3NE from '../../assets/terrain/overlay_elevation_3_ne.png';
+import overlayElev3NW from '../../assets/terrain/overlay_elevation_3_nw.png';
+import overlayElev3W  from '../../assets/terrain/overlay_elevation_3_w.png';
+import overlayElev3SW from '../../assets/terrain/overlay_elevation_3_sw.png';
+import overlayElev3SE from '../../assets/terrain/overlay_elevation_3_se.png';
 
 const DIFFICULT_VARIANTS = [overlayDifficult1, overlayDifficult2, overlayDifficult3];
 const COVER_VARIANTS = [overlayCover1, overlayCover2];
@@ -33,6 +39,7 @@ const COVER_VARIANTS = [overlayCover1, overlayCover2];
 const ELEVATION_SIDES = [
   [overlayElev1E, overlayElev1NE, overlayElev1NW, overlayElev1W, overlayElev1SW, overlayElev1SE],
   [overlayElev2E, overlayElev2NE, overlayElev2NW, overlayElev2W, overlayElev2SW, overlayElev2SE],
+  [overlayElev3E, overlayElev3NE, overlayElev3NW, overlayElev3W, overlayElev3SW, overlayElev3SE],
 ];
 
 // Pointy-top hex image dimensions at HEX_SIZE=24
@@ -308,7 +315,7 @@ export default function HexBoard({
         {hexCells}
 
         {/* Objectives */}
-        {objectives.filter(obj => !obj.carrierId).map((obj, i) => <ObjectiveMarker key={i} obj={obj} />)}
+        {objectives.filter(obj => !obj.carrierId).map(obj => <ObjectiveMarker key={`${obj.q},${obj.r}`} obj={obj} />)}
 
         {/* Units */}
         {units.filter(u => !u.destroyed && !u.surrendered).map(u => (
