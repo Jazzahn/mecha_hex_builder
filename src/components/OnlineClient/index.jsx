@@ -177,7 +177,7 @@ function OnlineGame({ playerIndex, initialState, onExit }) {
   }
 
   return (
-    <OnlineGameProvider playerIndex={playerIndex} initialState={gameState}>
+    <OnlineGameProvider playerIndex={playerIndex} initialState={initialState}>
       <GameInner />
     </OnlineGameProvider>
   );
