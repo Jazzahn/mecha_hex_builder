@@ -8,7 +8,12 @@ import {
 } from '../../game/hexMath';
 import { UNIT_TYPES } from '../../data/gameData';
 import grassHexImg from '../../assets/terrain/grass_hex.png';
-import heavyMechImg from '../../assets/units/Heavy.png';
+import heavyMechBlue   from '../../assets/units/Heavy_blue.png';
+import assaultMechBlue from '../../assets/units/Assault_blue.png';
+import mediumMechBlue  from '../../assets/units/Medium_blue.png';
+import heavyMechRed    from '../../assets/units/Heavy_red.png';
+import assaultMechRed  from '../../assets/units/Assault_red.png';
+import mediumMechRed   from '../../assets/units/Medium_red.png';
 import overlayDifficult1 from '../../assets/terrain/overlay_difficult_1.png';
 import overlayDifficult2 from '../../assets/terrain/overlay_difficult_2.png';
 import overlayDifficult3 from '../../assets/terrain/overlay_difficult_3.png';
@@ -59,9 +64,10 @@ const TYPE_ABBREV = {
   armedStructure: 'S', unarmedStructure: 'S', fortifiedStructure: 'S',
 };
 
-const UNIT_SPRITES = {
-  heavy: heavyMechImg,
-};
+const UNIT_SPRITES = [
+  { heavy: heavyMechBlue,  assault: assaultMechBlue, medium: mediumMechBlue  },
+  { heavy: heavyMechRed,   assault: assaultMechRed,  medium: mediumMechRed   },
+];
 
 function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
   const { x, y } = hexToPixel(unit.q, unit.r);
@@ -71,7 +77,7 @@ function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
   const arrowPts = facingArrow(x, y, unit.facing);
   const arrowStr = arrowPts.map(p => `${p.x},${p.y}`).join(' ');
   const r = HEX_SIZE * 0.58;
-  const sprite = UNIT_SPRITES[unit.typeId];
+  const sprite = UNIT_SPRITES[unit.playerIndex]?.[unit.typeId];
   const spriteSize = HEX_SIZE * 1.5;
 
   // Sprite images face "down" (+90° from East). Rotate to match current facing.

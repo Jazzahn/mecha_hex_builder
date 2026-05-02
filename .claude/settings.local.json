@@ -8,7 +8,10 @@
       "Bash(vercel --version)",
       "Bash(npm install *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Heavy.png\"   \"Heavy_blue.png\")",
+      "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Assault.png\" \"Assault_blue.png\")",
+      "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Medium.png\"  \"Medium_blue.png\")"
     ]
   }
 }
