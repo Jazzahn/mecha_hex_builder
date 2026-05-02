@@ -308,7 +308,7 @@ export default function HexBoard({
         {hexCells}
 
         {/* Objectives */}
-        {objectives.map((obj, i) => <ObjectiveMarker key={i} obj={obj} />)}
+        {objectives.filter(obj => !obj.carrierId).map((obj, i) => <ObjectiveMarker key={i} obj={obj} />)}
 
         {/* Units */}
         {units.filter(u => !u.destroyed && !u.surrendered).map(u => (

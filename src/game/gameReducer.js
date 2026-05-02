@@ -162,8 +162,12 @@ function advancePhaseIfDone(state) {
     return advancePhaseIfDone(roundStartState);
   }
 
+  const nextPhase = PLAY_PHASES[nextPhaseIndex];
+  const ipHasUnits = state.units.some(u =>
+    nextPhase.types.includes(u.typeId) && !u.destroyed && !u.surrendered && u.playerIndex === state.initiativePlayer
+  );
   return addLog(
-    { ...state, phaseIndex: nextPhaseIndex, activePlayer: state.initiativePlayer },
+    { ...state, phaseIndex: nextPhaseIndex, activePlayer: ipHasUnits ? state.initiativePlayer : 1 - state.initiativePlayer },
     `${PLAY_PHASES[nextPhaseIndex].label} begins.`
   );
 }
