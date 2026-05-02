@@ -776,3 +776,36 @@ export function gameReducer(state, action) {
       return state;
   }
 }
+
+// ── Online helper ───────────────────────────────────────────────────────────
+// Builds a game state that is already past terrain + objective setup, ready
+// for deployment. Used by the server so online games skip the manual phases.
+
+const OBJ_MIN_ROW  = 6;
+const OBJ_MAX_ROW  = BOARD_ROWS - 7;
+const OBJ_MIN_DIST = 3;
+
+function findValidObjectiveHex(terrain, objectives) {
+  const candidates = [];
+  for (let r = OBJ_MIN_ROW; r <= OBJ_MAX_ROW; r++) {
+    for (let q = 0; q < BOARD_COLS; q++) {
+      if (terrain[hexKey(q, r)]?.type === 'blocking') continue;
+      if (objectives.some(o => hexDistance(q, r, o.q, o.r) <= OBJ_MIN_DIST)) continue;
+      candidates.push({ q, r });
+    }
+  }
+  if (!candidates.length) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+export function buildOnlineInitialState(playerNames, armies) {
+  let state = buildInitialState(playerNames, armies);
+  state = gameReducer(state, { type: 'RANDOMIZE_TERRAIN' });
+  state = gameReducer(state, { type: 'FINISH_TERRAIN' });
+  while (state.phase === 'objective-setup') {
+    const hex = findValidObjectiveHex(state.terrain, state.objectives);
+    if (!hex) break;
+    state = gameReducer(state, { type: 'PLACE_OBJECTIVE', q: hex.q, r: hex.r });
+  }
+  return state;
+}

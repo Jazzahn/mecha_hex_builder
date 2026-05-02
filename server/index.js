@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import express from 'express';
-import { gameReducer, buildInitialState } from '../src/game/gameReducer.js';
+import { gameReducer, buildOnlineInitialState } from '../src/game/gameReducer.js';
 
 const app = express();
 app.get('/', (_req, res) => res.send('ok'));
@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     socket.data.playerIndex = 1;
 
     const [p0, p1] = room.players;
-    room.gameState = buildInitialState([p0.displayName, p1.displayName], [p0.army, p1.army]);
+    room.gameState = buildOnlineInitialState([p0.displayName, p1.displayName], [p0.army, p1.army]);
 
     // Send each player their index + the shared initial state
     io.to(p0.socketId).emit('game-start', { playerIndex: 0, gameState: room.gameState });
