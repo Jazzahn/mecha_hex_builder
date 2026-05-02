@@ -33,7 +33,7 @@ function WeaponSelect({ pc, dispatch, onWeaponHover }) {
         ))}
       </div>
       <button className="combat-cancel-btn" onClick={() => dispatch({ type: 'CANCEL_SHOOT' })}>
-        Cancel
+        Done Shooting
       </button>
     </div>
   );

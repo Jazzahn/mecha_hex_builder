@@ -67,6 +67,7 @@ function makeGameUnit(armyUnit, playerIndex, q, r, facing) {
     heldAction: false,
     firedWeaponKeys: [],
     hasCruised: false,
+    heatSinkCanceled: 0,
     ammoBoxDamaged: false,
     slotDamage,
     destroyed: false,
@@ -151,7 +152,7 @@ function advancePhaseIfDone(state) {
     const newInitiative = 1 - state.initiativePlayer;
     const resetUnits = state.units.map(u => ({
       ...u, activated: false, heldAction: false,
-      firedWeaponKeys: [], hasCruised: false, ammoBoxDamaged: false,
+      firedWeaponKeys: [], hasCruised: false, heatSinkCanceled: 0, ammoBoxDamaged: false,
     }));
     const roundStartState = addLog(
       { ...state, round: newRound, phaseIndex: 0, initiativePlayer: newInitiative, activePlayer: newInitiative, units: resetUnits },
@@ -517,13 +518,27 @@ export function gameReducer(state, action) {
       }
 
       // Overheating: 1s on the hit roll wound the attacker
+      // Heat Sinks cancel up to 3 total overheat results per activation (tracked via heatSinkCanceled)
       if (weapon.special?.includes('Overheating')) {
         const overheats = countOverheats(rolls);
         if (overheats > 0) {
           const hasHS = hasActiveUpgrade(attacker.armyUnit, attacker.slotDamage, 'heatSinks');
-          const canceled = hasHS ? Math.min(overheats, 3) : 0;
+          const budgetUsed = attacker.heatSinkCanceled ?? 0;
+          const budgetRemaining = hasHS ? Math.max(0, 3 - budgetUsed) : 0;
+          const canceled = Math.min(overheats, budgetRemaining);
           const wounds = overheats - canceled;
-          if (canceled > 0) newState = addLog(newState, `${attacker.name} Heat Sinks absorb ${canceled} overheat${canceled > 1 ? 's' : ''}.`);
+          if (canceled > 0) {
+            const newBudgetUsed = budgetUsed + canceled;
+            newState = {
+              ...newState,
+              units: newState.units.map(u => u.id === attacker.id
+                ? { ...u, heatSinkCanceled: newBudgetUsed }
+                : u),
+            };
+            const remaining = 3 - newBudgetUsed;
+            newState = addLog(newState,
+              `${attacker.name} Heat Sinks absorb ${canceled} overheat${canceled > 1 ? 's' : ''} (${remaining} budget left).`);
+          }
           if (wounds > 0) {
             newState = addLog(newState, `${attacker.name} suffers ${wounds} overheat wound${wounds > 1 ? 's' : ''}!`);
             const { units: wu, objectives: wo, logs: wl } = autoAssignDamage(newState.units, newState.objectives, attacker.id, wounds);
@@ -700,12 +715,11 @@ export function gameReducer(state, action) {
       if (!attacker) return { ...state, pendingCombat: null };
 
       const firedKey = pc.weaponList[pc.selectedWeaponIdx]?.key;
+      const newFiredKeys = firedKey ? [...(attacker.firedWeaponKeys ?? []), firedKey] : attacker.firedWeaponKeys;
+
       let newState = {
         ...state,
-        units: state.units.map(u => u.id === attacker.id ? {
-          ...u,
-          firedWeaponKeys: firedKey ? [...(u.firedWeaponKeys ?? []), firedKey] : u.firedWeaponKeys,
-        } : u),
+        units: state.units.map(u => u.id === attacker.id ? { ...u, firedWeaponKeys: newFiredKeys } : u),
         pendingCombat: null,
       };
 
@@ -723,6 +737,36 @@ export function gameReducer(state, action) {
           for (const l of logs) newState = addLog(newState, l);
         }
         if (names.length > 0) newState = addLog(newState, `Blast! ${names.join(', ')} hit for ${dpH}.`);
+      }
+
+      // If attacker still has unfired, non-disabled weapons, loop back to weapon selection
+      const updatedAttacker = newState.units.find(u => u.id === pc.attackerId);
+      if (updatedAttacker && !updatedAttacker.destroyed) {
+        const remaining = getEquippedWeapons(updatedAttacker.armyUnit, updatedAttacker.slotDamage)
+          .filter(w => !w.disabled && !newFiredKeys.includes(w.key));
+        if (remaining.length > 0) {
+          newState = {
+            ...newState,
+            pendingCombat: {
+              step: 'weapon-select',
+              attackerId: pc.attackerId,
+              weaponList: remaining,
+              selectedWeaponIdx: -1,
+              targetId: null,
+              validTargets: [],
+              hitRolls: [],
+              blockRolls: [],
+              hits: 0,
+              blocks: 0,
+              netDamage: 0,
+              remainingDamage: 0,
+              coverPenalty: 0,
+              blastTargetIds: [],
+              lastExpArmorSave: null,
+              lockedUpgradeKey: null,
+            },
+          };
+        }
       }
 
       return newState;

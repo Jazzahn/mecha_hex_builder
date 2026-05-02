@@ -1,7 +1,7 @@
 import { useGame } from '../../store/gameContext';
 import { UNIT_TYPES } from '../../data/gameData';
 import { PLAY_PHASES } from '../../game/gameReducer';
-import { getEquippedWeapons } from '../../game/combat';
+import { getEquippedWeapons, hasActiveUpgrade } from '../../game/combat';
 
 export default function ActionPanel() {
   const { gameState, dispatch } = useGame();
@@ -10,9 +10,25 @@ export default function ActionPanel() {
     activePlayer, playerNames, phaseIndex, round,
   } = gameState;
 
+  const { localPlayerIndex } = useGame();
+  const isOnline = localPlayerIndex !== null;
+  const isMyTurn =
+    !isOnline ||
+    (gameState.phase === 'playing'         && localPlayerIndex === activePlayer) ||
+    (gameState.phase === 'deploy'          && localPlayerIndex === gameState.deployPlayerIndex) ||
+    (gameState.phase === 'terrain'         && localPlayerIndex === 0) ||
+    (gameState.phase === 'objective-setup' && localPlayerIndex === 0) ||
+    gameState.phase === 'over';
+
   const phase = PLAY_PHASES[phaseIndex];
   const selectedUnit = units.find(u => u.id === selectedUnitId);
   const unitType = selectedUnit ? UNIT_TYPES[selectedUnit.typeId] : null;
+
+  const hasHighTuned = selectedUnit
+    ? hasActiveUpgrade(selectedUnit.armyUnit, selectedUnit.slotDamage, 'highTunedEngine')
+    : false;
+  const effectiveMoveSP   = (unitType?.move   ?? 0) + (hasHighTuned ? 1 : 0);
+  const effectiveCruiseSP = (unitType?.cruise ?? 0) + (hasHighTuned ? 2 : 0);
 
   const firedKeys = selectedUnit?.firedWeaponKeys ?? [];
   const availableWeapons = selectedUnit
@@ -31,6 +47,21 @@ export default function ActionPanel() {
   const postFire = hasFired && !pendingAction && !pendingCombat;
 
   const isStructure = selectedUnit && ['armedStructure', 'unarmedStructure', 'fortifiedStructure'].includes(selectedUnit.typeId);
+
+  if (!isMyTurn) {
+    return (
+      <div className="action-panel">
+        <div className="action-panel-status">
+          <div className="status-round">Round {round} / 4</div>
+          <div className="status-phase">{phase?.label}</div>
+          <div className="status-player" style={{ color: activePlayer === 0 ? '#90caf9' : '#ef9a9a' }}>
+            {playerNames[activePlayer]}'s turn
+          </div>
+        </div>
+        <div className="action-hint action-hint--waiting">Waiting for opponent…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="action-panel">
@@ -72,10 +103,10 @@ export default function ActionPanel() {
           {!isStructure && (
             <>
               <button className="action-btn action-btn--move" onClick={() => dispatch({ type: 'START_ACTION', action: 'move' })}>
-                Move ({unitType?.move} SP)
+                Move ({effectiveMoveSP} SP)
               </button>
               <button className="action-btn action-btn--cruise" onClick={() => dispatch({ type: 'START_ACTION', action: 'cruise' })}>
-                Cruise ({unitType?.cruise} SP)
+                Cruise ({effectiveCruiseSP} SP)
               </button>
             </>
           )}
@@ -126,11 +157,6 @@ export default function ActionPanel() {
       {/* Fired at least one weapon, not currently moving */}
       {postFire && (
         <div className="action-facing">
-          {canShoot && (
-            <button className="action-btn action-btn--shoot" onClick={() => dispatch({ type: 'START_SHOOT' })}>
-              Fire Next Weapon
-            </button>
-          )}
           <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_ACTIVATION' })}>
             End Activation
           </button>

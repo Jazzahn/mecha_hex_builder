@@ -9,6 +9,7 @@ import ValidationPanel from './components/ValidationPanel';
 import UpgradeLibrary from './components/UpgradeLibrary';
 import PrintView from './components/PrintView';
 import GameClient from './components/GameClient/index.jsx';
+import OnlineClient from './components/OnlineClient/index.jsx';
 import { ALL_UPGRADES, KEYWORDS, getSlotCost } from './data/gameData';
 import { canAddToZone } from './utils/validation';
 import Tooltip from './components/Tooltip';
@@ -56,7 +57,7 @@ function DragPreview({ upgradeId }) {
   );
 }
 
-function ArmyBuilderInner({ onPlayClick }) {
+function ArmyBuilderInner({ onPlayClick, onOnlineClick }) {
   const { army, dispatch, load } = useArmy();
   const { setActiveDragId } = useBuilder();
 
@@ -90,7 +91,7 @@ function ArmyBuilderInner({ onPlayClick }) {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <div className="screen-only">
-        <ArmyHeader onPlayClick={onPlayClick} />
+        <ArmyHeader onPlayClick={onPlayClick} onOnlineClick={onOnlineClick} />
         <div className="main-layout">
           <aside className="sidebar">
             <AddUnitPanel />
@@ -134,16 +135,22 @@ function ActiveDragOverlay() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('builder'); // 'builder' | 'game'
+  const [page, setPage] = useState('builder'); // 'builder' | 'game' | 'online'
 
   if (page === 'game') {
     return <GameClient onExit={() => setPage('builder')} />;
+  }
+  if (page === 'online') {
+    return <OnlineClient onExit={() => setPage('builder')} />;
   }
 
   return (
     <ArmyProvider>
       <BuilderProvider>
-        <ArmyBuilderInner onPlayClick={() => setPage('game')} />
+        <ArmyBuilderInner
+          onPlayClick={() => setPage('game')}
+          onOnlineClick={() => setPage('online')}
+        />
       </BuilderProvider>
     </ArmyProvider>
   );

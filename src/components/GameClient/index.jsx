@@ -109,6 +109,9 @@ function PlayingView() {
       }
       return;
     }
+    // Lock out token clicks while a move action is in progress — prevents
+    // deselect → reselect → fresh SP exploit
+    if (pendingAction) return;
     // Normal unit selection
     if (selectedUnitId === unitId) {
       dispatch({ type: 'DESELECT_UNIT' });
@@ -212,7 +215,7 @@ function GameOver() {
   );
 }
 
-function GameInner() {
+export function GameInner() {
   const { gameState } = useGame();
   switch (gameState.phase) {
     case 'terrain':          return <TerrainEditor />;

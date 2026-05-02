@@ -60,7 +60,7 @@
 
 .game-board-area {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -69,12 +69,22 @@
 }
 
 .hex-board-wrap {
-  display: inline-block;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px 8px 16px 8px;
 }
 
 .hex-board-svg {
   display: block;
   cursor: crosshair;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /* ── Sidebar sections ─────────────────────────────────── */
@@ -1013,3 +1023,110 @@
 .combat-exp-armor-save--saved  { background: #0a2e0a; border: 1px solid #388e3c; color: #a5d6a7; }
 .combat-exp-armor-save--failed { background: #2e0a0a; border: 1px solid #c62828; color: #ef9a9a; }
 
+
+/* ── Online lobby / waiting ─────────────────────────────── */
+.online-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0d1117;
+  color: #e0e0e0;
+}
+.online-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.online-lobby,
+.online-waiting,
+.online-disconnected {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 32px 40px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.online-lobby-title,
+.online-waiting-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
+.online-field-label { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: #8b949e; }
+.online-field-input {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e0e0e0;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  outline: none;
+}
+.online-field-input:focus { border-color: #58a6ff; }
+.online-code-input { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
+.online-army-picker { display: flex; flex-direction: column; gap: 6px; }
+.online-army-loaded {
+  background: #0a2e0a;
+  border: 1px solid #388e3c;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.online-army-clear { background: none; border: none; color: #ef9a9a; cursor: pointer; font-size: 1rem; padding: 0; }
+.online-army-slots { display: flex; flex-direction: column; gap: 6px; }
+.online-army-hint { font-size: 0.78rem; color: #8b949e; }
+.online-army-slot-btn {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e0e0e0;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+}
+.online-army-slot-btn:hover { border-color: #58a6ff; }
+.online-error { color: #ef9a9a; font-size: 0.82rem; }
+.online-actions { display: flex; flex-direction: column; gap: 10px; }
+.online-join-row { display: flex; gap: 8px; }
+.online-join-row .online-field-input { flex: 1; min-width: 0; }
+.online-btn {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e0e0e0;
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.online-btn:hover:not(:disabled) { background: #30363d; }
+.online-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.online-btn--create { background: #1565c0; border-color: #1e88e5; }
+.online-btn--create:hover:not(:disabled) { background: #1976d2; }
+.online-btn--join { background: #1b5e20; border-color: #388e3c; white-space: nowrap; }
+.online-btn--join:hover:not(:disabled) { background: #2e7d32; }
+.online-btn--copy { align-self: center; }
+.online-room-code {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-align: center;
+  color: #58a6ff;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+}
+.online-waiting-hint { font-size: 0.82rem; color: #8b949e; text-align: center; margin: 0; }
+
+/* Waiting-for-opponent hint in ActionPanel */
+.action-hint--waiting { color: #8b949e; font-style: italic; }
+
+/* Online button in header */
+.play-btn--online { background: #1565c0; border-color: #1e88e5; margin-left: 4px; }
+.play-btn--online:hover { background: #1976d2; }
