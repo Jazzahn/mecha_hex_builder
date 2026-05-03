@@ -312,27 +312,33 @@ function CombatDone({ pc, units, dispatch }) {
   );
 }
 
-export default function CombatPanel({ pendingCombat, units, dispatch, hasMoved, onWeaponHover }) {
+export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onWeaponHover }) {
   if (!pendingCombat) return null;
   const attacker = units.find(u => u.id === pendingCombat.attackerId);
+  return (
+    <div className="combat-panel">
+      <div className="combat-panel-header">
+        <span className="combat-panel-title">⚔ {attacker?.name} fires!</span>
+        <span className="combat-step-indicator">{pendingCombat.step.replace(/-/g, ' ')}</span>
+      </div>
+      <div className="combat-panel-body">
+        {pendingCombat.step === 'weapon-select'   && <WeaponSelect    pc={pendingCombat} dispatch={dispatch} onWeaponHover={onWeaponHover} />}
+        {pendingCombat.step === 'target-select'   && <TargetSelect    pc={pendingCombat} dispatch={dispatch} />}
+        {pendingCombat.step === 'hit-roll'        && <HitRoll         pc={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
+        {pendingCombat.step === 'block-roll'      && <BlockRoll       pc={pendingCombat} units={units} dispatch={dispatch} />}
+        {pendingCombat.step === 'overheat-assign' && <OverheatAssign  pc={pendingCombat} units={units} dispatch={dispatch} />}
+        {pendingCombat.step === 'damage-assign'   && <DamageAssign    pc={pendingCombat} units={units} dispatch={dispatch} />}
+        {pendingCombat.step === 'done'            && <CombatDone      pc={pendingCombat} units={units} dispatch={dispatch} />}
+      </div>
+    </div>
+  );
+}
 
+export default function CombatPanel({ pendingCombat, units, dispatch, hasMoved, onWeaponHover }) {
+  if (!pendingCombat) return null;
   return (
     <div className="combat-overlay">
-      <div className="combat-panel">
-        <div className="combat-panel-header">
-          <span className="combat-panel-title">⚔ {attacker?.name} fires!</span>
-          <span className="combat-step-indicator">{pendingCombat.step.replace(/-/g, ' ')}</span>
-        </div>
-        <div className="combat-panel-body">
-          {pendingCombat.step === 'weapon-select'   && <WeaponSelect    pc={pendingCombat} dispatch={dispatch} onWeaponHover={onWeaponHover} />}
-          {pendingCombat.step === 'target-select'   && <TargetSelect    pc={pendingCombat} dispatch={dispatch} />}
-          {pendingCombat.step === 'hit-roll'        && <HitRoll         pc={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
-          {pendingCombat.step === 'block-roll'      && <BlockRoll       pc={pendingCombat} units={units} dispatch={dispatch} />}
-          {pendingCombat.step === 'overheat-assign' && <OverheatAssign  pc={pendingCombat} units={units} dispatch={dispatch} />}
-          {pendingCombat.step === 'damage-assign'   && <DamageAssign    pc={pendingCombat} units={units} dispatch={dispatch} />}
-          {pendingCombat.step === 'done'            && <CombatDone      pc={pendingCombat} units={units} dispatch={dispatch} />}
-        </div>
-      </div>
+      <CombatPanelInner pendingCombat={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} onWeaponHover={onWeaponHover} />
     </div>
   );
 }

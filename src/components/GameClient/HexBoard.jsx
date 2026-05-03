@@ -1,19 +1,20 @@
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BOARD_COLS, BOARD_ROWS, HEX_SIZE,
   hexToPixel, pixelToHex, hexCorners, cornersToPoints,
-  facingArrow, hexKey, hexNeighborAt, isDeployZone, inBounds,
+  hexKey, hexNeighborAt, inBounds,
   SVG_WIDTH, SVG_HEIGHT, PLAYER_COLORS, PLAYER_LIGHT,
   FACING_PIXEL_DELTAS,
 } from '../../game/hexMath';
-import { UNIT_TYPES } from '../../data/gameData';
 import grassHexImg from '../../assets/terrain/grass_hex.png';
 import heavyMechBlue   from '../../assets/units/Heavy_blue.png';
 import assaultMechBlue from '../../assets/units/Assault_blue.png';
 import mediumMechBlue  from '../../assets/units/Medium_blue.png';
+import lightMechBlue   from '../../assets/units/Light_blue.png';
 import heavyMechRed    from '../../assets/units/Heavy_red.png';
 import assaultMechRed  from '../../assets/units/Assault_red.png';
 import mediumMechRed   from '../../assets/units/Medium_red.png';
+import lightMechRed    from '../../assets/units/Light_red.png';
 import overlayDifficult1 from '../../assets/terrain/overlay_difficult_1.png';
 import overlayDifficult2 from '../../assets/terrain/overlay_difficult_2.png';
 import overlayDifficult3 from '../../assets/terrain/overlay_difficult_3.png';
@@ -37,6 +38,16 @@ import overlayElev3NW from '../../assets/terrain/overlay_elevation_3_nw.png';
 import overlayElev3W  from '../../assets/terrain/overlay_elevation_3_w.png';
 import overlayElev3SW from '../../assets/terrain/overlay_elevation_3_sw.png';
 import overlayElev3SE from '../../assets/terrain/overlay_elevation_3_se.png';
+import shadowW1  from '../../assets/terrain/shadow_1_w.png';
+import shadowW2  from '../../assets/terrain/shadow_2_w.png';
+import shadowW3  from '../../assets/terrain/shadow_3_w.png';
+import shadowNW1 from '../../assets/terrain/shadow_1_nw.png';
+import shadowNW2 from '../../assets/terrain/shadow_2_nw.png';
+import shadowNW3 from '../../assets/terrain/shadow_3_nw.png';
+
+// Indexed [1..3] — null placeholder at [0] so diff maps directly
+const SHADOW_W  = [null, shadowW1,  shadowW2,  shadowW3];
+const SHADOW_NW = [null, shadowNW1, shadowNW2, shadowNW3];
 
 const DIFFICULT_VARIANTS = [overlayDifficult1, overlayDifficult2, overlayDifficult3];
 const COVER_VARIANTS = [overlayCover1, overlayCover2];
@@ -65,17 +76,17 @@ const TYPE_ABBREV = {
 };
 
 const UNIT_SPRITES = [
-  { heavy: heavyMechBlue,  assault: assaultMechBlue, medium: mediumMechBlue  },
-  { heavy: heavyMechRed,   assault: assaultMechRed,  medium: mediumMechRed   },
+  { heavy: heavyMechBlue,  assault: assaultMechBlue, medium: mediumMechBlue,  light: lightMechBlue  },
+  { heavy: heavyMechRed,   assault: assaultMechRed,  medium: mediumMechRed,   light: lightMechRed   },
 ];
 
-function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
+const TREE_SHADOW  = 'drop-shadow(2px 4px 3px rgba(0,0,0,0.50))';
+
+function UnitToken({ unit, selected, hasObjective, onUnitClick, onHoverUnit }) {
   const { x, y } = hexToPixel(unit.q, unit.r);
   const color = PLAYER_COLORS[unit.playerIndex];
   const lightColor = PLAYER_LIGHT[unit.playerIndex];
   const abbrev = TYPE_ABBREV[unit.typeId] ?? '?';
-  const arrowPts = facingArrow(x, y, unit.facing);
-  const arrowStr = arrowPts.map(p => `${p.x},${p.y}`).join(' ');
   const r = HEX_SIZE * 0.58;
   const sprite = UNIT_SPRITES[unit.playerIndex]?.[unit.typeId];
   const spriteSize = HEX_SIZE * 1.5;
@@ -88,17 +99,14 @@ function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
     <g
       className={`unit-token${unit.activated ? ' unit-token--activated' : ''}${selected ? ' unit-token--selected' : ''}`}
       onClick={e => { e.stopPropagation(); onUnitClick(unit.id); }}
+      onMouseEnter={e => onHoverUnit?.(unit.id, e.clientX, e.clientY)}
+      onMouseLeave={() => onHoverUnit?.(null, 0, 0)}
       style={{ cursor: 'pointer' }}
     >
-      {/* Player-colour ring */}
-      {sprite ? (
-        <circle cx={x} cy={y} r={r} fill={unit.activated ? 'rgba(180,180,180,0.25)' : 'rgba(255,255,255,0.08)'} stroke={color} strokeWidth={selected ? 2.5 : 1.5} />
-      ) : (
-        <circle cx={x} cy={y} r={r} fill={unit.activated ? '#ccc' : lightColor} stroke={color} strokeWidth={selected ? 2.5 : 1.5} />
-      )}
-      {/* Selection ring and arrow drawn before the sprite so sprite sits on top */}
+      {/* Background circle for fallback (no sprite) units only */}
+      {!sprite && <circle cx={x} cy={y} r={r} fill={unit.activated ? '#ccc' : lightColor} stroke={color} strokeWidth={1.5} />}
+      {/* Yellow dashed selection ring */}
       {selected && <circle cx={x} cy={y} r={r + 3} fill="none" stroke="#ffeb3b" strokeWidth={2} strokeDasharray="4 2" />}
-      <polygon points={arrowStr} fill={unit.activated ? '#aaa' : color} opacity={0.85} style={{ pointerEvents: 'none' }} />
       {sprite ? (
         <image
           href={sprite}
@@ -123,6 +131,8 @@ function UnitToken({ unit, selected, hasObjective, onUnitClick }) {
           ★
         </text>
       )}
+      {/* Transparent hit area — keeps pointer events on sprite units where all children are pointerEvents:none */}
+      <circle cx={x} cy={y} r={r} fill="transparent" />
     </g>
   );
 }
@@ -143,9 +153,6 @@ function TurnOverlay({ unit, onTurnLeft, onTurnRight }) {
   // Left turn (CCW) = facing+1, right turn (CW) = facing+5
   const leftFacing  = (unit.facing + 1) % 6;
   const rightFacing = (unit.facing + 5) % 6;
-  const leftHex  = { q: unit.q, r: unit.r }; // placeholder; computed via neighbor
-  const rightHex = { q: unit.q, r: unit.r };
-
   // Use hexToPixel on the neighbor hex in each turn-facing direction
   // We replicate the direction lookup inline (getDirections is not exported)
   const dirs = unit.r % 2 === 0
@@ -184,24 +191,112 @@ export default function HexBoard({
   onUnitClick,
   onTurnLeft,
   onTurnRight,
+  onUnitPos,
+  onHoverUnit,
 }) {
   const svgRef = useRef(null);
   const { units = [], terrain = {}, objectives = [], selectedUnitId } = gameState;
 
   const carryingIds = new Set(objectives.map(o => o.carrierId).filter(Boolean));
 
-  function handleSvgClick(e) {
-    if (!onHexClick) return;
+  // ── Zoom / pan ──────────────────────────────────────────────────────────────
+  const [zoom, setZoom] = useState(1);
+  const [pan,  setPan]  = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Refs so wheel handler (attached imperatively) always reads fresh values
+  const zoomRef = useRef(zoom);
+  const panRef  = useRef(pan);
+  zoomRef.current = zoom;
+  panRef.current  = pan;
+
+  const dragRef = useRef({ active: false, lastX: 0, lastY: 0, moved: false });
+
+  // Convert a mouse event to SVG viewBox coordinates
+  function toSVGCoords(e) {
     const rect = svgRef.current.getBoundingClientRect();
-    // Scale from rendered pixels back to viewBox coordinates
-    const sx = (e.clientX - rect.left) * (SVG_WIDTH  / rect.width);
-    const sy = (e.clientY - rect.top)  * (SVG_HEIGHT / rect.height);
-    const { q, r } = pixelToHex(sx, sy);
+    return {
+      x: (e.clientX - rect.left) * (SVG_WIDTH  / rect.width),
+      y: (e.clientY - rect.top)  * (SVG_HEIGHT / rect.height),
+    };
+  }
+
+  // Wheel zoom — must be non-passive to call preventDefault
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const { x: cx, y: cy } = toSVGCoords(e);
+    const newZoom = Math.min(6, Math.max(0.4, zoomRef.current * factor));
+    const ratio   = newZoom / zoomRef.current;
+    setPan({ x: cx - ratio * (cx - panRef.current.x), y: cy - ratio * (cy - panRef.current.y) });
+    setZoom(newZoom);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
+
+  // Fire the selected unit's SVG-relative pixel position whenever selection or view changes
+  const onUnitPosRef = useRef(onUnitPos);
+  onUnitPosRef.current = onUnitPos;
+  useEffect(() => {
+    const cb = onUnitPosRef.current;
+    if (!cb) return;
+    const unit = units.find(u => u.id === selectedUnitId);
+    if (!unit || !svgRef.current) { cb(null); return; }
+    const { x: cx, y: cy } = hexToPixel(unit.q, unit.r);
+    const rect = svgRef.current.getBoundingClientRect();
+    const vx = (cx * zoom + pan.x) * (rect.width  / SVG_WIDTH);
+    const vy = (cy * zoom + pan.y) * (rect.height / SVG_HEIGHT);
+    const hexScreenW = HEX_SIZE * Math.sqrt(3) * zoom * (rect.width / SVG_WIDTH);
+    cb({ x: vx, y: vy, hexScreenW });
+  }, [selectedUnitId, zoom, pan, units]);
+
+  function handleMouseDown(e) {
+    if (e.button !== 0) return;
+    if (e.target.closest('.unit-token')) return;
+    const { x, y } = toSVGCoords(e);
+    dragRef.current = { active: true, lastX: x, lastY: y, moved: false };
+    setIsDragging(true);
+  }
+
+  function handleMouseMove(e) {
+    if (!dragRef.current.active) return;
+    const { x, y } = toSVGCoords(e);
+    const dx = x - dragRef.current.lastX;
+    const dy = y - dragRef.current.lastY;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragRef.current.moved = true;
+    dragRef.current.lastX = x;
+    dragRef.current.lastY = y;
+    setPan(p => ({ x: p.x + dx, y: p.y + dy }));
+  }
+
+  function handleMouseUp() {
+    dragRef.current.active = false;
+    setIsDragging(false);
+  }
+
+  function handleSvgClick(e) {
+    // Swallow the click if the mouse moved during the drag
+    if (dragRef.current.moved) { dragRef.current.moved = false; return; }
+    if (!onHexClick) return;
+    const { x: sx, y: sy } = toSVGCoords(e);
+    // Undo the zoom/pan transform to get content coordinates
+    const cx = (sx - pan.x) / zoom;
+    const cy = (sy - pan.y) / zoom;
+    const { q, r } = pixelToHex(cx, cy);
     if (inBounds(q, r)) onHexClick(q, r);
   }
 
-  // Build all hex cells
+  // Build all hex cells and a separate elevation-sprite layer (rendered after all
+  // base hex content so shadows project onto neighbouring lower hexes correctly)
   const hexCells = [];
+  const elevSprites = [];
+  const terrainOverlays = [];
+  const shadowSprites = [];
   for (let r = 0; r < BOARD_ROWS; r++) {
     for (let q = 0; q < BOARD_COLS; q++) {
       const { x, y } = hexToPixel(q, r);
@@ -212,6 +307,34 @@ export default function HexBoard({
       const overlay = overlayHexes.get(hk);
 
       const terrainFill = terrainEntry?.type ? (TERRAIN_COLORS[terrainEntry.type] ?? null) : null;
+
+      if (terrainEntry?.type === 'difficult') {
+        terrainOverlays.push(
+          <image key={`to-${hk}`}
+            href={DIFFICULT_VARIANTS[(q * 7 + r * 13) % 3]}
+            x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+            width={HEX_IMG_W} height={HEX_IMG_H}
+            clipPath={`url(#hc-${hk})`}
+            preserveAspectRatio="xMidYMid slice"
+            style={{ pointerEvents: 'none' }}
+          />
+        );
+      } else if (terrainEntry?.type === 'cover') {
+        terrainOverlays.push(
+          <image key={`to-${hk}`}
+            href={COVER_VARIANTS[(q * 11 + r * 7) % 2]}
+            x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+            width={HEX_IMG_W} height={HEX_IMG_H}
+            clipPath={`url(#hc-${hk})`}
+            preserveAspectRatio="xMidYMid slice"
+            style={{ pointerEvents: 'none', filter: TREE_SHADOW }}
+          />
+        );
+      } else if (terrainFill) {
+        terrainOverlays.push(
+          <polygon key={`to-${hk}`} points={pts} fill={terrainFill} stroke="none" style={{ pointerEvents: 'none' }} />
+        );
+      }
 
       let overlayFill = 'none';
       let overlayOpacity = 0;
@@ -243,50 +366,6 @@ export default function HexBoard({
             preserveAspectRatio="xMidYMid slice"
             style={{ pointerEvents: 'none', filter: `brightness(${1 + (terrainEntry?.elevation ?? 0) * 0.15})` }}
           />
-          {/* Terrain overlays */}
-          {terrainEntry?.type === 'difficult' ? (
-            <image
-              href={DIFFICULT_VARIANTS[(q * 7 + r * 13) % 3]}
-              x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
-              width={HEX_IMG_W} height={HEX_IMG_H}
-              clipPath={`url(#hc-${hk})`}
-              preserveAspectRatio="xMidYMid slice"
-              style={{ pointerEvents: 'none' }}
-            />
-          ) : terrainEntry?.type === 'cover' ? (
-            <image
-              href={COVER_VARIANTS[(q * 11 + r * 7) % 2]}
-              x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
-              width={HEX_IMG_W} height={HEX_IMG_H}
-              clipPath={`url(#hc-${hk})`}
-              preserveAspectRatio="xMidYMid slice"
-              style={{ pointerEvents: 'none' }}
-            />
-          ) : terrainFill && (
-            <polygon points={pts} fill={terrainFill} stroke="none" style={{ pointerEvents: 'none' }} />
-          )}
-          {/* Elevation side overlays — one layer per elevation level up to this hex's elevation.
-              Each layer only renders on sides where the neighbor drops below that level. */}
-          {(terrainEntry?.elevation ?? 0) > 0 && Array.from({ length: terrainEntry.elevation }, (_, i) => i).reverse().map(levelIdx => {
-            const level = levelIdx + 1;
-            const sideImgs = ELEVATION_SIDES[levelIdx];
-            return sideImgs.map((img, side) => {
-              const n = hexNeighborAt(q, r, side);
-              const neighborElev = terrain[hexKey(n.q, n.r)]?.elevation ?? 0;
-              if (neighborElev >= terrainEntry.elevation - levelIdx) return null;
-              return (
-                <image
-                  key={`${level}-${side}`}
-                  href={img}
-                  x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
-                  width={HEX_IMG_W} height={HEX_IMG_H}
-                  clipPath={`url(#hc-${hk})`}
-                  preserveAspectRatio="xMidYMid slice"
-                  style={{ pointerEvents: 'none' }}
-                />
-              );
-            });
-          })}
           {/* Hex border */}
           <polygon points={pts} fill="none" stroke="#333" strokeWidth={0.6} />
           {overlayFill !== 'none' && (
@@ -306,6 +385,54 @@ export default function HexBoard({
           </text>
         </g>
       );
+
+      // Shadow sprites: for each hex check if its W (side 3) or NW (side 2) neighbour
+      // is higher — if so, render the matching shadow sprite on this hex.
+      const myElev = terrainEntry?.elevation ?? 0;
+      [{ side: 3, sprites: SHADOW_W }, { side: 2, sprites: SHADOW_NW }].forEach(({ side, sprites }) => {
+        const n = hexNeighborAt(q, r, side);
+        const nElev = terrain[hexKey(n.q, n.r)]?.elevation ?? 0;
+        const diff = Math.min(3, nElev - myElev);
+        if (diff <= 0) return;
+        // Stack all levels 1→diff so a taller cliff includes all lower shadow layers
+        for (let h = 1; h <= diff; h++) {
+          shadowSprites.push(
+            <image
+              key={`sh-${hk}-${side}-${h}`}
+              href={sprites[h]}
+              x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+              width={HEX_IMG_W} height={HEX_IMG_H}
+              clipPath={`url(#hc-${hk})`}
+              preserveAspectRatio="xMidYMid slice"
+              style={{ pointerEvents: 'none', filter: 'brightness(0.8) blur(3px)' }}
+            />
+          );
+        }
+      });
+
+      // Elevation sprites collected separately so their shadows paint over
+      // neighbouring lower hexes rather than being buried under their grass.
+      if ((terrainEntry?.elevation ?? 0) > 0) {
+        Array.from({ length: terrainEntry.elevation }, (_, i) => i).reverse().forEach(levelIdx => {
+          const level = levelIdx + 1;
+          ELEVATION_SIDES[levelIdx].forEach((img, side) => {
+            const n = hexNeighborAt(q, r, side);
+            const neighborElev = terrain[hexKey(n.q, n.r)]?.elevation ?? 0;
+            if (neighborElev >= terrainEntry.elevation - levelIdx) return;
+            elevSprites.push(
+              <image
+                key={`es-${hk}-${level}-${side}`}
+                href={img}
+                x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+                width={HEX_IMG_W} height={HEX_IMG_H}
+                clipPath={`url(#hc-${hk})`}
+                preserveAspectRatio="xMidYMid slice"
+                style={{ pointerEvents: 'none' }}
+              />
+            );
+          });
+        });
+      }
     }
   }
 
@@ -315,34 +442,51 @@ export default function HexBoard({
         ref={svgRef}
         viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
         className="hex-board-svg"
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         onClick={handleSvgClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
-        {/* Hex grid */}
-        {hexCells}
+        <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
+          {/* 1. Grass + borders + labels */}
+          {hexCells}
 
-        {/* Objectives */}
-        {objectives.filter(obj => !obj.carrierId).map(obj => <ObjectiveMarker key={`${obj.q},${obj.r}`} obj={obj} />)}
+          {/* 2. Elevation side sprites */}
+          {elevSprites}
 
-        {/* Units */}
-        {units.filter(u => !u.destroyed && !u.surrendered).map(u => (
-          <UnitToken
-            key={u.id}
-            unit={u}
-            selected={u.id === selectedUnitId}
-            hasObjective={carryingIds.has(u.id)}
-            onUnitClick={onUnitClick ?? (() => {})}
-          />
-        ))}
+          {/* 3. Terrain overlays (cover/difficult) */}
+          {terrainOverlays}
 
-        {/* Turn overlay — shown on selected unit during step movement */}
-        {(() => {
-          const { pendingAction } = gameState;
-          if (!onTurnLeft || !onTurnRight) return null;
-          if (pendingAction?.remainingMoves == null) return null;
-          const selUnit = units.find(u => u.id === selectedUnitId && !u.destroyed);
-          if (!selUnit) return null;
-          return <TurnOverlay unit={selUnit} onTurnLeft={onTurnLeft} onTurnRight={onTurnRight} />;
-        })()}
+          {/* 4. Hill shadows */}
+          {shadowSprites}
+
+          {/* Objectives */}
+          {objectives.filter(obj => !obj.carrierId).map(obj => <ObjectiveMarker key={`${obj.q},${obj.r}`} obj={obj} />)}
+
+          {/* Units */}
+          {units.filter(u => !u.destroyed && !u.surrendered).map(u => (
+            <UnitToken
+              key={u.id}
+              unit={u}
+              selected={u.id === selectedUnitId}
+              hasObjective={carryingIds.has(u.id)}
+              onUnitClick={onUnitClick ?? (() => {})}
+              onHoverUnit={onHoverUnit}
+            />
+          ))}
+
+          {/* Turn overlay — shown on selected unit during step movement */}
+          {(() => {
+            const { pendingAction } = gameState;
+            if (!onTurnLeft || !onTurnRight) return null;
+            if (pendingAction?.remainingMoves == null) return null;
+            const selUnit = units.find(u => u.id === selectedUnitId && !u.destroyed);
+            if (!selUnit) return null;
+            return <TurnOverlay unit={selUnit} onTurnLeft={onTurnLeft} onTurnRight={onTurnRight} />;
+          })()}
+        </g>
       </svg>
     </div>
   );

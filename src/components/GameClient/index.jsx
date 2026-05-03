@@ -1,32 +1,41 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { GameProvider, useGame } from '../../store/gameContext';
 import GameSetup from './GameSetup';
 import TerrainEditor from './TerrainEditor';
 import ObjectiveSetup from './ObjectiveSetup';
 import DeployPhase from './DeployPhase';
 import HexBoard from './HexBoard';
-import ActionPanel from './ActionPanel';
-import CombatPanel from './CombatPanel';
+import UnitActionModal from './UnitActionModal';
+import UnitTooltip from './UnitTooltip';
 import { hexKey, hexDistance, hexNeighborAt, inBounds, inFrontArc, BOARD_COLS, BOARD_ROWS } from '../../game/hexMath';
 import { checkLOS, unitHeight } from '../../game/combat';
 import { PLAY_PHASES } from '../../game/gameReducer';
 import { UNIT_TYPES } from '../../data/gameData';
 
 function PlayingView() {
-  const { gameState, dispatch } = useGame();
+  const { gameState, dispatch, localPlayerIndex } = useGame();
   const {
     selectedUnitId, units, pendingAction, pendingCombat, terrain,
     phaseIndex, playerNames, activePlayer, round, log,
   } = gameState;
 
   const [hoveredWeaponEntry, setHoveredWeaponEntry] = useState(null);
+  const [unitModalPos, setUnitModalPos] = useState(null);
+  const [tooltipInfo, setTooltipInfo] = useState(null);
+  const hoverTimerRef = useRef(null);
+  const boardAreaRef = useRef(null);
+
+  const isOnline = localPlayerIndex !== null;
+  const isMyTurn =
+    !isOnline ||
+    (gameState.phase === 'playing' && localPlayerIndex === activePlayer) ||
+    gameState.phase === 'over';
 
   const selectedUnit = units.find(u => u.id === selectedUnitId);
 
   // Build overlay hexes
   const overlayHexes = new Map();
 
-  // Step-movement overlays: forward hex (green) and backward hex (amber), grayed if too expensive
   if (pendingAction?.remainingMoves != null && selectedUnit) {
     const { remainingMoves } = pendingAction;
     const stepCost = (fromQ, fromR, toQ, toR, isForward) => {
@@ -70,7 +79,6 @@ function PlayingView() {
     if (target) overlayHexes.set(hexKey(target.q, target.r), 'combat-target');
   }
 
-  // Weapon range ring: only hexes in arc + LOS, matching actual targeting rules
   if (hoveredWeaponEntry && pendingCombat?.step === 'weapon-select') {
     const attacker = units.find(u => u.id === pendingCombat.attackerId);
     if (attacker) {
@@ -83,7 +91,6 @@ function PlayingView() {
           const dist = hexDistance(attacker.q, attacker.r, q, r);
           if (dist < 1 || dist > weapon.range) continue;
           if (!hasTurret && !isIndirect && !inFrontArc(attacker.q, attacker.r, attacker.facing, q, r)) continue;
-          // Use mech height (2) as the assumed target height for the ring — most conservative
           if (!isIndirect && !checkLOS(attacker.q, attacker.r, q, r, terrain, attackerH, 2)) continue;
           overlayHexes.set(hexKey(q, r), 'range-ring');
         }
@@ -102,17 +109,13 @@ function PlayingView() {
   }
 
   function handleUnitClick(unitId) {
-    // Target selection mode
     if (pendingCombat?.step === 'target-select') {
       if (pendingCombat.validTargets.includes(unitId)) {
         dispatch({ type: 'SELECT_COMBAT_TARGET', targetId: unitId });
       }
       return;
     }
-    // Lock out token clicks while a move action is in progress — prevents
-    // deselect → reselect → fresh SP exploit
     if (pendingAction) return;
-    // Normal unit selection
     if (selectedUnitId === unitId) {
       dispatch({ type: 'DESELECT_UNIT' });
     } else {
@@ -120,18 +123,42 @@ function PlayingView() {
     }
   }
 
+  function handleUnitPos(pos) {
+    setUnitModalPos(pos);
+  }
+
+  function handleHoverUnit(unitId, clientX, clientY) {
+    clearTimeout(hoverTimerRef.current);
+    if (!unitId) { setTooltipInfo(null); return; }
+    hoverTimerRef.current = setTimeout(() => {
+      const rect = boardAreaRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltipInfo({ unitId, x: clientX - rect.left, y: clientY - rect.top });
+    }, 1000);
+  }
+
   const phase = PLAY_PHASES[phaseIndex];
   const phaseUnits = units.filter(u => phase?.types.includes(u.typeId) && !u.destroyed);
   const activatedCount = phaseUnits.filter(u => u.activated).length;
-  const hasMoved = !!pendingAction?.moved;
 
   return (
     <div className="game-layout game-layout--playing">
       <div className="game-sidebar">
-        <ActionPanel />
-
         <div className="sidebar-section">
-          <div className="phase-progress">
+          <div className="action-panel-status">
+            <div className="status-round">Round {round} / 4</div>
+            <div className="status-phase">{phase?.label}</div>
+            <div className="status-player" style={{ color: activePlayer === 0 ? '#90caf9' : '#ef9a9a' }}>
+              {playerNames[activePlayer]}'s turn
+            </div>
+          </div>
+          {!isMyTurn && <div className="action-hint" style={{ color: '#888' }}>Waiting for opponent…</div>}
+          {isMyTurn && !selectedUnit && (
+            <div className="action-hint">
+              Click one of {playerNames[activePlayer]}'s unactivated units to select it.
+            </div>
+          )}
+          <div className="phase-progress" style={{ marginTop: 10 }}>
             <div className="phase-progress-label">{phase?.label}</div>
             <div className="phase-progress-bar">
               <div
@@ -155,7 +182,7 @@ function PlayingView() {
         </div>
       </div>
 
-      <div className="game-board-area" style={{ position: 'relative' }}>
+      <div className="game-board-area" ref={boardAreaRef} style={{ position: 'relative' }}>
         <HexBoard
           gameState={gameState}
           overlayHexes={overlayHexes}
@@ -163,14 +190,18 @@ function PlayingView() {
           onUnitClick={handleUnitClick}
           onTurnLeft={() => dispatch({ type: 'STEP_TURN', dir: 'left' })}
           onTurnRight={() => dispatch({ type: 'STEP_TURN', dir: 'right' })}
+          onUnitPos={handleUnitPos}
+          onHoverUnit={handleHoverUnit}
         />
-        {pendingCombat && (
-          <CombatPanel
-            pendingCombat={pendingCombat}
-            units={units}
-            dispatch={dispatch}
-            hasMoved={hasMoved}
-            onWeaponHover={setHoveredWeaponEntry}
+        <UnitActionModal
+          position={unitModalPos}
+          boardWidth={boardAreaRef.current?.offsetWidth}
+          onWeaponHover={setHoveredWeaponEntry}
+        />
+        {tooltipInfo && (
+          <UnitTooltip
+            unitId={tooltipInfo.unitId}
+            position={{ x: tooltipInfo.x, y: tooltipInfo.y }}
           />
         )}
       </div>

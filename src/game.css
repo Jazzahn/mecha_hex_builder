@@ -1130,3 +1130,155 @@
 /* Online button in header */
 .play-btn--online { background: #1565c0; border-color: #1e88e5; margin-left: 4px; }
 .play-btn--online:hover { background: #1976d2; }
+
+/* ── Unit action modal ────────────────────────────────── */
+.unit-action-modal {
+  background: #1c1c22;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.65);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.unit-action-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #141418;
+  border-bottom: 1px solid #2e2e38;
+}
+
+.unit-action-modal-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #e0f0ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unit-action-modal-close {
+  background: none;
+  border: none;
+  color: #556;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 0 0 8px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.unit-action-modal-close:hover { color: #ef5350; }
+
+/* Ensure action-btn sections inside modal have proper padding */
+.unit-action-modal .action-buttons,
+.unit-action-modal .action-step-move,
+.unit-action-modal .action-facing {
+  padding: 10px 12px;
+  border-bottom: none;
+}
+
+/* Combat panel inside modal — no extra wrapper needed */
+.unit-action-modal .combat-panel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: auto;
+}
+
+/* ── Unit tooltip ─────────────────────────────────────── */
+.unit-tooltip {
+  background: rgba(18, 18, 26, 0.96);
+  border: 1px solid #2e3a4a;
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.55);
+  padding: 8px 10px;
+  min-width: 160px;
+  max-width: 220px;
+  pointer-events: none;
+}
+
+.unit-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.unit-tooltip-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e0f0ff;
+}
+
+.unit-tooltip-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.unit-tooltip-status--ready {
+  color: #76ff03;
+  background: rgba(118, 255, 3, 0.1);
+  border: 1px solid rgba(118,255,3,0.3);
+}
+.unit-tooltip-status--done {
+  color: #888;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #333;
+}
+
+.unit-tooltip-type {
+  font-size: 0.7rem;
+  color: #607d8b;
+  margin-bottom: 7px;
+}
+
+.unit-tooltip-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.unit-tooltip-slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.unit-tooltip-slot-name {
+  font-size: 0.72rem;
+  color: #b0c4d8;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unit-tooltip-slot--destroyed .unit-tooltip-slot-name {
+  text-decoration: line-through;
+  color: #4a4a4a;
+}
+
+.unit-tooltip-slot-boxes {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.unit-tooltip-box {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #2a4050;
+  border-radius: 1px;
+  background: transparent;
+}
+
+.unit-tooltip-box--hit {
+  background: #c62828;
+  border-color: #ef5350;
+}
