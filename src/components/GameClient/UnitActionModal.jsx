@@ -1,4 +1,4 @@
-import { useGame } from '../../store/gameContext';
+import { useGame, isActivePlayer } from '../../store/gameContext';
 import { UNIT_TYPES } from '../../data/gameData';
 import { PLAY_PHASES } from '../../game/gameReducer';
 import { getEquippedWeapons, hasActiveUpgrade } from '../../game/combat';
@@ -11,12 +11,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const selectedUnit = units.find(u => u.id === selectedUnitId);
   if (!selectedUnit || !position) return null;
 
-  const isOnline = localPlayerIndex !== null;
-  const isMyTurn =
-    !isOnline ||
-    (gameState.phase === 'playing'         && localPlayerIndex === activePlayer) ||
-    (gameState.phase === 'deploy'          && localPlayerIndex === gameState.deployPlayerIndex) ||
-    gameState.phase === 'over';
+  const isMyTurn = isActivePlayer(gameState, localPlayerIndex);
 
   const MODAL_W = 240;
   const hexW = position.hexScreenW ?? 60;
@@ -51,6 +46,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const canShoot = availableWeapons.length > 0 && !selectedUnit.hasCruised && !pendingCombat;
   const postFire = hasFired && !pendingAction && !pendingCombat;
   const isStructure = ['armedStructure', 'unarmedStructure', 'fortifiedStructure'].includes(selectedUnit.typeId);
+  const isVehicle   = ['groundVehicle', 'heavyVehicle'].includes(selectedUnit.typeId);
 
   return (
     <div className="unit-action-modal" style={style}>
@@ -63,13 +59,14 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
         <div className="action-hint">Not your turn</div>
       )}
 
-      {isMyTurn && pendingCombat && (
+      {(isMyTurn || pendingCombat?.step === 'ram-push') && pendingCombat && (
         <CombatPanelInner
           pendingCombat={pendingCombat}
           units={units}
           dispatch={dispatch}
           hasMoved={hasMoved}
           onWeaponHover={onWeaponHover}
+          localPlayerIndex={localPlayerIndex}
         />
       )}
 
@@ -85,6 +82,11 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
               <button className="action-btn action-btn--cruise" onClick={() => dispatch({ type: 'START_ACTION', action: 'cruise' })}>
                 Cruise ({effectiveCruiseSP} SP)
               </button>
+              {!isVehicle && (
+                <button className="action-btn action-btn--ram" onClick={() => dispatch({ type: 'START_ACTION', action: 'ram' })}>
+                  Ram ({effectiveCruiseSP} SP)
+                </button>
+              )}
             </>
           )}
           {canShoot && (
@@ -100,8 +102,13 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
             <span className="action-sp-label">SP remaining:</span>
             <span className="action-sp-count">{pendingAction.remainingMoves}</span>
           </div>
-          <div className="action-move-hint">Use ↺/↻ on the unit to turn. Click highlighted hexes to move.</div>
-          <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_STEP_MOVE' })}>End Move</button>
+          {pendingAction.action === 'ram'
+            ? <div className="action-move-hint">Move adjacent to an enemy then click the red hex to ram them.</div>
+            : <div className="action-move-hint">Use ↺/↻ on the unit to turn. Click highlighted hexes to move.</div>
+          }
+          {pendingAction.action !== 'ram' && (
+            <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_STEP_MOVE' })}>End Move</button>
+          )}
           {!pendingAction.moved && (
             <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'DESELECT_UNIT' })}>Cancel</button>
           )}

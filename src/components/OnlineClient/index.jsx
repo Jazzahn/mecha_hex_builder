@@ -8,6 +8,15 @@ import OnlineArmyBuilder from './OnlineArmyBuilder';
 
 const POINT_OPTIONS = [100, 150, 200, 250, 300, 400];
 
+function DisconnectedScreen({ onExit }) {
+  return (
+    <div className="online-disconnected">
+      <h2>Opponent disconnected</h2>
+      <button className="online-btn" onClick={onExit}>Back to lobby</button>
+    </div>
+  );
+}
+
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 
 function Lobby({ onCreated, onJoined }) {
@@ -190,14 +199,7 @@ function ArmyBuildingScreen({ playerIndex, maxPoints, opponentName, onGameStart,
     setIsReady(false);
   }
 
-  if (disconnected) {
-    return (
-      <div className="online-disconnected">
-        <h2>Opponent disconnected</h2>
-        <button className="online-btn" onClick={onExit}>Back to lobby</button>
-      </div>
-    );
-  }
+  if (disconnected) return <DisconnectedScreen onExit={onExit} />;
 
   return (
     <OnlineArmyBuilder
@@ -222,14 +224,7 @@ function OnlineGame({ playerIndex, initialState, onExit }) {
     return () => socket.off('opponent-disconnected', handler);
   }, []);
 
-  if (disconnected) {
-    return (
-      <div className="online-disconnected">
-        <h2>Opponent disconnected</h2>
-        <button className="online-btn" onClick={onExit}>Back to lobby</button>
-      </div>
-    );
-  }
+  if (disconnected) return <DisconnectedScreen onExit={onExit} />;
 
   return (
     <OnlineGameProvider playerIndex={playerIndex} initialState={initialState}>
@@ -258,14 +253,6 @@ export default function OnlineClient({ onExit }) {
   }
 
   function handleJoined(pi, maxPts, oppName) {
-    setPlayerIndex(pi);
-    setRoomMaxPoints(maxPts);
-    setOpponentName(oppName);
-    setScreen('building');
-  }
-
-  // Called from both WaitingRoom (host) and Lobby join path
-  function handleBothJoined(pi, maxPts, oppName) {
     setPlayerIndex(pi);
     setRoomMaxPoints(maxPts);
     setOpponentName(oppName);
@@ -331,7 +318,7 @@ export default function OnlineClient({ onExit }) {
             code={roomCode}
             maxPoints={roomMaxPoints}
             displayName={displayName}
-            onBothJoined={handleBothJoined}
+            onBothJoined={handleJoined}
           />
         )}
       </div>

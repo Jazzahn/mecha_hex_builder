@@ -164,21 +164,21 @@ function BlockRoll({ pc, units, dispatch }) {
   );
 }
 
-function DamageAssign({ pc, units, dispatch }) {
-  const target = units.find(u => u.id === pc.targetId);
-  if (!target) return null;
+function SlotAssign({ unitId, remaining, showExpArmor, pc, units, dispatch }) {
+  const unit = units.find(u => u.id === unitId);
+  if (!unit) return null;
 
-  const slots = getAllSlots(target.armyUnit, target.slotDamage);
+  const slots = getAllSlots(unit.armyUnit, unit.slotDamage);
   const hasAvailable = slots.some(s => !s.disabled);
   const { lockedUpgradeKey, lastExpArmorSave } = pc;
 
   return (
     <div className="combat-step">
       <div className="combat-assign-header">
-        Assign <strong>{pc.remainingDamage}</strong> damage to {target.name}
+        Assign <strong>{remaining}</strong> damage to {unit.name}
       </div>
 
-      {lastExpArmorSave && (
+      {showExpArmor && lastExpArmorSave && (
         <div className={`combat-exp-armor-save${lastExpArmorSave.saved ? ' combat-exp-armor-save--saved' : ' combat-exp-armor-save--failed'}`}>
           Experimental Armor: rolled {lastExpArmorSave.roll} — {lastExpArmorSave.saved ? '✓ Saved!' : '✗ Failed'}
         </div>
@@ -227,59 +227,24 @@ function DamageAssign({ pc, units, dispatch }) {
   );
 }
 
-function OverheatAssign({ pc, units, dispatch }) {
-  const attacker = units.find(u => u.id === pc.attackerId);
-  if (!attacker) return null;
-
-  const slots = getAllSlots(attacker.armyUnit, attacker.slotDamage);
-  const hasAvailable = slots.some(s => !s.disabled);
-  const { lockedUpgradeKey } = pc;
-
+function RamPush({ pc, units, isChooser }) {
+  const pushed  = units.find(u => u.id === pc.pushedUnitId);
+  const rammer  = units.find(u => u.id === pc.rammerId);
+  const target  = units.find(u => u.id === pc.targetId);
   return (
     <div className="combat-step">
-      <div className="combat-assign-header">
-        Assign <strong>{pc.overheatRemaining}</strong> overheat damage to {attacker.name}
+      <div className="combat-matchup">
+        <span className="combat-attacker-label">{rammer?.name}</span>
+        <span className="combat-vs"> → </span>
+        <span className="combat-target-label">{target?.name}</span>
       </div>
-
-      {!hasAvailable ? (
-        <div className="combat-no-slots">No slots remaining — unit will be destroyed.</div>
-      ) : (
-        <div className="combat-slot-list">
-          {slots.map(s => {
-            const isLocked = lockedUpgradeKey === s.key;
-            const isBlocked = !s.disabled && lockedUpgradeKey && !isLocked;
-            const clickable = !s.disabled && !isBlocked;
-            return (
-              <button
-                key={s.key}
-                className={[
-                  'combat-slot-btn',
-                  s.disabled ? 'combat-slot-btn--disabled' : '',
-                  isLocked ? 'combat-slot-btn--locked' : '',
-                  isBlocked ? 'combat-slot-btn--blocked' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => clickable && dispatch({ type: 'ASSIGN_DAMAGE', slotKey: s.key })}
-                disabled={!clickable}
-              >
-                <div className="dup-header">
-                  <span className="slot-name">{s.upgrade.name}</span>
-                  <span className="slot-loc">[{s.location}]</span>
-                  {s.disabled && <span className="slot-destroyed-tag">✗ Destroyed</span>}
-                  {isLocked && <span className="slot-locked-tag">assign here</span>}
-                </div>
-                <div className="dup-slots">
-                  {Array.from({ length: s.threshold }).map((_, boxIdx) => (
-                    <span
-                      key={boxIdx}
-                      className={`dup-slot${boxIdx < s.dmg ? ' dup-slot--damaged' : ''}`}
-                    />
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="combat-instruction">
+        <strong>{pushed?.name}</strong> must be pushed!
+      </div>
+      {isChooser
+        ? <div className="combat-instruction">Click a purple hex to choose the push direction.</div>
+        : <div className="combat-instruction" style={{ color: '#aaa' }}>Waiting for opponent to choose push direction…</div>
+      }
     </div>
   );
 }
@@ -312,13 +277,16 @@ function CombatDone({ pc, units, dispatch }) {
   );
 }
 
-export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onWeaponHover }) {
+export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onWeaponHover, localPlayerIndex = null }) {
   if (!pendingCombat) return null;
-  const attacker = units.find(u => u.id === pendingCombat.attackerId);
+  const isRamStep = pendingCombat.step.startsWith('ram-');
+  const actorId   = isRamStep ? pendingCombat.rammerId : pendingCombat.attackerId;
+  const actor     = units.find(u => u.id === actorId);
+  const isChooser = localPlayerIndex === null || localPlayerIndex === pendingCombat.pushChooserIndex;
   return (
     <div className="combat-panel">
       <div className="combat-panel-header">
-        <span className="combat-panel-title">⚔ {attacker?.name} fires!</span>
+        <span className="combat-panel-title">⚔ {actor?.name} {isRamStep ? 'rams!' : 'fires!'}</span>
         <span className="combat-step-indicator">{pendingCombat.step.replace(/-/g, ' ')}</span>
       </div>
       <div className="combat-panel-body">
@@ -326,9 +294,21 @@ export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onW
         {pendingCombat.step === 'target-select'   && <TargetSelect    pc={pendingCombat} dispatch={dispatch} />}
         {pendingCombat.step === 'hit-roll'        && <HitRoll         pc={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
         {pendingCombat.step === 'block-roll'      && <BlockRoll       pc={pendingCombat} units={units} dispatch={dispatch} />}
-        {pendingCombat.step === 'overheat-assign' && <OverheatAssign  pc={pendingCombat} units={units} dispatch={dispatch} />}
-        {pendingCombat.step === 'damage-assign'   && <DamageAssign    pc={pendingCombat} units={units} dispatch={dispatch} />}
+        {pendingCombat.step === 'overheat-assign' && (
+          <SlotAssign unitId={pendingCombat.attackerId} remaining={pendingCombat.overheatRemaining}
+            pc={pendingCombat} units={units} dispatch={dispatch} />
+        )}
+        {(pendingCombat.step === 'damage-assign' ||
+          pendingCombat.step === 'ram-damage-rammer' ||
+          pendingCombat.step === 'ram-damage-target') && (
+          <SlotAssign
+            unitId={pendingCombat.step === 'ram-damage-rammer' ? pendingCombat.rammerId : pendingCombat.targetId}
+            remaining={pendingCombat.remainingDamage}
+            showExpArmor
+            pc={pendingCombat} units={units} dispatch={dispatch} />
+        )}
         {pendingCombat.step === 'done'            && <CombatDone      pc={pendingCombat} units={units} dispatch={dispatch} />}
+        {pendingCombat.step === 'ram-push'        && <RamPush         pc={pendingCombat} units={units} isChooser={isChooser} />}
       </div>
     </div>
   );

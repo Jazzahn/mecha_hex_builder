@@ -348,6 +348,8 @@ export default function HexBoard({
       if (overlay === 'valid-target')    { overlayFill = '#ff6f00'; overlayOpacity = 0.45; }
       if (overlay === 'combat-target')   { overlayFill = '#e53935'; overlayOpacity = 0.35; }
       if (overlay === 'range-ring')      { overlayFill = '#1565c0'; overlayOpacity = 0.20; }
+      if (overlay === 'ram-target')      { overlayFill = '#f50057'; overlayOpacity = 0.55; }
+      if (overlay === 'ram-push-hex')    { overlayFill = '#ce93d8'; overlayOpacity = 0.50; }
 
       hexCells.push(
         <g key={hk}>

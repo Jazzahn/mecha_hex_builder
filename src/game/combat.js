@@ -123,6 +123,30 @@ export function damagePerHit(weapon) {
   return weapon.special?.includes('Deadly') ? 2 : 1;
 }
 
+// Damage each model takes when one rams the other.
+// Vehicles can't ram and return no damage when rammed (rammerTakes = 0).
+export function calcRamDamage(rammer, target) {
+  const isVehicle = u => u.typeId === 'groundVehicle' || u.typeId === 'heavyVehicle';
+  const rammerSlots = UNIT_TYPES[rammer.typeId]?.totalSlots ?? 1;
+  const targetSlots = UNIT_TYPES[target.typeId]?.totalSlots ?? 1;
+  const diff = rammerSlots - targetSlots; // positive → rammer is bigger
+
+  let rammerTakes = 1;
+  let targetTakes = 1;
+
+  if (diff > 0) targetTakes  += Math.floor(diff / 3);
+  else if (diff < 0) rammerTakes += Math.floor(-diff / 3);
+
+  if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'meleeOptimized'))  targetTakes++;
+  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'meleeOptimized'))  rammerTakes++;
+  if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'reinforcedFrame')) rammerTakes = Math.max(0, rammerTakes - 1);
+  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'reinforcedFrame')) targetTakes = Math.max(0, targetTakes - 1);
+
+  if (isVehicle(target)) rammerTakes = 0;
+
+  return { rammerTakes, targetTakes };
+}
+
 // True when all equipped upgrade slots are disabled
 export function isUnitDestroyed(armyUnit, slotDamage) {
   let hasAny = false;

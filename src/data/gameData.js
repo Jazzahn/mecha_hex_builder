@@ -10,7 +10,6 @@ export const UNIT_TYPES = {
     slots: { torso: 5, larm: 4, rarm: 4 },
     totalSlots: 13,
     isMecha: true,
-    phase: 'Assault Mecha',
   },
   heavy: {
     id: 'heavy',
@@ -23,7 +22,6 @@ export const UNIT_TYPES = {
     slots: { torso: 4, larm: 3, rarm: 3 },
     totalSlots: 10,
     isMecha: true,
-    phase: 'Heavy Mecha',
   },
   medium: {
     id: 'medium',
@@ -36,7 +34,6 @@ export const UNIT_TYPES = {
     slots: { torso: 3, larm: 2, rarm: 2 },
     totalSlots: 7,
     isMecha: true,
-    phase: 'Medium Mecha',
   },
   light: {
     id: 'light',
@@ -49,7 +46,6 @@ export const UNIT_TYPES = {
     slots: { torso: 2, larm: 1, rarm: 1 },
     totalSlots: 4,
     isMecha: true,
-    phase: 'Light Mecha',
   },
   groundVehicle: {
     id: 'groundVehicle',
@@ -63,7 +59,6 @@ export const UNIT_TYPES = {
     totalSlots: 1,
     isMecha: false,
     special: ['Turret'],
-    phase: 'Vehicle',
   },
   heavyVehicle: {
     id: 'heavyVehicle',
@@ -77,7 +72,6 @@ export const UNIT_TYPES = {
     totalSlots: 2,
     isMecha: false,
     special: ['Armored', 'Turret'],
-    phase: 'Vehicle',
   },
   armedStructure: {
     id: 'armedStructure',
@@ -89,7 +83,6 @@ export const UNIT_TYPES = {
     totalSlots: 3,
     isMecha: false,
     special: ['Armored', 'Turret'],
-    phase: 'Structure',
   },
   unarmedStructure: {
     id: 'unarmedStructure',
@@ -101,7 +94,6 @@ export const UNIT_TYPES = {
     totalSlots: 1,
     isMecha: false,
     special: ['Armored', 'Landing Zone', 'NPC'],
-    phase: 'Structure',
   },
   fortifiedStructure: {
     id: 'fortifiedStructure',
@@ -113,7 +105,6 @@ export const UNIT_TYPES = {
     totalSlots: 1,
     isMecha: false,
     special: ['Armored', 'NPC'],
-    phase: 'Structure',
   },
 };
 
@@ -381,7 +372,5 @@ export const KEYWORDS = {
   'Rogue':        'May be activated during phases other than its normal phase, but may only move or shoot when doing so.',
 };
 
-export const MECHA_UNIT_IDS = ['assault', 'heavy', 'medium', 'light'];
-export const VEHICLE_UNIT_IDS = ['groundVehicle', 'heavyVehicle'];
-export const STRUCTURE_UNIT_IDS = ['armedStructure', 'unarmedStructure', 'fortifiedStructure'];
-export const ARMORED_UNIT_IDS = ['heavyVehicle', 'armedStructure', 'unarmedStructure', 'fortifiedStructure'];
+export const MECHA_UNIT_IDS    = ['assault', 'heavy', 'medium', 'light'];
+export const ARMORED_UNIT_IDS  = ['heavyVehicle', 'armedStructure', 'unarmedStructure', 'fortifiedStructure'];

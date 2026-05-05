@@ -11,7 +11,10 @@
       "Bash(node -e ' *)",
       "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Heavy.png\"   \"Heavy_blue.png\")",
       "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Assault.png\" \"Assault_blue.png\")",
-      "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Medium.png\"  \"Medium_blue.png\")"
+      "PowerShell(Rename-Item \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\assets\\\\units\\\\Medium.png\"  \"Medium_blue.png\")",
+      "Bash(node --input-type=module --eval ' *)",
+      "Bash(npx --yes acorn --ecma2020 --module src/game/combat.js)",
+      "Bash(del \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\components\\\\GameClient\\\\ActionPanel.jsx\")"
     ]
   }
 }

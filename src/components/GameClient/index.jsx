@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { GameProvider, useGame } from '../../store/gameContext';
+import { GameProvider, useGame, isActivePlayer } from '../../store/gameContext';
 import GameSetup from './GameSetup';
 import TerrainEditor from './TerrainEditor';
 import ObjectiveSetup from './ObjectiveSetup';
@@ -25,11 +25,7 @@ function PlayingView() {
   const hoverTimerRef = useRef(null);
   const boardAreaRef = useRef(null);
 
-  const isOnline = localPlayerIndex !== null;
-  const isMyTurn =
-    !isOnline ||
-    (gameState.phase === 'playing' && localPlayerIndex === activePlayer) ||
-    gameState.phase === 'over';
+  const isMyTurn = isActivePlayer(gameState, localPlayerIndex);
 
   const selectedUnit = units.find(u => u.id === selectedUnitId);
 
@@ -74,9 +70,26 @@ function PlayingView() {
     });
   }
 
-  if (pendingCombat?.targetId && pendingCombat.step !== 'target-select') {
+  if (pendingCombat?.targetId && pendingCombat.step !== 'target-select' && pendingCombat.step !== 'ram-push') {
     const target = units.find(u => u.id === pendingCombat.targetId);
     if (target) overlayHexes.set(hexKey(target.q, target.r), 'combat-target');
+  }
+
+  // Ram: show enemy in forward hex as ram-target during ram action
+  if (pendingAction?.action === 'ram' && pendingAction.remainingMoves != null && selectedUnit) {
+    const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
+    if (inBounds(fwd.q, fwd.r)) {
+      const enemy = units.find(u => !u.destroyed && !u.surrendered &&
+        u.playerIndex !== selectedUnit.playerIndex && u.q === fwd.q && u.r === fwd.r);
+      if (enemy) overlayHexes.set(hexKey(fwd.q, fwd.r), 'ram-target');
+    }
+  }
+
+  // Ram push: show valid push destination hexes
+  if (pendingCombat?.step === 'ram-push') {
+    (pendingCombat.validPushHexes ?? []).forEach(({ q, r }) => {
+      overlayHexes.set(hexKey(q, r), 'ram-push-hex');
+    });
   }
 
   if (hoveredWeaponEntry && pendingCombat?.step === 'weapon-select') {
@@ -99,7 +112,33 @@ function PlayingView() {
   }
 
   function handleHexClick(q, r) {
+    // Ram push resolution — push chooser clicks a purple hex
+    if (pendingCombat?.step === 'ram-push') {
+      const isChooser = !isOnline || localPlayerIndex === pendingCombat.pushChooserIndex;
+      if (isChooser && (pendingCombat.validPushHexes ?? []).some(h => h.q === q && h.r === r)) {
+        dispatch({ type: 'RESOLVE_RAM_PUSH', q, r });
+      }
+      return;
+    }
+
     if (pendingAction?.remainingMoves != null && selectedUnit) {
+      // Ram action: clicking an enemy in the forward hex executes the ram;
+      // clicking an empty forward/backward hex moves normally (approach).
+      if (pendingAction.action === 'ram') {
+        const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
+        if (fwd.q === q && fwd.r === r) {
+          const enemy = units.find(u => !u.destroyed && !u.surrendered &&
+            u.playerIndex !== selectedUnit.playerIndex && u.q === q && u.r === r);
+          if (enemy) { dispatch({ type: 'EXECUTE_RAM', targetId: enemy.id }); return; }
+          dispatch({ type: 'STEP_MOVE', direction: 'forward' });
+          return;
+        }
+        const bwdFacing = (selectedUnit.facing + 3) % 6;
+        const bwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, bwdFacing);
+        if (bwd.q === q && bwd.r === r) dispatch({ type: 'STEP_MOVE', direction: 'backward' });
+        return;
+      }
+
       const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
       const bwdFacing = (selectedUnit.facing + 3) % 6;
       const bwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, bwdFacing);
@@ -115,6 +154,20 @@ function PlayingView() {
       }
       return;
     }
+
+    // Ram action: clicking an adjacent forward enemy executes the ram
+    if (pendingAction?.action === 'ram' && pendingAction.remainingMoves != null && selectedUnit) {
+      const unit = units.find(u => u.id === unitId);
+      if (unit && !unit.destroyed && !unit.surrendered && unit.playerIndex !== selectedUnit.playerIndex) {
+        const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
+        if (fwd.q === unit.q && fwd.r === unit.r) {
+          dispatch({ type: 'EXECUTE_RAM', targetId: unitId });
+          return;
+        }
+      }
+      return;
+    }
+
     if (pendingAction) return;
     if (selectedUnitId === unitId) {
       dispatch({ type: 'DESELECT_UNIT' });

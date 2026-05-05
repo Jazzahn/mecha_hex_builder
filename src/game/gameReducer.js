@@ -4,7 +4,7 @@ import {
   getEquippedWeapons, canWeaponTarget, rollDice,
   countSuccesses, countOverheats, parseStatValue,
   damagePerHit, getAllSlots, damageThreshold, isUnitDestroyed,
-  hasActiveUpgrade, getCoverPenalty,
+  hasActiveUpgrade, getCoverPenalty, calcRamDamage,
 } from './combat';
 
 export const PLAY_PHASES = [
@@ -82,6 +82,12 @@ function occupiedSet(units) {
   return s;
 }
 
+function occupiedSetExcluding(units, excludeId) {
+  const s = new Set();
+  units.filter(u => !u.destroyed && !u.surrendered && u.id !== excludeId).forEach(u => s.add(hexKey(u.q, u.r)));
+  return s;
+}
+
 function addLog(state, text) {
   return { ...state, log: [...state.log, { round: state.round, text }] };
 }
@@ -94,11 +100,125 @@ function checkAnnihilation(state) {
   return state;
 }
 
+// After both sides' ram damage is resolved, determine push and transition pendingCombat.
+function startRamPushOrEnd(state, rammerId, targetId, targetTypeId, rammerTakes, targetTakes) {
+  const rammer = state.units.find(u => u.id === rammerId);
+  const target  = state.units.find(u => u.id === targetId);
+
+  const isStructure = ['armedStructure', 'unarmedStructure', 'fortifiedStructure'].includes(targetTypeId);
+  const rammerPushed = isStructure || rammerTakes >= targetTakes;
+  const pushedUnit   = state.units.find(u => u.id === (rammerPushed ? rammerId : targetId));
+  const pushChooserIndex = rammerPushed
+    ? (target?.playerIndex ?? 0)
+    : (rammer?.playerIndex ?? 0);
+
+  if (!pushedUnit || pushedUnit.destroyed) {
+    let finalUnits = state.units;
+    if (!rammerPushed && target && !target.destroyed) {
+      finalUnits = finalUnits.map(u => u.id === rammerId ? { ...u, q: target.q, r: target.r } : u);
+    }
+    const activated = finalUnits.map(u => u.id === rammerId ? { ...u, activated: true } : u);
+    return advancePhaseIfDone(addLog(
+      { ...state, units: activated, selectedUnitId: null, pendingAction: null, pendingCombat: null },
+      `${rammer?.name ?? 'Rammer'} (P${(rammer?.playerIndex ?? 0) + 1}) rams.`
+    ));
+  }
+
+  const ramIds = new Set([rammerId, targetId]);
+  const thirdOccupied = new Set(
+    state.units
+      .filter(u => !u.destroyed && !u.surrendered && !ramIds.has(u.id))
+      .map(u => hexKey(u.q, u.r))
+  );
+  const validPushHexes = hexNeighbors(pushedUnit.q, pushedUnit.r).filter(({ q, r }) =>
+    inBounds(q, r) &&
+    !thirdOccupied.has(hexKey(q, r)) &&
+    state.terrain[hexKey(q, r)]?.type !== 'blocking'
+  );
+
+  return {
+    ...state,
+    pendingCombat: {
+      step: 'ram-push',
+      rammerId,
+      targetId,
+      pushedUnitId: pushedUnit.id,
+      pushChooserIndex,
+      validPushHexes,
+      rammerPushed,
+    },
+  };
+}
+
 function dropCarriedObjectives(objectives, unitId, q, r, logs) {
   const carried = objectives.filter(o => o.carrierId === unitId);
   if (carried.length === 0) return objectives;
   logs.push(`An objective is dropped at ${q},${r}!`);
   return objectives.map(o => o.carrierId === unitId ? { ...o, carrierId: null, q, r } : o);
+}
+
+// Apply 1 damage point to slotKey on unitId. Returns null if slot is invalid/full.
+function applyOneDamage(state, unitId, slotKey, { extraDamage = 0, destroySuffix = '' } = {}) {
+  const unit = state.units.find(u => u.id === unitId);
+  if (!unit) return null;
+  const [loc, idxStr] = slotKey.split(':');
+  const upgradeId = unit.armyUnit.slots[loc]?.[Number(idxStr)];
+  if (!upgradeId) return null;
+  const threshold  = damageThreshold(upgradeId, unit.typeId);
+  const currentDmg = unit.slotDamage[slotKey] ?? 0;
+  if (currentDmg >= threshold) return null;
+  const newDmg = Math.min(currentDmg + 1 + extraDamage, threshold);
+  const upgradeDestroyed = newDmg >= threshold;
+  const newSlotDamage = { ...unit.slotDamage, [slotKey]: newDmg };
+  let newUnits = state.units.map(u => u.id === unitId ? { ...u, slotDamage: newSlotDamage } : u);
+  let newState = state;
+  if (upgradeDestroyed) {
+    newState = addLog(newState, `${unit.name}'s ${ALL_UPGRADES[upgradeId]?.name ?? upgradeId} is destroyed${destroySuffix}!`);
+  }
+  const updatedUnit = newUnits.find(u => u.id === unitId);
+  const unitDestroyed = isUnitDestroyed(updatedUnit.armyUnit, updatedUnit.slotDamage);
+  if (unitDestroyed) {
+    newUnits = newUnits.map(u => u.id === unitId ? { ...u, destroyed: true } : u);
+    newState = addLog(newState, `${unit.name} is destroyed${destroySuffix}!`);
+    const dropLogs = [];
+    const droppedObjs = dropCarriedObjectives(newState.objectives, unitId, unit.q, unit.r, dropLogs);
+    newState = { ...newState, objectives: droppedObjs };
+    for (const l of dropLogs) newState = addLog(newState, l);
+  }
+  return { newState, newUnits, upgradeDestroyed, unitDestroyed, newLocked: upgradeDestroyed ? null : slotKey };
+}
+
+function commitActivation(state, unit) {
+  const moved   = state.pendingAction?.action === 'move';
+  const cruised = state.pendingAction?.action === 'cruise';
+  const shot    = (unit.firedWeaponKeys?.length ?? 0) > 0;
+  const verb    = cruised ? 'cruise' : moved && shot ? 'move and shoot' : moved ? 'move' : shot ? 'shoot' : 'hold';
+  const units   = state.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
+  return advancePhaseIfDone(addLog(
+    { ...state, units, selectedUnitId: null, pendingAction: null },
+    `${unit.name} (P${unit.playerIndex + 1}) ${verb}s.`
+  ));
+}
+
+function makeCombatState(attackerId, weaponList) {
+  return {
+    step: 'weapon-select',
+    attackerId,
+    weaponList,
+    selectedWeaponIdx: null,
+    targetId: null,
+    validTargets: [],
+    hitRolls: [],
+    blockRolls: [],
+    hits: 0,
+    blocks: 0,
+    netDamage: 0,
+    remainingDamage: 0,
+    coverPenalty: 0,
+    blastTargetIds: [],
+    lastExpArmorSave: null,
+    lockedUpgradeKey: null,
+  };
 }
 
 // Auto-assign `count` damage points to random available slots on a unit
@@ -342,16 +462,7 @@ export function gameReducer(state, action) {
       const hasMoved = state.pendingAction?.moved === true;
       const hasFired = (unit?.firedWeaponKeys?.length ?? 0) > 0;
       if (unit && (hasMoved || hasFired)) {
-        // Unit already spent resources — commit activation so SP can't be reclaimed
-        const moved = state.pendingAction?.action === 'move';
-        const cruised = state.pendingAction?.action === 'cruise';
-        const shot = hasFired;
-        const verb = cruised ? 'cruise' : moved && shot ? 'move and shoot' : moved ? 'move' : shot ? 'shoot' : 'hold';
-        const units = state.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
-        return advancePhaseIfDone(addLog(
-          { ...state, units, selectedUnitId: null, pendingAction: null },
-          `${unit.name} (P${unit.playerIndex + 1}) ${verb}s.`
-        ));
+        return commitActivation(state, unit);
       }
       return { ...state, selectedUnitId: null, pendingAction: null };
     }
@@ -372,6 +483,13 @@ export function gameReducer(state, action) {
       }
 
       const unitType = UNIT_TYPES[unit.typeId];
+
+      if (act === 'ram') {
+        const sp = unitType.cruise + (hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'highTunedEngine') ? 2 : 0);
+        const updatedUnits = state.units.map(u => u.id === unit.id ? { ...u, hasCruised: true } : u);
+        return { ...state, units: updatedUnits, pendingAction: { action: 'ram', remainingMoves: sp, moved: false } };
+      }
+
       let sp = act === 'cruise' ? unitType.cruise : unitType.move;
 
       // High Tuned Engine: +1 move, +2 cruise
@@ -398,8 +516,7 @@ export function gameReducer(state, action) {
       const { q: nq, r: nr } = dest;
 
       if (!inBounds(nq, nr)) return state;
-      const occ = occupiedSet(state.units);
-      occ.delete(hexKey(unit.q, unit.r));
+      const occ = occupiedSetExcluding(state.units, unit.id);
       if (occ.has(hexKey(nq, nr))) return state;
 
       const t = state.terrain[hexKey(nq, nr)];
@@ -462,15 +579,7 @@ export function gameReducer(state, action) {
     case 'END_ACTIVATION': {
       const unit = state.units.find(u => u.id === state.selectedUnitId);
       if (!unit || state.pendingCombat) return state;
-      const moved = state.pendingAction?.action === 'move';
-      const cruised = state.pendingAction?.action === 'cruise';
-      const shot = (unit.firedWeaponKeys?.length ?? 0) > 0;
-      const verb = cruised ? 'cruise' : moved && shot ? 'move and shoot' : moved ? 'move' : shot ? 'shoot' : 'hold';
-      const units = state.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
-      return advancePhaseIfDone(addLog(
-        { ...state, units, selectedUnitId: null, pendingAction: null },
-        `${unit.name} (P${unit.playerIndex + 1}) ${verb}s.`
-      ));
+      return commitActivation(state, unit);
     }
 
     // ── Combat ──────────────────────────────────────────────
@@ -481,27 +590,7 @@ export function gameReducer(state, action) {
       const weapons = getEquippedWeapons(unit.armyUnit, unit.slotDamage)
         .filter(w => !w.disabled && !firedKeys.includes(w.key));
       if (weapons.length === 0) return state;
-      return {
-        ...state,
-        pendingCombat: {
-          step: 'weapon-select',
-          attackerId: unit.id,
-          weaponList: weapons,
-          selectedWeaponIdx: null,
-          targetId: null,
-          validTargets: [],
-          hitRolls: [],
-          blockRolls: [],
-          hits: 0,
-          blocks: 0,
-          netDamage: 0,
-          remainingDamage: 0,
-          coverPenalty: 0,
-          blastTargetIds: [],
-          lastExpArmorSave: null,
-          lockedUpgradeKey: null,
-        },
-      };
+      return { ...state, pendingCombat: makeCombatState(unit.id, weapons) };
     }
 
     case 'SELECT_WEAPON': {
@@ -659,42 +748,17 @@ export function gameReducer(state, action) {
 
     case 'ASSIGN_DAMAGE': {
       const pc = state.pendingCombat;
-      if (!pc || (pc.step !== 'damage-assign' && pc.step !== 'overheat-assign')) return state;
+      if (!pc || (pc.step !== 'damage-assign' && pc.step !== 'overheat-assign' &&
+                  pc.step !== 'ram-damage-rammer' && pc.step !== 'ram-damage-target')) return state;
 
       // Overheat: player assigns damage to their own attacker
       if (pc.step === 'overheat-assign') {
-        const attacker = state.units.find(u => u.id === pc.attackerId);
-        if (!attacker) return state;
         const { slotKey } = action;
         if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
-        const [loc, idxStr] = slotKey.split(':');
-        const upgradeId = attacker.armyUnit.slots[loc]?.[Number(idxStr)];
-        if (!upgradeId) return state;
-        const threshold = damageThreshold(upgradeId, attacker.typeId);
-        const currentDmg = attacker.slotDamage[slotKey] ?? 0;
-        if (currentDmg >= threshold) return state;
-        const newDmg = Math.min(currentDmg + 1, threshold);
-        const upgradeDestroyed = newDmg >= threshold;
-        const newSlotDamage = { ...attacker.slotDamage, [slotKey]: newDmg };
-        let newUnits = state.units.map(u =>
-          u.id === attacker.id ? { ...u, slotDamage: newSlotDamage } : u
-        );
-        let newState = state;
-        if (upgradeDestroyed) {
-          newState = addLog(newState, `${attacker.name}'s ${ALL_UPGRADES[upgradeId]?.name ?? upgradeId} is destroyed by overheat!`);
-        }
-        const updatedAttacker = newUnits.find(u => u.id === attacker.id);
-        const unitDestroyed = isUnitDestroyed(updatedAttacker.armyUnit, updatedAttacker.slotDamage);
-        if (unitDestroyed) {
-          newUnits = newUnits.map(u => u.id === attacker.id ? { ...u, destroyed: true } : u);
-          newState = addLog(newState, `${attacker.name} is destroyed by overheat!`);
-          const dropLogs = [];
-          const droppedObjs = dropCarriedObjectives(newState.objectives, attacker.id, attacker.q, attacker.r, dropLogs);
-          newState = { ...newState, objectives: droppedObjs };
-          for (const l of dropLogs) newState = addLog(newState, l);
-        }
+        const result = applyOneDamage(state, pc.attackerId, slotKey, { destroySuffix: ' by overheat' });
+        if (!result) return state;
+        const { newState, newUnits, unitDestroyed, newLocked } = result;
         const newRemaining = pc.overheatRemaining - 1;
-        const newLocked = upgradeDestroyed ? null : slotKey;
         return checkAnnihilation({
           ...newState,
           units: newUnits,
@@ -707,39 +771,48 @@ export function gameReducer(state, action) {
         });
       }
 
+      // ── Ram damage assignment (rammer or target) ───────────────────────────
+      if (pc.step === 'ram-damage-rammer' || pc.step === 'ram-damage-target') {
+        const isRammer  = pc.step === 'ram-damage-rammer';
+        const damagedId = isRammer ? pc.rammerId : pc.targetId;
+        if (!state.units.find(u => u.id === damagedId && !u.destroyed)) return state;
+        const { slotKey } = action;
+        if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
+        const result = applyOneDamage(state, damagedId, slotKey);
+        if (!result) return state;
+        const { newState, newUnits, unitDestroyed, newLocked } = result;
+        const newRemaining = pc.remainingDamage - 1;
+        if (newRemaining > 0 && !unitDestroyed) {
+          return { ...newState, units: newUnits, pendingCombat: { ...pc, remainingDamage: newRemaining, lockedUpgradeKey: newLocked } };
+        }
+        const afterCheck = checkAnnihilation({ ...newState, units: newUnits });
+        if (afterCheck.phase === 'over') return afterCheck;
+        if (isRammer) {
+          const targetUnit = afterCheck.units.find(u => u.id === pc.targetId);
+          if (pc.targetTakes > 0 && targetUnit && !targetUnit.destroyed) {
+            return { ...afterCheck, pendingCombat: { ...pc, step: 'ram-damage-target', remainingDamage: pc.targetTakes, lockedUpgradeKey: null } };
+          }
+        }
+        return startRamPushOrEnd(afterCheck, pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
+      }
+
+      // ── Normal damage assignment ────────────────────────────────────────────
       const target = state.units.find(u => u.id === pc.targetId);
       if (!target) return state;
-
       const { slotKey } = action;
-
-      // Enforce lock: once an upgrade is partially damaged, all remaining damage goes there
       if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
-
       const [loc, idxStr] = slotKey.split(':');
-      const idx = Number(idxStr);
-      const upgradeId = target.armyUnit.slots[loc]?.[idx];
+      const upgradeId = target.armyUnit.slots[loc]?.[Number(idxStr)];
       if (!upgradeId) return state;
-
-      const threshold = damageThreshold(upgradeId, target.typeId);
-      const currentDmg = target.slotDamage[slotKey] ?? 0;
-      if (currentDmg >= threshold) return state;
 
       // Experimental Armor: roll 5+ to ignore this point of damage
       const hasExpArmor = hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor');
       if (hasExpArmor) {
         const saveRoll = rollDice(1)[0];
+        const newRemaining = pc.remainingDamage - 1;
         if (saveRoll >= 5) {
-          const newRemaining = pc.remainingDamage - 1;
           return addLog(
-            {
-              ...state,
-              pendingCombat: {
-                ...pc,
-                remainingDamage: newRemaining,
-                step: newRemaining <= 0 ? 'done' : 'damage-assign',
-                lastExpArmorSave: { roll: saveRoll, saved: true },
-              },
-            },
+            { ...state, pendingCombat: { ...pc, remainingDamage: newRemaining, step: newRemaining <= 0 ? 'done' : 'damage-assign', lastExpArmorSave: { roll: saveRoll, saved: true } } },
             `${target.name}'s Experimental Armor saves! (rolled ${saveRoll})`
           );
         }
@@ -749,46 +822,29 @@ export function gameReducer(state, action) {
       // Ammo Box: first time in round target's Ammo Box weapon takes damage
       const isAmmoBox = ALL_UPGRADES[upgradeId]?.special?.includes('Ammo Box');
       let extraDamage = 0;
-      let newState = state;
+      let preState = state;
       if (isAmmoBox && !target.ammoBoxDamaged) {
         extraDamage = 1;
-        newState = addLog(newState, `Ammo Box! ${ALL_UPGRADES[upgradeId].name} takes +1 extra damage!`);
+        preState = addLog(preState, `Ammo Box! ${ALL_UPGRADES[upgradeId].name} takes +1 extra damage!`);
       }
 
-      const newDmg = Math.min(currentDmg + 1 + extraDamage, threshold);
-      const upgradeDestroyed = newDmg >= threshold;
-      const newSlotDamage = { ...target.slotDamage, [slotKey]: newDmg };
-      let newUnits = newState.units.map(u =>
-        u.id === target.id ? { ...u, slotDamage: newSlotDamage, ammoBoxDamaged: u.ammoBoxDamaged || (isAmmoBox && extraDamage > 0) } : u
-      );
+      const result = applyOneDamage(preState, pc.targetId, slotKey, { extraDamage });
+      if (!result) return state;
+      const { newState, newUnits, unitDestroyed, newLocked } = result;
 
-      if (upgradeDestroyed) {
-        newState = addLog(newState, `${target.name}'s ${ALL_UPGRADES[upgradeId]?.name ?? upgradeId} is destroyed!`);
+      let finalUnits = newUnits;
+      if (isAmmoBox && extraDamage > 0) {
+        finalUnits = finalUnits.map(u => u.id === target.id ? { ...u, ammoBoxDamaged: true } : u);
       }
 
-      const updatedTarget = newUnits.find(u => u.id === target.id);
-      const unitDestroyed = isUnitDestroyed(updatedTarget.armyUnit, updatedTarget.slotDamage);
-      if (unitDestroyed) {
-        newUnits = newUnits.map(u => u.id === target.id ? { ...u, destroyed: true } : u);
-        newState = addLog(newState, `${target.name} is destroyed!`);
-        const dropLogs = [];
-        const droppedObjs = dropCarriedObjectives(newState.objectives, target.id, target.q, target.r, dropLogs);
-        newState = { ...newState, objectives: droppedObjs };
-        for (const l of dropLogs) newState = addLog(newState, l);
-      }
-
-      const newRemaining = newState.pendingCombat.remainingDamage - 1;
-      // Lock clears when the upgrade is destroyed so player can pick a new one
-      const newLocked = upgradeDestroyed ? null : slotKey;
-
+      const newRemaining = preState.pendingCombat.remainingDamage - 1;
       return checkAnnihilation({
         ...newState,
-        units: newUnits,
+        units: finalUnits,
         pendingCombat: {
           ...newState.pendingCombat,
           remainingDamage: newRemaining,
           lockedUpgradeKey: newLocked,
-          // If the unit is fully destroyed, end assignment regardless of remaining damage
           step: (newRemaining <= 0 || unitDestroyed) ? 'done' : 'damage-assign',
         },
       });
@@ -831,31 +887,73 @@ export function gameReducer(state, action) {
         const remaining = getEquippedWeapons(updatedAttacker.armyUnit, updatedAttacker.slotDamage)
           .filter(w => !w.disabled && !newFiredKeys.includes(w.key));
         if (remaining.length > 0) {
-          newState = {
-            ...newState,
-            pendingCombat: {
-              step: 'weapon-select',
-              attackerId: pc.attackerId,
-              weaponList: remaining,
-              selectedWeaponIdx: null,
-              targetId: null,
-              validTargets: [],
-              hitRolls: [],
-              blockRolls: [],
-              hits: 0,
-              blocks: 0,
-              netDamage: 0,
-              remainingDamage: 0,
-              coverPenalty: 0,
-              blastTargetIds: [],
-              lastExpArmorSave: null,
-              lockedUpgradeKey: null,
-            },
-          };
+          newState = { ...newState, pendingCombat: makeCombatState(pc.attackerId, remaining) };
         }
       }
 
       return checkAnnihilation(newState);
+    }
+
+    // ── Ramming ─────────────────────────────────────────────
+    case 'EXECUTE_RAM': {
+      const { targetId } = action;
+      const rammer = state.units.find(u => u.id === state.selectedUnitId);
+      const target  = state.units.find(u => u.id === targetId);
+      if (!rammer || !target || target.destroyed || target.surrendered) return state;
+
+      const { rammerTakes, targetTakes } = calcRamDamage(rammer, target);
+
+      const newState = addLog(state,
+        `${rammer.name} rams ${target.name}! Assign ${rammerTakes} damage to ${rammer.name}, then ${targetTakes} to ${target.name}.`
+      );
+
+      // Both sides take 0 damage (edge case) — skip straight to push
+      if (rammerTakes === 0 && targetTakes === 0) {
+        return startRamPushOrEnd(newState, rammer.id, target.id, target.typeId, rammerTakes, targetTakes);
+      }
+
+      const firstStep      = rammerTakes > 0 ? 'ram-damage-rammer' : 'ram-damage-target';
+      const firstRemaining = rammerTakes > 0 ? rammerTakes : targetTakes;
+
+      return {
+        ...newState,
+        pendingCombat: {
+          step: firstStep,
+          rammerId: rammer.id,
+          targetId,
+          targetTypeId: target.typeId,
+          rammerTakes,
+          targetTakes,
+          remainingDamage: firstRemaining,
+          lockedUpgradeKey: null,
+        },
+      };
+    }
+
+    case 'RESOLVE_RAM_PUSH': {
+      const pc = state.pendingCombat;
+      if (!pc || pc.step !== 'ram-push') return state;
+      const { q, r } = action;
+      if (!pc.validPushHexes.some(h => h.q === q && h.r === r)) return state;
+
+      const pushedUnit = state.units.find(u => u.id === pc.pushedUnitId);
+      if (!pushedUnit) return state;
+
+      const pushedOriginQ = pushedUnit.q;
+      const pushedOriginR = pushedUnit.r;
+
+      const newUnits = state.units.map(u => {
+        const isRammer = u.id === pc.rammerId;
+        if (u.id === pc.pushedUnitId) return { ...u, q, r, activated: isRammer ? true : u.activated };
+        if (!pc.rammerPushed && isRammer) return { ...u, q: pushedOriginQ, r: pushedOriginR, activated: true };
+        if (isRammer) return { ...u, activated: true };
+        return u;
+      });
+
+      return advancePhaseIfDone(addLog(
+        { ...state, units: newUnits, selectedUnitId: null, pendingAction: null, pendingCombat: null },
+        `${pushedUnit.name} pushed to ${q},${r}.`
+      ));
     }
 
     default:
