@@ -112,10 +112,10 @@ function UnitToken({ unit, selected, hasObjective, onUnitClick, onHoverUnit }) {
           href={sprite}
           x={x - spriteSize / 2} y={y - spriteSize / 2}
           width={spriteSize} height={spriteSize}
-          opacity={unit.activated ? 0.45 : 1}
+          opacity={unit.activated ? 0.75 : 1}
           preserveAspectRatio="xMidYMid meet"
           transform={`rotate(${spriteDeg}, ${x}, ${y})`}
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', filter: TREE_SHADOW }}
         />
       ) : (
         <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle"

@@ -66,6 +66,9 @@ function reducer(state, action) {
     case 'LOAD':
       nextId = Math.max(...action.army.units.map(u => u.id), 0) + 1;
       return action.army;
+    case 'LOAD_CLAMPED':
+      nextId = Math.max(...action.army.units.map(u => u.id), 0) + 1;
+      return { ...action.army, pointLimit: action.pointLimit };
     default:
       return state;
   }
@@ -77,8 +80,8 @@ function updateUnit(state, unitId, fn) {
 
 const ArmyContext = createContext(null);
 
-export function ArmyProvider({ children }) {
-  const [army, dispatch] = useReducer(reducer, initialState);
+export function ArmyProvider({ children, initialArmy }) {
+  const [army, dispatch] = useReducer(reducer, initialArmy ?? initialState);
 
   const save = useCallback(() => {
     localStorage.setItem('mechaArmy', JSON.stringify(army));

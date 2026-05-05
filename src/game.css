@@ -1045,10 +1045,12 @@
   border: 1px solid #30363d;
   border-radius: 10px;
   padding: 32px 40px;
-  width: 360px;
+  width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 .online-lobby-title,
 .online-waiting-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
@@ -1076,6 +1078,9 @@
   justify-content: space-between;
   gap: 8px;
 }
+.online-army-loaded--over { background: #2e1a00; border-color: #f57c00; }
+.online-army-cost { color: #8b949e; }
+.online-army-over-label { color: #ffb74d; font-weight: 600; }
 .online-army-clear { background: none; border: none; color: #ef9a9a; cursor: pointer; font-size: 1rem; padding: 0; }
 .online-army-slots { display: flex; flex-direction: column; gap: 6px; }
 .online-army-hint { font-size: 0.78rem; color: #8b949e; }
@@ -1088,8 +1093,54 @@
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .online-army-slot-btn:hover { border-color: #58a6ff; }
+.online-army-slot-btn--ineligible { opacity: 0.5; }
+.online-army-slot-name { font-weight: 600; }
+.online-army-slot-meta { font-size: 0.75rem; color: #8b949e; }
+.online-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b949e;
+  margin-top: 4px;
+}
+.online-section-divider::before,
+.online-section-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #30363d;
+}
+.online-field-select {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e0e0e0;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+}
+.online-field-select:focus { border-color: #58a6ff; }
+.online-room-info {
+  font-size: 0.82rem;
+  color: #8b949e;
+  padding: 4px 0;
+}
+.online-room-info--error { color: #ef9a9a; }
+.online-room-info--ok { color: #81c995; }
+.online-waiting-limit {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #8b949e;
+}
 .online-error { color: #ef9a9a; font-size: 0.82rem; }
 .online-actions { display: flex; flex-direction: column; gap: 10px; }
 .online-join-row { display: flex; gap: 8px; }
@@ -1123,6 +1174,71 @@
   padding: 16px;
 }
 .online-waiting-hint { font-size: 0.82rem; color: #8b949e; text-align: center; margin: 0; }
+
+/* ── Online army builder header ───────────────────────────────────────────── */
+.online-army-header {
+  border-bottom: 2px solid #1565c0;
+}
+.online-load-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.online-load-label {
+  font-size: 0.78rem;
+  color: #8b949e;
+}
+.online-load-btn {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #c9d1d9;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.online-load-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+.online-opponent-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+  border-left: 1px solid #30363d;
+  border-right: 1px solid #30363d;
+}
+.online-opponent-name {
+  font-size: 0.75rem;
+  color: #8b949e;
+  white-space: nowrap;
+}
+.online-opponent-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #f57c00;
+  white-space: nowrap;
+}
+.online-opponent-badge--ready { color: #81c995; }
+.online-ready-btn {
+  background: #1b5e20;
+  border: 1px solid #388e3c;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.online-ready-btn:hover:not(:disabled) { background: #2e7d32; }
+.online-ready-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.online-ready-btn--cancel {
+  background: #37251a;
+  border-color: #f57c00;
+  color: #ffb74d;
+}
+.online-ready-btn--cancel:hover { background: #4a2f1a; }
 
 /* Waiting-for-opponent hint in ActionPanel */
 .action-hint--waiting { color: #8b949e; font-style: italic; }

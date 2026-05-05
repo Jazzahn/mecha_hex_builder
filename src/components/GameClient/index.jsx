@@ -138,7 +138,7 @@ function PlayingView() {
   }
 
   const phase = PLAY_PHASES[phaseIndex];
-  const phaseUnits = units.filter(u => phase?.types.includes(u.typeId) && !u.destroyed);
+  const phaseUnits = units.filter(u => phase?.types.includes(u.typeId) && !u.destroyed && !u.surrendered);
   const activatedCount = phaseUnits.filter(u => u.activated).length;
 
   return (

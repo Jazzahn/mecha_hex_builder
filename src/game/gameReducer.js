@@ -336,9 +336,25 @@ export function gameReducer(state, action) {
       return { ...state, selectedUnitId: action.unitId };
     }
 
-    case 'DESELECT_UNIT':
+    case 'DESELECT_UNIT': {
       if (state.pendingCombat) return state;
+      const unit = state.units.find(u => u.id === state.selectedUnitId);
+      const hasMoved = state.pendingAction?.moved === true;
+      const hasFired = (unit?.firedWeaponKeys?.length ?? 0) > 0;
+      if (unit && (hasMoved || hasFired)) {
+        // Unit already spent resources — commit activation so SP can't be reclaimed
+        const moved = state.pendingAction?.action === 'move';
+        const cruised = state.pendingAction?.action === 'cruise';
+        const shot = hasFired;
+        const verb = cruised ? 'cruise' : moved && shot ? 'move and shoot' : moved ? 'move' : shot ? 'shoot' : 'hold';
+        const units = state.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
+        return advancePhaseIfDone(addLog(
+          { ...state, units, selectedUnitId: null, pendingAction: null },
+          `${unit.name} (P${unit.playerIndex + 1}) ${verb}s.`
+        ));
+      }
       return { ...state, selectedUnitId: null, pendingAction: null };
+    }
 
     case 'START_ACTION': {
       const unit = state.units.find(u => u.id === state.selectedUnitId);
@@ -686,7 +702,7 @@ export function gameReducer(state, action) {
             ...pc,
             overheatRemaining: newRemaining,
             lockedUpgradeKey: newLocked,
-            step: (newRemaining <= 0 || unitDestroyed) ? 'hit-roll' : 'overheat-assign',
+            step: unitDestroyed ? 'done' : newRemaining <= 0 ? 'hit-roll' : 'overheat-assign',
           },
         });
       }
@@ -821,7 +837,7 @@ export function gameReducer(state, action) {
               step: 'weapon-select',
               attackerId: pc.attackerId,
               weaponList: remaining,
-              selectedWeaponIdx: -1,
+              selectedWeaponIdx: null,
               targetId: null,
               validTargets: [],
               hitRolls: [],

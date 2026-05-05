@@ -10,7 +10,7 @@ const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
-// roomCode → { players: [{socketId, displayName, playerIndex, army}], gameState }
+// roomCode → { players: [{socketId, displayName, playerIndex}], armies: [null,null], ready: [false,false], maxPoints, gameState }
 const rooms = new Map();
 
 function generateCode() {
@@ -21,20 +21,37 @@ function generateCode() {
 io.on('connection', (socket) => {
   console.log('connect:', socket.id);
 
-  socket.on('create-room', ({ displayName, army }) => {
+  socket.on('create-room', ({ displayName, maxPoints }) => {
+    const pts = Number(maxPoints) || 200;
     const code = generateCode();
     rooms.set(code, {
-      players: [{ socketId: socket.id, displayName, army, playerIndex: 0 }],
+      players: [{ socketId: socket.id, displayName, playerIndex: 0 }],
+      armies: [null, null],
+      ready: [false, false],
+      maxPoints: pts,
       gameState: null,
     });
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerIndex = 0;
     socket.emit('room-created', { code });
-    console.log(`Room ${code} created by "${displayName}"`);
+    console.log(`Room ${code} created by "${displayName}" (${pts} pts)`);
   });
 
-  socket.on('join-room', ({ code, displayName, army }) => {
+  socket.on('get-room-info', ({ code }) => {
+    const room = rooms.get(code);
+    if (!room) {
+      socket.emit('room-info-error', { message: 'Room not found.' });
+      return;
+    }
+    if (room.players.length >= 2) {
+      socket.emit('room-info-error', { message: 'Room is full.' });
+      return;
+    }
+    socket.emit('room-info', { maxPoints: room.maxPoints });
+  });
+
+  socket.on('join-room', ({ code, displayName }) => {
     const room = rooms.get(code);
     if (!room) {
       socket.emit('join-error', { message: 'Room not found.' });
@@ -45,18 +62,53 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.players.push({ socketId: socket.id, displayName, army, playerIndex: 1 });
+    room.players.push({ socketId: socket.id, displayName, playerIndex: 1 });
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerIndex = 1;
 
     const [p0, p1] = room.players;
-    room.gameState = buildOnlineInitialState([p0.displayName, p1.displayName], [p0.army, p1.army]);
+    // Both players go to the army builder
+    io.to(p0.socketId).emit('both-joined', { maxPoints: room.maxPoints, opponentName: p1.displayName });
+    io.to(p1.socketId).emit('both-joined', { maxPoints: room.maxPoints, opponentName: p0.displayName });
+    console.log(`Room ${code}: "${p0.displayName}" vs "${p1.displayName}" — building armies`);
+  });
 
-    // Send each player their index + the shared initial state
-    io.to(p0.socketId).emit('game-start', { playerIndex: 0, gameState: room.gameState });
-    io.to(p1.socketId).emit('game-start', { playerIndex: 1, gameState: room.gameState });
-    console.log(`Room ${code}: "${p0.displayName}" vs "${p1.displayName}" — game started`);
+  socket.on('player-ready', ({ army }) => {
+    const { roomCode, playerIndex } = socket.data;
+    const room = rooms.get(roomCode);
+    if (!room) return;
+
+    room.armies[playerIndex] = army;
+    room.ready[playerIndex] = true;
+
+    // Tell the opponent this player is ready
+    const opponent = room.players.find(p => p.playerIndex !== playerIndex);
+    if (opponent) io.to(opponent.socketId).emit('opponent-ready');
+
+    // If both ready, build and start the game
+    if (room.ready[0] && room.ready[1]) {
+      const [p0, p1] = room.players;
+      room.gameState = buildOnlineInitialState(
+        [p0.displayName, p1.displayName],
+        [room.armies[0], room.armies[1]]
+      );
+      io.to(p0.socketId).emit('game-start', { playerIndex: 0, gameState: room.gameState });
+      io.to(p1.socketId).emit('game-start', { playerIndex: 1, gameState: room.gameState });
+      console.log(`Room ${roomCode}: both ready — game started`);
+    }
+  });
+
+  socket.on('player-unready', () => {
+    const { roomCode, playerIndex } = socket.data;
+    const room = rooms.get(roomCode);
+    if (!room) return;
+
+    room.armies[playerIndex] = null;
+    room.ready[playerIndex] = false;
+
+    const opponent = room.players.find(p => p.playerIndex !== playerIndex);
+    if (opponent) io.to(opponent.socketId).emit('opponent-unready');
   });
 
   socket.on('dispatch-action', ({ action }) => {
@@ -66,7 +118,6 @@ io.on('connection', (socket) => {
 
     const { phase, activePlayer, deployPlayerIndex } = room.gameState;
 
-    // Server-side turn enforcement
     const allowed =
       (phase === 'playing' && playerIndex === activePlayer) ||
       (phase === 'deploy'  && playerIndex === deployPlayerIndex) ||
