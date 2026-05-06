@@ -39,6 +39,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
     .filter(w => !w.disabled && !firedKeys.includes(w.key));
   const hasFired = firedKeys.length > 0;
 
+  const hasBoostJets = hasActiveUpgrade(selectedUnit.armyUnit, selectedUnit.slotDamage, 'boostJets');
   const canInitiateAction = !pendingAction && !pendingCombat && !hasFired;
   const inStepping = pendingAction?.remainingMoves != null;
   const postMove = pendingAction != null && pendingAction.remainingMoves == null;
@@ -79,6 +80,11 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
               <button className="action-btn action-btn--move" onClick={() => dispatch({ type: 'START_ACTION', action: 'move' })}>
                 Move ({effectiveMoveSP} SP)
               </button>
+              {hasBoostJets && (
+                <button className="action-btn action-btn--jump" onClick={() => dispatch({ type: 'START_ACTION', action: 'move', isJumping: true })}>
+                  Jump ({effectiveMoveSP} SP)
+                </button>
+              )}
               <button className="action-btn action-btn--cruise" onClick={() => dispatch({ type: 'START_ACTION', action: 'cruise' })}>
                 Cruise ({effectiveCruiseSP} SP)
               </button>
@@ -104,10 +110,14 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
           </div>
           {pendingAction.action === 'ram'
             ? <div className="action-move-hint">Move adjacent to an enemy then click the red hex to ram them.</div>
-            : <div className="action-move-hint">Use ↺/↻ on the unit to turn. Click highlighted hexes to move.</div>
+            : pendingAction.isJumping
+              ? <div className="action-move-hint">Jumping — terrain and units ignored. Turn freely. Click hexes to fly.</div>
+              : <div className="action-move-hint">Use ↺/↻ on the unit to turn. Click highlighted hexes to move.</div>
           }
           {pendingAction.action !== 'ram' && (
-            <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_STEP_MOVE' })}>End Move</button>
+            <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_STEP_MOVE' })}>
+              {pendingAction.isJumping ? 'Land' : 'End Move'}
+            </button>
           )}
           {!pendingAction.moved && (
             <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'DESELECT_UNIT' })}>Cancel</button>

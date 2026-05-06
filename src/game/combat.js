@@ -61,6 +61,7 @@ export function hasActiveUpgrade(armyUnit, slotDamage, upgradeId) {
 
 // Att dice penalty from cover terrain or RAM Armor (always counts as cover)
 export function getCoverPenalty(target, _attacker, terrain) {
+  if (target.hasJumped) return 1;
   if (terrain[hexKey(target.q, target.r)]?.type === 'cover') return 1;
   if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'ramArmor')) return 1;
   return 0;
@@ -94,7 +95,7 @@ export function canWeaponTarget(attacker, target, weapon, terrain) {
   const dist = hexDistance(attacker.q, attacker.r, target.q, target.r);
   if (dist < 1 || dist > weapon.range) return false;
 
-  const isIndirect = weapon.special?.includes('Indirect');
+  const isIndirect = weapon.special?.includes('Indirect') || !!attacker.hasJumped;
   const hasTurret = UNIT_TYPES[attacker.typeId]?.special?.includes('Turret');
 
   if (!hasTurret && !isIndirect) {
@@ -139,8 +140,8 @@ export function calcRamDamage(rammer, target) {
 
   if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'meleeOptimized'))  targetTakes++;
   if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'meleeOptimized'))  rammerTakes++;
-  if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'reinforcedFrame')) rammerTakes = Math.max(0, rammerTakes - 1);
-  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'reinforcedFrame')) targetTakes = Math.max(0, targetTakes - 1);
+  if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'reinforcedFrame') || rammer.hasJumped) rammerTakes = Math.max(0, rammerTakes - 1);
+  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'reinforcedFrame') || target.hasJumped) targetTakes = Math.max(0, targetTakes - 1);
 
   if (isVehicle(target)) rammerTakes = 0;
 

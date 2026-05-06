@@ -69,6 +69,7 @@ function makeGameUnit(armyUnit, playerIndex, q, r, facing) {
     hasCruised: false,
     heatSinkCanceled: 0,
     ammoBoxDamaged: false,
+    hasJumped: false,
     slotDamage,
     destroyed: false,
     surrendered: false,
@@ -283,7 +284,7 @@ function advancePhaseIfDone(state) {
     const newInitiative = 1 - state.initiativePlayer;
     const resetUnits = state.units.map(u => ({
       ...u, activated: false, heldAction: false,
-      firedWeaponKeys: [], hasCruised: false, heatSinkCanceled: 0, ammoBoxDamaged: false,
+      firedWeaponKeys: [], hasCruised: false, heatSinkCanceled: 0, ammoBoxDamaged: false, hasJumped: false,
     }));
     const roundStartState = addLog(
       { ...state, round: newRound, phaseIndex: 0, initiativePlayer: newInitiative, activePlayer: newInitiative, units: resetUnits },
@@ -301,6 +302,35 @@ function advancePhaseIfDone(state) {
     { ...state, phaseIndex: nextPhaseIndex, activePlayer: ipHasUnits ? state.initiativePlayer : 1 - state.initiativePlayer },
     `${PLAY_PHASES[nextPhaseIndex].label} begins.`
   );
+}
+
+// Called when jump movement ends (END_STEP_MOVE or moves exhausted).
+// Applies fall damage (capped at 1) and marks hasJumped on the unit.
+function endJump(state) {
+  const unit = state.units.find(u => u.id === state.selectedUnitId);
+  if (!unit) return { ...state, pendingAction: { action: 'move', moved: true } };
+  const startEl  = state.pendingAction?.jumpStartElevation ?? 0;
+  const landEl   = state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0;
+  let newUnits   = state.units.map(u => u.id === unit.id ? { ...u, hasJumped: true } : u);
+  let newState   = { ...state, units: newUnits, pendingAction: { action: 'move', moved: true } };
+  if (landEl < startEl) {
+    newState = addLog(newState, `${unit.name} takes 1 falling damage landing from a jump!`);
+    const { units: afterFall, objectives: afterObj, logs } = autoAssignDamage(newState.units, newState.objectives, unit.id, 1);
+    newState = { ...newState, units: afterFall, objectives: afterObj };
+    for (const l of logs) newState = addLog(newState, l);
+    const afterCheck = checkAnnihilation(newState);
+    if (afterCheck.phase === 'over') return afterCheck;
+    const landed = afterCheck.units.find(u => u.id === unit.id);
+    if (landed?.destroyed) {
+      const activated = afterCheck.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
+      return advancePhaseIfDone(addLog(
+        { ...afterCheck, units: activated, selectedUnitId: null, pendingAction: null },
+        `${unit.name} (P${unit.playerIndex + 1}) is destroyed on landing!`
+      ));
+    }
+    return afterCheck;
+  }
+  return newState;
 }
 
 export function gameReducer(state, action) {
@@ -453,7 +483,10 @@ export function gameReducer(state, action) {
       if (!unit || unit.playerIndex !== state.activePlayer || unit.activated) return state;
       const phase = PLAY_PHASES[state.phaseIndex];
       if (!phase.types.includes(unit.typeId)) return state;
-      return { ...state, selectedUnitId: action.unitId };
+      const units = unit.hasJumped
+        ? state.units.map(u => u.id === action.unitId ? { ...u, hasJumped: false } : u)
+        : state.units;
+      return { ...state, selectedUnitId: action.unitId, units };
     }
 
     case 'DESELECT_UNIT': {
@@ -501,7 +534,16 @@ export function gameReducer(state, action) {
         ? state.units.map(u => u.id === unit.id ? { ...u, hasCruised: true } : u)
         : state.units;
 
-      return { ...state, units: updatedUnits, pendingAction: { action: act, remainingMoves: sp, moved: false } };
+      const isJumping = act === 'move' && !!action.isJumping &&
+        hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'boostJets');
+      const jumpStartElevation = isJumping
+        ? (state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0) : undefined;
+
+      return {
+        ...state,
+        units: updatedUnits,
+        pendingAction: { action: act, remainingMoves: sp, moved: false, isJumping, jumpStartElevation },
+      };
     }
 
     case 'STEP_MOVE': {
@@ -516,19 +558,22 @@ export function gameReducer(state, action) {
       const { q: nq, r: nr } = dest;
 
       if (!inBounds(nq, nr)) return state;
-      const occ = occupiedSetExcluding(state.units, unit.id);
-      if (occ.has(hexKey(nq, nr))) return state;
-
-      const t = state.terrain[hexKey(nq, nr)];
-      if (t?.type === 'blocking') return state;
 
       let cost = isForward ? 1 : 2;
-      if (t?.type === 'difficult') cost++;
-      const fromEl = state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0;
-      const toEl = t?.elevation ?? 0;
-      const elDiff = toEl - fromEl;
-      if (elDiff > 1) return state;
-      if (elDiff > 0) cost += elDiff;
+      if (pa.isJumping) {
+        // Jump: fly over occupied hexes, all terrain, and elevation restrictions
+      } else {
+        const occ = occupiedSetExcluding(state.units, unit.id);
+        if (occ.has(hexKey(nq, nr))) return state;
+        const t = state.terrain[hexKey(nq, nr)];
+        if (t?.type === 'blocking') return state;
+        if (t?.type === 'difficult') cost++;
+        const fromEl = state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0;
+        const toEl   = t?.elevation ?? 0;
+        const elDiff = toEl - fromEl;
+        if (elDiff > 1) return state;
+        if (elDiff > 0) cost += elDiff;
+      }
 
       if (cost > pa.remainingMoves) return state;
 
@@ -539,6 +584,11 @@ export function gameReducer(state, action) {
         : { action: pa.action, moved: true };
 
       let newState = { ...state, units: newUnits, pendingAction: newPa };
+
+      // Carry isJumping/jumpStartElevation into newPa so subsequent steps still know we're jumping
+      if (pa.isJumping && newRemaining > 0) {
+        newState = { ...newState, pendingAction: { ...newPa, isJumping: true, jumpStartElevation: pa.jumpStartElevation } };
+      }
 
       // Pick up any objective on the destination hex
       const pickup = newState.objectives.find(o => o.carrierId == null && o.q === nq && o.r === nr);
@@ -551,6 +601,9 @@ export function gameReducer(state, action) {
         );
       }
 
+      // Jump landing: if SP exhausted mid-jump, apply landing effects
+      if (pa.isJumping && newRemaining <= 0) return endJump(newState);
+
       return newState;
     }
 
@@ -561,8 +614,14 @@ export function gameReducer(state, action) {
       if (!unit) return state;
 
       const newFacing = action.dir === 'left' ? (unit.facing + 1) % 6 : (unit.facing + 5) % 6;
+      const newUnits  = state.units.map(u => u.id === unit.id ? { ...u, facing: newFacing } : u);
+
+      if (pa.isJumping) {
+        // Turning during a jump costs 0 SP — free facing
+        return { ...state, units: newUnits };
+      }
+
       const newRemaining = pa.remainingMoves - 1;
-      const newUnits = state.units.map(u => u.id === unit.id ? { ...u, facing: newFacing } : u);
       const newPa = newRemaining > 0
         ? { ...pa, remainingMoves: newRemaining }
         : { action: pa.action, moved: pa.moved };
@@ -573,6 +632,7 @@ export function gameReducer(state, action) {
     case 'END_STEP_MOVE': {
       const pa = state.pendingAction;
       if (!pa) return state;
+      if (pa.isJumping && pa.moved) return endJump(state);
       return { ...state, pendingAction: { action: pa.action, moved: pa.moved } };
     }
 
@@ -624,7 +684,7 @@ export function gameReducer(state, action) {
       const target = state.units.find(u => u.id === pc.targetId);
 
       const coverPenalty = getCoverPenalty(target, attacker, state.terrain);
-      const isIndirect = weapon.special?.includes('Indirect');
+      const isIndirect = weapon.special?.includes('Indirect') || !!attacker.hasJumped;
       const hasMoved = !!state.pendingAction?.moved;
       let att = weapon.att - coverPenalty;
       if (isIndirect && hasMoved) att--;

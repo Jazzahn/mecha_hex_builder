@@ -33,8 +33,9 @@ function PlayingView() {
   const overlayHexes = new Map();
 
   if (pendingAction?.remainingMoves != null && selectedUnit) {
-    const { remainingMoves } = pendingAction;
+    const { remainingMoves, isJumping } = pendingAction;
     const stepCost = (fromQ, fromR, toQ, toR, isForward) => {
+      if (isJumping) return isForward ? 1 : 2;
       const t = terrain[hexKey(toQ, toR)];
       if (t?.type === 'blocking') return null;
       let c = isForward ? 1 : 2;
@@ -45,6 +46,7 @@ function PlayingView() {
       return c;
     };
     const isOccupied = (q, r) =>
+      !isJumping &&
       units.some(u => !u.destroyed && !u.surrendered && u.id !== selectedUnit.id && u.q === q && u.r === r);
 
     const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
