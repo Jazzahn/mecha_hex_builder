@@ -245,6 +245,25 @@
 .deploy-unit-type { font-size: 0.72rem; color: #888; margin-top: 1px; }
 .deploy-unit-done { font-size: 0.78rem; color: #4caf50; font-style: italic; }
 
+.deploy-facing-label { font-size: 0.78rem; color: #90caf9; margin-bottom: 8px; font-weight: 600; }
+.deploy-facing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.deploy-facing-btn {
+  background: #1a2a3a;
+  border: 1px solid #42a5f5;
+  color: #90caf9;
+  font-size: 0.75rem;
+  padding: 6px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+.deploy-facing-btn:hover { background: #1e3a5a; border-color: #90caf9; }
+
 /* ── Action panel ─────────────────────────────────────── */
 .action-panel {
   display: flex;
@@ -879,6 +898,24 @@
   margin-top: 2px;
 }
 .combat-cancel-btn:hover { border-color: #e65100; color: #e65100; }
+
+.combat-waiting {
+  font-size: 0.78rem;
+  color: #888;
+  font-style: italic;
+  margin: 6px 0;
+  text-align: center;
+}
+
+.combat-overheat-pending {
+  font-size: 0.75rem;
+  color: #ffb74d;
+  background: rgba(255, 152, 0, 0.12);
+  border: 1px solid rgba(255, 152, 0, 0.35);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px 0;
+}
 
 .combat-no-targets {
   font-size: 0.78rem;

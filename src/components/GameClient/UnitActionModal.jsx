@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from 'react';
 import { useGame, isActivePlayer } from '../../store/gameContext';
 import { UNIT_TYPES } from '../../data/gameData';
 import { PLAY_PHASES } from '../../game/gameReducer';
@@ -9,9 +10,34 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const { selectedUnitId, units, pendingAction, pendingCombat, activePlayer, playerNames, phaseIndex } = gameState;
 
   const selectedUnit = units.find(u => u.id === selectedUnitId);
+
+  // Drag state for fix 5
+  const [dragPos, setDragPos] = useState(null);
+  const dragStateRef = useRef({ dragging: false, startX: 0, startY: 0, origLeft: 0, origTop: 0 });
+
+  // Reset drag position when the selected unit changes
+  useEffect(() => { setDragPos(null); }, [selectedUnitId]);
+
   if (!selectedUnit || !position) return null;
 
   const isMyTurn = isActivePlayer(gameState, localPlayerIndex);
+
+  // Determine if local player controls the current combat step
+  const combatAttacker = units.find(u => u.id === pendingCombat?.attackerId);
+  const combatTarget   = units.find(u => u.id === pendingCombat?.targetId);
+  const combatRammer   = units.find(u => u.id === pendingCombat?.rammerId);
+  const combatStepController = (() => {
+    if (!pendingCombat) return null;
+    switch (pendingCombat.step) {
+      case 'block-roll': case 'damage-assign': return combatTarget?.playerIndex ?? 0;
+      case 'overheat-assign': case 'overheat-result': return combatAttacker?.playerIndex ?? 0;
+      case 'ram-damage-rammer': return combatRammer?.playerIndex ?? 0;
+      case 'ram-damage-target': return combatTarget?.playerIndex ?? 0;
+      case 'ram-push': return pendingCombat.pushChooserIndex ?? 0;
+      default: return combatAttacker?.playerIndex ?? (combatRammer?.playerIndex ?? 0);
+    }
+  })();
+  const isCombatController = localPlayerIndex === null || combatStepController === null || localPlayerIndex === combatStepController;
 
   const MODAL_W = 240;
   const hexW = position.hexScreenW ?? 60;
@@ -19,13 +45,39 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const bw = boardWidth ?? 800;
   const fitsRight = (position.x + GAP + MODAL_W) < bw;
 
+  const computedLeft = fitsRight ? position.x + GAP : position.x - GAP - MODAL_W;
+  const computedTop  = Math.max(8, position.y - 40);
+
   const style = {
     position: 'absolute',
-    left: fitsRight ? position.x + GAP : position.x - GAP - MODAL_W,
-    top: Math.max(8, position.y - 40),
+    left:  dragPos ? dragPos.left  : computedLeft,
+    top:   dragPos ? dragPos.top   : computedTop,
     width: MODAL_W,
     zIndex: 10,
   };
+
+  function handleHeaderMouseDown(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const origLeft = dragPos ? dragPos.left : computedLeft;
+    const origTop  = dragPos ? dragPos.top  : computedTop;
+    dragStateRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, origLeft, origTop };
+
+    function onMove(ev) {
+      if (!dragStateRef.current.dragging) return;
+      setDragPos({
+        left: dragStateRef.current.origLeft + ev.clientX - dragStateRef.current.startX,
+        top:  dragStateRef.current.origTop  + ev.clientY - dragStateRef.current.startY,
+      });
+    }
+    function onUp() {
+      dragStateRef.current.dragging = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
 
   const unitType = UNIT_TYPES[selectedUnit.typeId];
   const hasMoved = !!pendingAction?.moved;
@@ -51,16 +103,16 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
 
   return (
     <div className="unit-action-modal" style={style}>
-      <div className="unit-action-modal-header">
+      <div className="unit-action-modal-header" onMouseDown={handleHeaderMouseDown} style={{ cursor: 'grab' }}>
         <span className="unit-action-modal-name">{selectedUnit.name}</span>
-        <button className="unit-action-modal-close" onClick={() => dispatch({ type: 'DESELECT_UNIT' })}>✕</button>
+        <button className="unit-action-modal-close" onMouseDown={e => e.stopPropagation()} onClick={() => dispatch({ type: 'DESELECT_UNIT' })}>✕</button>
       </div>
 
-      {!isMyTurn && (
+      {!isMyTurn && !pendingCombat && (
         <div className="action-hint">Not your turn</div>
       )}
 
-      {(isMyTurn || pendingCombat?.step === 'ram-push') && pendingCombat && (
+      {pendingCombat && (isCombatController || isMyTurn) && (
         <CombatPanelInner
           pendingCombat={pendingCombat}
           units={units}
@@ -119,9 +171,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
               {pendingAction.isJumping ? 'Land' : 'End Move'}
             </button>
           )}
-          {!pendingAction.moved && (
-            <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'DESELECT_UNIT' })}>Cancel</button>
-          )}
+          <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
         </div>
       )}
 

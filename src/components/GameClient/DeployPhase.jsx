@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useGame } from '../../store/gameContext';
 import { hexKey, isDeployZone, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 import { UNIT_TYPES } from '../../data/gameData';
 import HexBoard from './HexBoard';
+
+const FACING_LABELS = ['E →', 'NE ↗', 'NW ↖', '← W', '↙ SW', 'SE ↘'];
 
 export default function DeployPhase() {
   const { gameState, dispatch } = useGame();
@@ -9,6 +12,8 @@ export default function DeployPhase() {
     deployPlayerIndex, deployUnitIndex, deployedCount,
     armies, units, terrain, playerNames,
   } = gameState;
+
+  const [pendingDeployHex, setPendingDeployHex] = useState(null);
 
   const army = armies[deployPlayerIndex];
   const occupied = new Set(units.map(u => hexKey(u.q, u.r)));
@@ -36,7 +41,16 @@ export default function DeployPhase() {
 
   function handleHexClick(q, r) {
     if (deployUnitIndex === null || deployUnitIndex === undefined) return;
-    dispatch({ type: 'DEPLOY_UNIT', q, r });
+    if (!isDeployZone(q, r, deployPlayerIndex)) return;
+    if (occupied.has(hexKey(q, r))) return;
+    if (terrain[hexKey(q, r)]?.type === 'blocking') return;
+    setPendingDeployHex({ q, r });
+  }
+
+  function handleFacingSelect(facing) {
+    if (!pendingDeployHex) return;
+    dispatch({ type: 'DEPLOY_UNIT', q: pendingDeployHex.q, r: pendingDeployHex.r, facing });
+    setPendingDeployHex(null);
   }
 
   function selectUnit(index) {
@@ -94,6 +108,22 @@ export default function DeployPhase() {
             })}
           </div>
         </div>
+
+        {pendingDeployHex && (
+          <div className="sidebar-section">
+            <div className="deploy-facing-label">Choose facing for {playerNames[deployPlayerIndex]}:</div>
+            <div className="deploy-facing-grid">
+              {FACING_LABELS.map((label, i) => (
+                <button key={i} className="deploy-facing-btn" onClick={() => handleFacingSelect(i)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button className="action-btn action-btn--cancel" onClick={() => setPendingDeployHex(null)}>
+              Cancel
+            </button>
+          </div>
+        )}
 
         <div className="sidebar-section sidebar-section--bottom">
           <button

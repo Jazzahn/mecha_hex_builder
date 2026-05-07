@@ -219,7 +219,20 @@ function makeCombatState(attackerId, weaponList) {
     blastTargetIds: [],
     lastExpArmorSave: null,
     lockedUpgradeKey: null,
+    pendingOverheatWounds: 0,
   };
+}
+
+// At natural 'done' points: if attacker has unresolved overheat wounds, go to
+// overheat-result first; otherwise go straight to 'done'.
+function transitionOrOverheat(state, pcMerge) {
+  const pc = state.pendingCombat;
+  const wounds = pc?.pendingOverheatWounds ?? 0;
+  const merged = { ...pc, ...pcMerge };
+  if (wounds > 0) {
+    return { ...state, pendingCombat: { ...merged, step: 'overheat-result', overheatRemaining: wounds, pendingOverheatWounds: 0, lockedUpgradeKey: null, lastExpArmorSave: null } };
+  }
+  return { ...state, pendingCombat: { ...merged, step: 'done' } };
 }
 
 // Auto-assign `count` damage points to random available slots on a unit
@@ -447,7 +460,7 @@ export function gameReducer(state, action) {
       if (occupiedSet(state.units).has(hexKey(q, r))) return state;
       if (state.terrain[hexKey(q, r)]?.type === 'blocking') return state;
 
-      const newUnit = makeGameUnit(army.units[unitIdx], pIdx, q, r, pIdx === 0 ? 5 : 2);
+      const newUnit = makeGameUnit(army.units[unitIdx], pIdx, q, r, action.facing ?? (pIdx === 0 ? 5 : 2));
       const newDeployedCount = [...state.deployedCount];
       newDeployedCount[pIdx]++;
 
@@ -520,7 +533,8 @@ export function gameReducer(state, action) {
       if (act === 'ram') {
         const sp = unitType.cruise + (hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'highTunedEngine') ? 2 : 0);
         const updatedUnits = state.units.map(u => u.id === unit.id ? { ...u, hasCruised: true } : u);
-        return { ...state, units: updatedUnits, pendingAction: { action: 'ram', remainingMoves: sp, moved: false } };
+        const unitSnapshot = { q: unit.q, r: unit.r, facing: unit.facing, hasCruised: unit.hasCruised, carryingObjective: unit.carryingObjective };
+        return { ...state, units: updatedUnits, pendingAction: { action: 'ram', remainingMoves: sp, moved: false, unitSnapshot, objectivesSnapshot: state.objectives } };
       }
 
       let sp = act === 'cruise' ? unitType.cruise : unitType.move;
@@ -539,10 +553,12 @@ export function gameReducer(state, action) {
       const jumpStartElevation = isJumping
         ? (state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0) : undefined;
 
+      const unitSnapshot = { q: unit.q, r: unit.r, facing: unit.facing, hasCruised: unit.hasCruised, carryingObjective: unit.carryingObjective };
+
       return {
         ...state,
         units: updatedUnits,
-        pendingAction: { action: act, remainingMoves: sp, moved: false, isJumping, jumpStartElevation },
+        pendingAction: { action: act, remainingMoves: sp, moved: false, isJumping, jumpStartElevation, unitSnapshot, objectivesSnapshot: state.objectives },
       };
     }
 
@@ -636,6 +652,21 @@ export function gameReducer(state, action) {
       return { ...state, pendingAction: { action: pa.action, moved: pa.moved } };
     }
 
+    case 'CANCEL_MOVE': {
+      const pa = state.pendingAction;
+      if (!pa || pa.remainingMoves == null) return state;
+      const unit = state.units.find(u => u.id === state.selectedUnitId);
+      if (!unit) return state;
+      const snap = pa.unitSnapshot;
+      if (!snap) return { ...state, pendingAction: null };
+      const newUnits = state.units.map(u =>
+        u.id === unit.id
+          ? { ...u, q: snap.q, r: snap.r, facing: snap.facing, hasCruised: snap.hasCruised, carryingObjective: snap.carryingObjective }
+          : u
+      );
+      return { ...state, units: newUnits, objectives: pa.objectivesSnapshot ?? state.objectives, pendingAction: null };
+    }
+
     case 'END_ACTIVATION': {
       const unit = state.units.find(u => u.id === state.selectedUnitId);
       if (!unit || state.pendingCombat) return state;
@@ -697,6 +728,10 @@ export function gameReducer(state, action) {
         newState = addLog(newState, `${target.name} is in cover: −${coverPenalty} att die.`);
       }
 
+      const evaThresholdForLog = parseStatValue(UNIT_TYPES[target.typeId].eva);
+      const hitsForLog = countSuccesses(rolls, evaThresholdForLog);
+      newState = addLog(newState, `${attacker.name} fires ${weapon.name} at ${target.name}: [${rolls.join(', ')}] → ${hitsForLog} hit${hitsForLog !== 1 ? 's' : ''}`);
+
       // Overheating: 1s on the hit roll wound the attacker
       // Heat Sinks cancel up to 3 total overheat results per activation (tracked via heatSinkCanceled)
       if (weapon.special?.includes('Overheating')) {
@@ -720,19 +755,9 @@ export function gameReducer(state, action) {
               `${attacker.name} Heat Sinks absorb ${canceled} overheat${canceled > 1 ? 's' : ''} (${remaining} budget left).`);
           }
           if (wounds > 0) {
-            newState = addLog(newState, `${attacker.name} suffers ${wounds} overheat wound${wounds > 1 ? 's' : ''}!`);
-            return {
-              ...newState,
-              pendingCombat: {
-                ...pc,
-                step: 'overheat-assign',
-                hitRolls: rolls,
-                coverPenalty,
-                overheatRemaining: wounds,
-                lockedUpgradeKey: null,
-                lastExpArmorSave: null,
-              },
-            };
+            newState = addLog(newState, `${attacker.name} suffers ${wounds} overheat wound${wounds > 1 ? 's' : ''}! (assigned after target damage)`);
+            // Store wounds; don't interrupt the hit flow — overheat resolved after defender assigns damage
+            return { ...newState, pendingCombat: { ...pc, hitRolls: rolls, coverPenalty, pendingOverheatWounds: wounds } };
           }
         }
       }
@@ -748,9 +773,9 @@ export function gameReducer(state, action) {
       const hits = countSuccesses(pc.hitRolls, evaThreshold);
       const weapon = pc.weaponList[pc.selectedWeaponIdx].weapon;
       if (hits === 0) {
-        return addLog(
-          { ...state, pendingCombat: { ...pc, step: 'done', hits: 0, netDamage: 0, remainingDamage: 0 } },
-          `${weapon.name} misses ${target.name}! (0 hits)`
+        return transitionOrOverheat(
+          addLog(state, `${weapon.name} misses ${target.name}! (0 hits)`),
+          { hits: 0, netDamage: 0, remainingDamage: 0 }
         );
       }
       return { ...state, pendingCombat: { ...pc, step: 'block-roll', hits } };
@@ -776,9 +801,9 @@ export function gameReducer(state, action) {
       const totalDamage = netHits * damagePerHit(weapon);
 
       if (totalDamage === 0) {
-        return addLog(
-          { ...state, pendingCombat: { ...pc, step: 'done', blocks, netDamage: 0, remainingDamage: 0 } },
-          `${target.name} blocks all hits from ${weapon.name}. No damage!`
+        return transitionOrOverheat(
+          addLog(state, `${target.name} blocks all hits from ${weapon.name} [${pc.blockRolls.join(', ')}] — ${blocks}/${pc.hits} saved. No damage!`),
+          { blocks, netDamage: 0, remainingDamage: 0 }
         );
       }
 
@@ -794,16 +819,22 @@ export function gameReducer(state, action) {
 
       if (available.length === 0) {
         const newUnits = state.units.map(u => u.id === target.id ? { ...u, destroyed: true } : u);
-        return checkAnnihilation(addLog(
-          { ...state, units: newUnits, pendingCombat: { ...pc, step: 'done', blocks, netDamage: totalDamage, remainingDamage: 0, blastTargetIds } },
-          `${target.name} is destroyed by ${attacker.name}'s ${weapon.name}!`
+        return checkAnnihilation(transitionOrOverheat(
+          addLog({ ...state, units: newUnits }, `${target.name} is destroyed by ${attacker.name}'s ${weapon.name}!`),
+          { blocks, netDamage: totalDamage, remainingDamage: 0, blastTargetIds }
         ));
       }
 
       return addLog(
         { ...state, pendingCombat: { ...pc, step: 'damage-assign', blocks, netDamage: totalDamage, remainingDamage: totalDamage, blastTargetIds } },
-        `${weapon.name} hits ${target.name} for ${totalDamage} damage. Assign damage.`
+        `${target.name} blocks [${pc.blockRolls.join(', ')}] — ${blocks}/${pc.hits} saved. ${weapon.name} deals ${totalDamage} damage.`
       );
+    }
+
+    case 'ADVANCE_OVERHEAT': {
+      const pc = state.pendingCombat;
+      if (!pc || pc.step !== 'overheat-result') return state;
+      return { ...state, pendingCombat: { ...pc, step: 'overheat-assign' } };
     }
 
     case 'ASSIGN_DAMAGE': {
@@ -826,7 +857,7 @@ export function gameReducer(state, action) {
             ...pc,
             overheatRemaining: newRemaining,
             lockedUpgradeKey: newLocked,
-            step: unitDestroyed ? 'done' : newRemaining <= 0 ? 'hit-roll' : 'overheat-assign',
+            step: unitDestroyed || newRemaining <= 0 ? 'done' : 'overheat-assign',
           },
         });
       }
@@ -838,19 +869,45 @@ export function gameReducer(state, action) {
         if (!state.units.find(u => u.id === damagedId && !u.destroyed)) return state;
         const { slotKey } = action;
         if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
-        const result = applyOneDamage(state, damagedId, slotKey);
+
+        // Experimental Armor: roll 5+ to ignore this point of damage
+        const damagedUnit = state.units.find(u => u.id === damagedId);
+        let ramState = state;
+        if (hasActiveUpgrade(damagedUnit.armyUnit, damagedUnit.slotDamage, 'experimentalArmor')) {
+          const saveRoll = rollDice(1)[0];
+          const newRemaining = pc.remainingDamage - 1;
+          if (saveRoll >= 5) {
+            const savedState = addLog(
+              { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: true } } },
+              `${damagedUnit.name}'s Experimental Armor saves! (rolled ${saveRoll})`
+            );
+            if (newRemaining <= 0) {
+              if (!isRammer) {
+                const rammerUnit = savedState.units.find(u => u.id === pc.rammerId);
+                if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
+                  return { ...savedState, pendingCombat: { ...savedState.pendingCombat, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null } };
+                }
+              }
+              return startRamPushOrEnd(savedState, pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
+            }
+            return { ...savedState, pendingCombat: { ...savedState.pendingCombat, remainingDamage: newRemaining } };
+          }
+          ramState = { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: false } } };
+        }
+
+        const result = applyOneDamage(ramState, damagedId, slotKey);
         if (!result) return state;
         const { newState, newUnits, unitDestroyed, newLocked } = result;
         const newRemaining = pc.remainingDamage - 1;
         if (newRemaining > 0 && !unitDestroyed) {
-          return { ...newState, units: newUnits, pendingCombat: { ...pc, remainingDamage: newRemaining, lockedUpgradeKey: newLocked } };
+          return { ...newState, units: newUnits, pendingCombat: { ...newState.pendingCombat, remainingDamage: newRemaining, lockedUpgradeKey: newLocked } };
         }
         const afterCheck = checkAnnihilation({ ...newState, units: newUnits });
         if (afterCheck.phase === 'over') return afterCheck;
-        if (isRammer) {
-          const targetUnit = afterCheck.units.find(u => u.id === pc.targetId);
-          if (pc.targetTakes > 0 && targetUnit && !targetUnit.destroyed) {
-            return { ...afterCheck, pendingCombat: { ...pc, step: 'ram-damage-target', remainingDamage: pc.targetTakes, lockedUpgradeKey: null } };
+        if (!isRammer) {
+          const rammerUnit = afterCheck.units.find(u => u.id === pc.rammerId);
+          if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
+            return { ...afterCheck, pendingCombat: { ...afterCheck.pendingCombat, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null } };
           }
         }
         return startRamPushOrEnd(afterCheck, pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
@@ -871,10 +928,11 @@ export function gameReducer(state, action) {
         const saveRoll = rollDice(1)[0];
         const newRemaining = pc.remainingDamage - 1;
         if (saveRoll >= 5) {
-          return addLog(
-            { ...state, pendingCombat: { ...pc, remainingDamage: newRemaining, step: newRemaining <= 0 ? 'done' : 'damage-assign', lastExpArmorSave: { roll: saveRoll, saved: true } } },
-            `${target.name}'s Experimental Armor saves! (rolled ${saveRoll})`
-          );
+          const savedState = addLog(state, `${target.name}'s Experimental Armor saves! (rolled ${saveRoll})`);
+          if (newRemaining <= 0) {
+            return transitionOrOverheat(savedState, { remainingDamage: 0, lastExpArmorSave: { roll: saveRoll, saved: true } });
+          }
+          return { ...savedState, pendingCombat: { ...savedState.pendingCombat, remainingDamage: newRemaining, step: 'damage-assign', lastExpArmorSave: { roll: saveRoll, saved: true } } };
         }
         state = { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: false } } };
       }
@@ -898,15 +956,16 @@ export function gameReducer(state, action) {
       }
 
       const newRemaining = preState.pendingCombat.remainingDamage - 1;
+      if (newRemaining <= 0 || unitDestroyed) {
+        return checkAnnihilation(transitionOrOverheat(
+          { ...newState, units: finalUnits },
+          { remainingDamage: newRemaining, lockedUpgradeKey: newLocked }
+        ));
+      }
       return checkAnnihilation({
         ...newState,
         units: finalUnits,
-        pendingCombat: {
-          ...newState.pendingCombat,
-          remainingDamage: newRemaining,
-          lockedUpgradeKey: newLocked,
-          step: (newRemaining <= 0 || unitDestroyed) ? 'done' : 'damage-assign',
-        },
+        pendingCombat: { ...newState.pendingCombat, remainingDamage: newRemaining, lockedUpgradeKey: newLocked, step: 'damage-assign' },
       });
     }
 
@@ -964,7 +1023,7 @@ export function gameReducer(state, action) {
       const { rammerTakes, targetTakes } = calcRamDamage(rammer, target);
 
       const newState = addLog(state,
-        `${rammer.name} rams ${target.name}! Assign ${rammerTakes} damage to ${rammer.name}, then ${targetTakes} to ${target.name}.`
+        `${rammer.name} rams ${target.name}! Assign ${targetTakes} damage to ${target.name}, then ${rammerTakes} to ${rammer.name}.`
       );
 
       // Both sides take 0 damage (edge case) — skip straight to push
@@ -972,8 +1031,9 @@ export function gameReducer(state, action) {
         return startRamPushOrEnd(newState, rammer.id, target.id, target.typeId, rammerTakes, targetTakes);
       }
 
-      const firstStep      = rammerTakes > 0 ? 'ram-damage-rammer' : 'ram-damage-target';
-      const firstRemaining = rammerTakes > 0 ? rammerTakes : targetTakes;
+      // Defender (target) assigns damage first, then rammer takes self-inflicted damage
+      const firstStep      = targetTakes > 0 ? 'ram-damage-target' : 'ram-damage-rammer';
+      const firstRemaining = targetTakes > 0 ? targetTakes : rammerTakes;
 
       return {
         ...newState,
