@@ -116,10 +116,33 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
     if (!room?.gameState) return;
 
-    const { phase, activePlayer, deployPlayerIndex } = room.gameState;
+    const { phase, activePlayer, deployPlayerIndex, pendingCombat, units } = room.gameState;
+
+    let combatController = null;
+    if (pendingCombat) {
+      const attacker = units.find(u => u.id === pendingCombat.attackerId);
+      const target   = units.find(u => u.id === pendingCombat.targetId);
+      const rammer   = units.find(u => u.id === pendingCombat.rammerId);
+      switch (pendingCombat.step) {
+        case 'block-roll':
+        case 'damage-assign':
+          combatController = target?.playerIndex ?? null; break;
+        case 'overheat-assign':
+        case 'overheat-result':
+          combatController = attacker?.playerIndex ?? null; break;
+        case 'ram-damage-rammer':
+          combatController = rammer?.playerIndex ?? null; break;
+        case 'ram-damage-target':
+          combatController = target?.playerIndex ?? null; break;
+        case 'ram-push':
+          combatController = pendingCombat.pushChooserIndex ?? null; break;
+        default:
+          combatController = attacker?.playerIndex ?? (rammer?.playerIndex ?? null);
+      }
+    }
 
     const allowed =
-      (phase === 'playing' && playerIndex === activePlayer) ||
+      (phase === 'playing' && (playerIndex === activePlayer || playerIndex === combatController)) ||
       (phase === 'deploy'  && playerIndex === deployPlayerIndex) ||
       (['terrain', 'objective-setup'].includes(phase) && playerIndex === 0) ||
       phase === 'over';
