@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGame } from '../../store/gameContext';
-import { hexKey, isDeployZone, hexNeighborAt, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
+import { hexKey, isDeployZone, hexNeighborAt, inBounds, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 import { UNIT_TYPES } from '../../data/gameData';
 import HexBoard from './HexBoard';
 
@@ -38,6 +38,10 @@ export default function DeployPhase() {
   }
   if (pendingDeployHex) {
     overlayHexes.set(hexKey(pendingDeployHex.q, pendingDeployHex.r), 'deploy-chosen');
+    for (let f = 0; f < 6; f++) {
+      const nb = hexNeighborAt(pendingDeployHex.q, pendingDeployHex.r, f);
+      if (inBounds(nb.q, nb.r)) overlayHexes.set(hexKey(nb.q, nb.r), 'facing-choice');
+    }
   }
 
   function handleHexClick(q, r) {

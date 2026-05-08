@@ -598,7 +598,7 @@ export function gameReducer(state, action) {
       const newUnits = state.units.map(u => u.id === unit.id ? { ...u, q: nq, r: nr } : u);
       const newPa = newRemaining > 0
         ? { ...pa, remainingMoves: newRemaining, moved: true }
-        : { action: pa.action, moved: true };
+        : { action: pa.action, moved: true, unitSnapshot: pa.unitSnapshot, objectivesSnapshot: pa.objectivesSnapshot };
 
       let newState = { ...state, units: newUnits, pendingAction: newPa };
 
@@ -641,7 +641,7 @@ export function gameReducer(state, action) {
       const newRemaining = pa.remainingMoves - 1;
       const newPa = newRemaining > 0
         ? { ...pa, remainingMoves: newRemaining }
-        : { action: pa.action, moved: pa.moved };
+        : { action: pa.action, moved: pa.moved, unitSnapshot: pa.unitSnapshot, objectivesSnapshot: pa.objectivesSnapshot };
 
       return { ...state, units: newUnits, pendingAction: newPa };
     }
@@ -655,7 +655,7 @@ export function gameReducer(state, action) {
 
     case 'CANCEL_MOVE': {
       const pa = state.pendingAction;
-      if (!pa || pa.remainingMoves == null) return state;
+      if (!pa) return state;
       const unit = state.units.find(u => u.id === state.selectedUnitId);
       if (!unit) return state;
       const snap = pa.unitSnapshot;

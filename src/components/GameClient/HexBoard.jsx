@@ -151,9 +151,8 @@ function ObjectiveMarker({ obj }) {
 
 function DeployFacingOverlay({ deployHex }) {
   if (!deployHex) return null;
-  const arrows = ['→', '↗', '↖', '←', '↙', '↘'];
-  const btnR = HEX_SIZE * 0.45;
-  const fs   = HEX_SIZE * 0.72;
+  const { x: ox, y: oy } = hexToPixel(deployHex.q, deployHex.r);
+  const s = HEX_SIZE * 0.28;
 
   return (
     <g>
@@ -161,14 +160,19 @@ function DeployFacingOverlay({ deployHex }) {
         const nb = hexNeighborAt(deployHex.q, deployHex.r, facing);
         if (!inBounds(nb.q, nb.r)) return null;
         const { x, y } = hexToPixel(nb.q, nb.r);
+        // Angle pointing from deploy hex center toward this neighbor
+        const angle = Math.atan2(y - oy, x - ox) * (180 / Math.PI);
+        // Caret triangle: tip at +s along x-axis, base on left — rotated to face outward
+        const pts = `${s},0 ${-s * 0.55},${s * 0.65} ${-s * 0.55},${-s * 0.65}`;
         return (
-          <g key={facing} style={{ pointerEvents: 'none' }}>
-            <circle cx={x} cy={y} r={btnR} fill="#6a0dad" stroke="#ce93d8" strokeWidth={1.5} opacity={0.92} />
-            <text x={x} y={y + 2} textAnchor="middle" dominantBaseline="middle"
-              fontSize={fs} fill="#e040fb" style={{ userSelect: 'none' }}>
-              {arrows[facing]}
-            </text>
-          </g>
+          <polygon
+            key={facing}
+            points={pts}
+            transform={`translate(${x},${y}) rotate(${angle})`}
+            fill="#e040fb"
+            opacity={0.92}
+            style={{ pointerEvents: 'none' }}
+          />
         );
       })}
     </g>
@@ -378,6 +382,7 @@ export default function HexBoard({
       if (overlay === 'ram-target')      { overlayFill = '#f50057'; overlayOpacity = 0.55; }
       if (overlay === 'ram-push-hex')    { overlayFill = '#ce93d8'; overlayOpacity = 0.50; }
       if (overlay === 'deploy-chosen')   { overlayFill = '#29b6f6'; overlayOpacity = 0.70; }
+      if (overlay === 'facing-choice')   { overlayFill = '#7b1fa2'; overlayOpacity = 0.45; }
 
       hexCells.push(
         <g key={hk}>
