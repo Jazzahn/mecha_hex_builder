@@ -173,7 +173,9 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
               {pendingAction.isJumping ? 'Land' : 'End Move'}
             </button>
           )}
-          <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
+          {!hasFired && (
+            <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
+          )}
         </div>
       )}
 
@@ -183,7 +185,9 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
             <button className="action-btn action-btn--shoot" onClick={() => dispatch({ type: 'START_SHOOT' })}>Shoot</button>
           )}
           <button className="action-btn action-btn--end" onClick={() => dispatch({ type: 'END_ACTIVATION' })}>End Activation</button>
-          <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
+          {!hasFired && (
+            <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
+          )}
         </div>
       )}
 

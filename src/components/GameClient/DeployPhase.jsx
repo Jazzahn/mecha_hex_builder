@@ -5,11 +5,13 @@ import { UNIT_TYPES } from '../../data/gameData';
 import HexBoard from './HexBoard';
 
 export default function DeployPhase() {
-  const { gameState, dispatch } = useGame();
+  const { gameState, dispatch, localPlayerIndex } = useGame();
   const {
     deployPlayerIndex, deployUnitIndex, deployedCount,
     armies, units, terrain, playerNames,
   } = gameState;
+
+  const isMyDeployTurn = localPlayerIndex == null || localPlayerIndex === deployPlayerIndex;
 
   const [pendingDeployHex, setPendingDeployHex] = useState(null);
 
@@ -45,6 +47,7 @@ export default function DeployPhase() {
   }
 
   function handleHexClick(q, r) {
+    if (!isMyDeployTurn) return;
     if (pendingDeployHex) {
       // Check if clicking a facing-direction neighbor
       for (let facing = 0; facing < 6; facing++) {
@@ -109,7 +112,7 @@ export default function DeployPhase() {
                 <button
                   key={u.id}
                   className={`deploy-unit-btn${isSelected ? ' deploy-unit-btn--selected' : ''}`}
-                  onClick={() => dispatch({ type: 'SELECT_DEPLOY_UNIT', index: armyIdx })}
+                  onClick={() => isMyDeployTurn && dispatch({ type: 'SELECT_DEPLOY_UNIT', index: armyIdx })}
                   style={{ borderColor: isSelected ? playerColor : undefined }}
                 >
                   <span className="deploy-unit-name">{u.name}</span>

@@ -145,6 +145,7 @@ io.on('connection', (socket) => {
 
     const allowed =
       (phase === 'playing' && (playerIndex === activePlayer || playerIndex === combatController)) ||
+      (phase === 'playing' && !!room.gameState.pendingMorale) ||
       (phase === 'deploy'  && playerIndex === deployPlayerIndex) ||
       (['terrain', 'objective-setup'].includes(phase) && playerIndex === 0) ||
       phase === 'over';

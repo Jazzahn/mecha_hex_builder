@@ -48,6 +48,7 @@ export function OnlineGameProvider({ playerIndex, initialState, children }) {
     const combatController = getCombatStepController(gameState);
     const canAct =
       (phase === 'playing'         && (playerIndex === activePlayer || playerIndex === combatController)) ||
+      (phase === 'playing'         && !!gameState.pendingMorale) ||
       (phase === 'deploy'          && playerIndex === deployPlayerIndex) ||
       (phase === 'terrain'         && playerIndex === 0) ||
       (phase === 'objective-setup' && playerIndex === 0) ||

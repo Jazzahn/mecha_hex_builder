@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { GameProvider, useGame, isActivePlayer } from '../../store/gameContext';
 import GameSetup from './GameSetup';
 import TerrainEditor from './TerrainEditor';
@@ -7,23 +7,78 @@ import DeployPhase from './DeployPhase';
 import HexBoard from './HexBoard';
 import UnitActionModal from './UnitActionModal';
 import UnitTooltip from './UnitTooltip';
-import { hexKey, hexDistance, hexNeighborAt, inBounds, inFrontArc, BOARD_COLS, BOARD_ROWS } from '../../game/hexMath';
+import { hexKey, hexDistance, hexNeighborAt, inBounds, inFrontArc, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 import { checkLOS, unitHeight } from '../../game/combat';
 import { PLAY_PHASES } from '../../game/gameReducer';
 import { UNIT_TYPES } from '../../data/gameData';
 
+function MoralePanel({ pendingMorale, playerNames, dispatch }) {
+  const { results } = pendingMorale;
+  return (
+    <div className="morale-overlay">
+      <div className="morale-card">
+        <div className="morale-card-title">Morale Check</div>
+        {[0, 1].map(pi => {
+          const group = results.filter(r => r.playerIndex === pi);
+          if (group.length === 0) return null;
+          return (
+            <div key={pi} className="morale-player-group">
+              <div className="morale-player-label" style={{ color: PLAYER_COLORS[pi] }}>
+                {playerNames[pi]}
+              </div>
+              {group.map((r, i) => (
+                <div key={i} className={`morale-result ${r.passed ? 'morale-result--pass' : 'morale-result--fail'}`}>
+                  <span className="morale-unit-name">{r.unitName}</span>
+                  {r.isVehicle
+                    ? <span className="morale-roll-detail">all mecha fallen</span>
+                    : <span className="morale-roll-detail">{r.roll} + {r.bonuses} = {r.total}</span>
+                  }
+                  <span className={`morale-verdict ${r.passed ? 'morale-verdict--pass' : 'morale-verdict--fail'}`}>
+                    {r.passed ? 'Holds' : 'Surrenders'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        <button className="sidebar-btn sidebar-btn--primary morale-continue-btn"
+          onClick={() => dispatch({ type: 'DISMISS_MORALE' })}>
+          Continue →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PlayingView() {
   const { gameState, dispatch, localPlayerIndex } = useGame();
   const {
-    selectedUnitId, units, pendingAction, pendingCombat, terrain,
+    selectedUnitId, units, pendingAction, pendingCombat, pendingMorale, terrain,
     phaseIndex, playerNames, activePlayer, round, log,
   } = gameState;
 
   const [hoveredWeaponEntry, setHoveredWeaponEntry] = useState(null);
   const [unitModalPos, setUnitModalPos] = useState(null);
   const [tooltipInfo, setTooltipInfo] = useState(null);
+  const [explosions, setExplosions] = useState([]);
   const hoverTimerRef = useRef(null);
   const boardAreaRef = useRef(null);
+  const prevUnitsRef = useRef(units);
+
+  useEffect(() => {
+    const prev = prevUnitsRef.current;
+    const newlyDestroyed = units.filter(u =>
+      u.destroyed && !prev.find(p => p.id === u.id)?.destroyed
+    );
+    if (newlyDestroyed.length > 0) {
+      const added = newlyDestroyed.map(u => ({ id: `${u.id}-${Date.now()}`, q: u.q, r: u.r }));
+      setExplosions(cur => [...cur, ...added]);
+      added.forEach(exp => {
+        setTimeout(() => setExplosions(cur => cur.filter(e => e.id !== exp.id)), 1500);
+      });
+    }
+    prevUnitsRef.current = units;
+  }, [units]);
 
   const isMyTurn = isActivePlayer(gameState, localPlayerIndex);
 
@@ -238,6 +293,9 @@ function PlayingView() {
       </div>
 
       <div className="game-board-area" ref={boardAreaRef} style={{ position: 'relative' }}>
+        {pendingMorale && (
+          <MoralePanel pendingMorale={pendingMorale} playerNames={playerNames} dispatch={dispatch} />
+        )}
         <HexBoard
           gameState={gameState}
           overlayHexes={overlayHexes}
@@ -247,6 +305,7 @@ function PlayingView() {
           onTurnRight={() => dispatch({ type: 'STEP_TURN', dir: 'right' })}
           onUnitPos={handleUnitPos}
           onHoverUnit={handleHoverUnit}
+          explosions={explosions}
         />
         <UnitActionModal
           position={unitModalPos}

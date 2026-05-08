@@ -43,6 +43,9 @@ export function buildInitialState(playerNames, armies) {
     selectedUnitId: null,
     pendingAction: null,
     pendingCombat: null,
+    pendingMorale: null,
+
+    startingMechaCount: [0, 0],
 
     log: [],
   };
@@ -269,6 +272,79 @@ function autoAssignDamage(units, objectives, targetId, count) {
   return { units: newUnits, objectives: newObjectives, logs };
 }
 
+const MECHA_TYPES = new Set(['light', 'medium', 'heavy', 'assault']);
+const VEHICLE_TYPES = new Set(['groundVehicle', 'heavyVehicle']);
+
+function startNextRound(state, newRound) {
+  const newInitiative = 1 - state.initiativePlayer;
+  const resetUnits = state.units.map(u => ({
+    ...u, activated: false, heldAction: false,
+    firedWeaponKeys: [], hasCruised: false, heatSinkCanceled: 0, ammoBoxDamaged: false, hasJumped: false,
+  }));
+  const roundStartState = addLog(
+    { ...state, round: newRound, phaseIndex: 0, initiativePlayer: newInitiative, activePlayer: newInitiative, units: resetUnits },
+    `Round ${newRound} begins. ${state.playerNames[newInitiative]} has initiative.`
+  );
+  return advancePhaseIfDone(roundStartState);
+}
+
+function runMoraleChecks(state) {
+  const results = [];
+  let newState = state;
+
+  for (const playerIndex of [0, 1]) {
+    const startCount = state.startingMechaCount?.[playerIndex] ?? 0;
+    if (startCount === 0) continue;
+    const aliveMecha = state.units.filter(u =>
+      MECHA_TYPES.has(u.typeId) && !u.destroyed && !u.surrendered && u.playerIndex === playerIndex
+    );
+    if (aliveMecha.length * 2 > startCount) continue; // not at half or below
+
+    for (const unit of aliveMecha) {
+      const nonDisabled = getAllSlots(unit.armyUnit, unit.slotDamage).filter(s => !s.disabled).length;
+      const roll = rollDice(1)[0];
+      const total = roll + nonDisabled;
+      const passed = total >= 6;
+      results.push({ unitId: unit.id, unitName: unit.name, playerIndex, roll, bonuses: nonDisabled, total, passed });
+    }
+  }
+
+  if (results.length === 0) return state;
+
+  // Apply surrenders
+  const surrenderIds = new Set(results.filter(r => !r.passed).map(r => r.unitId));
+  newState = { ...newState, units: newState.units.map(u => surrenderIds.has(u.id) ? { ...u, surrendered: true } : u) };
+
+  for (const r of results) {
+    const verb = r.passed ? 'passes' : 'fails';
+    newState = addLog(newState, `${r.unitName} ${verb} morale (${r.roll}+${r.bonuses}=${r.total}) — ${r.passed ? 'holds!' : 'surrenders!'}`);
+  }
+
+  // Vehicle cascade: if all mecha for a player gone, their vehicles surrender too
+  for (const playerIndex of [0, 1]) {
+    const mechaRemain = newState.units.some(u =>
+      MECHA_TYPES.has(u.typeId) && !u.destroyed && !u.surrendered && u.playerIndex === playerIndex
+    );
+    if (!mechaRemain) {
+      const vehicles = newState.units.filter(u =>
+        VEHICLE_TYPES.has(u.typeId) && !u.destroyed && !u.surrendered && u.playerIndex === playerIndex
+      );
+      if (vehicles.length > 0) {
+        newState = { ...newState, units: newState.units.map(u =>
+          vehicles.some(v => v.id === u.id) ? { ...u, surrendered: true } : u
+        )};
+        newState = addLog(newState, `All of ${state.playerNames[playerIndex]}'s mecha have fallen — vehicles surrender!`);
+        vehicles.forEach(v => results.push({ unitId: v.id, unitName: v.name, playerIndex, roll: null, bonuses: null, total: null, passed: false, isVehicle: true }));
+      }
+    }
+  }
+
+  newState = checkAnnihilation(newState);
+  if (newState.phase === 'over') return newState;
+
+  return { ...newState, pendingMorale: { results } };
+}
+
 function advancePhaseIfDone(state) {
   const phase = PLAY_PHASES[state.phaseIndex];
   const phaseUnits = state.units.filter(u =>
@@ -295,17 +371,10 @@ function advancePhaseIfDone(state) {
   if (nextPhaseIndex >= PLAY_PHASES.length) {
     const newRound = state.round + 1;
     if (newRound > 4) return addLog({ ...state, phase: 'over' }, 'Game over after 4 rounds!');
-    const newInitiative = 1 - state.initiativePlayer;
-    const resetUnits = state.units.map(u => ({
-      ...u, activated: false, heldAction: false,
-      firedWeaponKeys: [], hasCruised: false, heatSinkCanceled: 0, ammoBoxDamaged: false, hasJumped: false,
-    }));
-    const roundStartState = addLog(
-      { ...state, round: newRound, phaseIndex: 0, initiativePlayer: newInitiative, activePlayer: newInitiative, units: resetUnits },
-      `Round ${newRound} begins. ${state.playerNames[newInitiative]} has initiative.`
-    );
-    // Skip any phases that have no living units (same as game-start logic)
-    return advancePhaseIfDone(roundStartState);
+    const afterMorale = runMoraleChecks(state);
+    if (afterMorale.phase === 'over') return afterMorale;
+    if (afterMorale.pendingMorale) return afterMorale; // pause for morale display
+    return startNextRound(afterMorale, newRound);
   }
 
   const nextPhase = PLAY_PHASES[nextPhaseIndex];
@@ -486,9 +555,15 @@ export function gameReducer(state, action) {
       return s;
     }
 
-    case 'START_GAME':
-      return addLog({ ...state, phase: 'playing', activePlayer: state.initiativePlayer },
-        `Battle begins! ${state.playerNames[state.initiativePlayer]} has initiative.`);
+    case 'START_GAME': {
+      const startingMechaCount = [0, 1].map(pi =>
+        state.units.filter(u => MECHA_TYPES.has(u.typeId) && u.playerIndex === pi).length
+      );
+      return addLog(
+        { ...state, phase: 'playing', activePlayer: state.initiativePlayer, startingMechaCount },
+        `Battle begins! ${state.playerNames[state.initiativePlayer]} has initiative.`
+      );
+    }
 
     // ── Selection / movement ────────────────────────────────
     case 'SELECT_UNIT': {
@@ -902,6 +977,14 @@ export function gameReducer(state, action) {
       }
 
       return state;
+    }
+
+    case 'DISMISS_MORALE': {
+      if (!state.pendingMorale) return state;
+      const s = { ...state, pendingMorale: null };
+      const newRound = s.round + 1;
+      if (newRound > 4) return addLog({ ...s, phase: 'over' }, 'Game over after 4 rounds!');
+      return startNextRound(s, newRound);
     }
 
     case 'ASSIGN_DAMAGE': {

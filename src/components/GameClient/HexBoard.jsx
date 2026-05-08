@@ -7,6 +7,7 @@ import {
   FACING_PIXEL_DELTAS,
 } from '../../game/hexMath';
 import grassHexImg from '../../assets/terrain/grass_hex.png';
+import explosionGif from '../../assets/animations/Explosion.gif';
 import heavyMechBlue   from '../../assets/units/Heavy_blue.png';
 import assaultMechBlue from '../../assets/units/Assault_blue.png';
 import mediumMechBlue  from '../../assets/units/Medium_blue.png';
@@ -224,6 +225,7 @@ export default function HexBoard({
   onUnitPos,
   onHoverUnit,
   deployFacingOrigin = null,
+  explosions = [],
 }) {
   const svgRef = useRef(null);
   const { units = [], terrain = {}, objectives = [], selectedUnitId } = gameState;
@@ -524,6 +526,21 @@ export default function HexBoard({
 
           {/* Deploy facing arrows — shown after player picks a deploy hex */}
           <DeployFacingOverlay deployHex={deployFacingOrigin} />
+
+          {/* Explosion animations — play once on unit destruction */}
+          {explosions.map(exp => {
+            const { x, y } = hexToPixel(exp.q, exp.r);
+            const sz = HEX_SIZE * 5;
+            return (
+              <image
+                key={exp.id}
+                href={explosionGif}
+                x={x - sz / 2} y={y - sz / 2}
+                width={sz} height={sz}
+                style={{ pointerEvents: 'none' }}
+              />
+            );
+          })}
         </g>
       </svg>
     </div>
