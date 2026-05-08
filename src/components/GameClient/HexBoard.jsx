@@ -530,7 +530,7 @@ export default function HexBoard({
           {/* Explosion animations — play once on unit destruction */}
           {explosions.map(exp => {
             const { x, y } = hexToPixel(exp.q, exp.r);
-            const sz = HEX_SIZE * 5;
+            const sz = HEX_SIZE * 2.5;
             return (
               <image
                 key={exp.id}
