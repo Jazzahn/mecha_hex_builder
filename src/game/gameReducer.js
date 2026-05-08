@@ -1054,7 +1054,7 @@ export function gameReducer(state, action) {
       const { rammerTakes, targetTakes } = calcRamDamage(rammer, target);
 
       const newState = addLog(
-        { ...state, pendingAction: null, selectedUnitId: null },
+        { ...state, pendingAction: null },
         `${rammer.name} rams ${target.name}! Assign ${targetTakes} damage to ${target.name}, then ${rammerTakes} to ${rammer.name}.`
       );
 

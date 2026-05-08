@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useGame } from '../../store/gameContext';
-import { hexKey, isDeployZone, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
+import { hexKey, isDeployZone, hexNeighborAt, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 import { UNIT_TYPES } from '../../data/gameData';
 import HexBoard from './HexBoard';
-
-const FACING_LABELS = ['E →', 'NE ↗', 'NW ↖', '← W', '↙ SW', 'SE ↘'];
 
 export default function DeployPhase() {
   const { gameState, dispatch } = useGame();
@@ -24,9 +22,9 @@ export default function DeployPhase() {
   );
   const undeployed = army.units.filter(u => !deployedIds.has(u.id));
 
-  // Build overlay: highlight valid deploy hexes
+  // Build overlay: highlight valid deploy hexes (hide when choosing facing)
   const overlayHexes = new Map();
-  if (deployUnitIndex !== null && deployUnitIndex !== undefined) {
+  if (!pendingDeployHex && deployUnitIndex !== null && deployUnitIndex !== undefined) {
     for (let r = 0; r < BOARD_ROWS; r++) {
       for (let q = 0; q < BOARD_COLS; q++) {
         const hk = hexKey(q, r);
@@ -38,23 +36,30 @@ export default function DeployPhase() {
       }
     }
   }
+  if (pendingDeployHex) {
+    overlayHexes.set(hexKey(pendingDeployHex.q, pendingDeployHex.r), 'deploy-chosen');
+  }
 
   function handleHexClick(q, r) {
+    if (pendingDeployHex) {
+      // Check if clicking a facing-direction neighbor
+      for (let facing = 0; facing < 6; facing++) {
+        const nb = hexNeighborAt(pendingDeployHex.q, pendingDeployHex.r, facing);
+        if (nb.q === q && nb.r === r) {
+          dispatch({ type: 'DEPLOY_UNIT', q: pendingDeployHex.q, r: pendingDeployHex.r, facing });
+          setPendingDeployHex(null);
+          return;
+        }
+      }
+      // Clicking elsewhere cancels the facing pick
+      setPendingDeployHex(null);
+      return;
+    }
     if (deployUnitIndex === null || deployUnitIndex === undefined) return;
     if (!isDeployZone(q, r, deployPlayerIndex)) return;
     if (occupied.has(hexKey(q, r))) return;
     if (terrain[hexKey(q, r)]?.type === 'blocking') return;
     setPendingDeployHex({ q, r });
-  }
-
-  function handleFacingSelect(facing) {
-    if (!pendingDeployHex) return;
-    dispatch({ type: 'DEPLOY_UNIT', q: pendingDeployHex.q, r: pendingDeployHex.r, facing });
-    setPendingDeployHex(null);
-  }
-
-  function selectUnit(index) {
-    dispatch({ type: 'SELECT_DEPLOY_UNIT', index: army.units.indexOf(undeployed[index]) });
   }
 
   const playerColor = PLAYER_COLORS[deployPlayerIndex];
@@ -70,8 +75,10 @@ export default function DeployPhase() {
             {playerNames[deployPlayerIndex]}'s turn to deploy
           </div>
           <p className="sidebar-hint">
-            Select a unit, then click a highlighted hex in your deployment zone (
-            {deployPlayerIndex === 0 ? 'top 5 rows' : 'bottom 5 rows'}).
+            {pendingDeployHex
+              ? 'Click a direction arrow on the board to set facing.'
+              : `Select a unit, then click a highlighted hex in your deployment zone (${deployPlayerIndex === 0 ? 'top 5 rows' : 'bottom 5 rows'}).`
+            }
           </p>
         </div>
 
@@ -109,22 +116,6 @@ export default function DeployPhase() {
           </div>
         </div>
 
-        {pendingDeployHex && (
-          <div className="sidebar-section">
-            <div className="deploy-facing-label">Choose facing for {playerNames[deployPlayerIndex]}:</div>
-            <div className="deploy-facing-grid">
-              {FACING_LABELS.map((label, i) => (
-                <button key={i} className="deploy-facing-btn" onClick={() => handleFacingSelect(i)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <button className="action-btn action-btn--cancel" onClick={() => setPendingDeployHex(null)}>
-              Cancel
-            </button>
-          </div>
-        )}
-
         <div className="sidebar-section sidebar-section--bottom">
           <button
             className="sidebar-btn sidebar-btn--primary"
@@ -142,6 +133,7 @@ export default function DeployPhase() {
           overlayHexes={overlayHexes}
           onHexClick={handleHexClick}
           onUnitClick={() => {}}
+          deployFacingOrigin={pendingDeployHex}
         />
       </div>
     </div>

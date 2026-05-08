@@ -149,6 +149,32 @@ function ObjectiveMarker({ obj }) {
   );
 }
 
+function DeployFacingOverlay({ deployHex }) {
+  if (!deployHex) return null;
+  const arrows = ['→', '↗', '↖', '←', '↙', '↘'];
+  const btnR = HEX_SIZE * 0.45;
+  const fs   = HEX_SIZE * 0.72;
+
+  return (
+    <g>
+      {[0, 1, 2, 3, 4, 5].map(facing => {
+        const nb = hexNeighborAt(deployHex.q, deployHex.r, facing);
+        if (!inBounds(nb.q, nb.r)) return null;
+        const { x, y } = hexToPixel(nb.q, nb.r);
+        return (
+          <g key={facing} style={{ pointerEvents: 'none' }}>
+            <circle cx={x} cy={y} r={btnR} fill="#6a0dad" stroke="#ce93d8" strokeWidth={1.5} opacity={0.92} />
+            <text x={x} y={y + 2} textAnchor="middle" dominantBaseline="middle"
+              fontSize={fs} fill="#e040fb" style={{ userSelect: 'none' }}>
+              {arrows[facing]}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 function TurnOverlay({ unit, onTurnLeft, onTurnRight }) {
   // Left turn (CCW) = facing+1, right turn (CW) = facing+5
   const leftFacing  = (unit.facing + 1) % 6;
@@ -193,6 +219,7 @@ export default function HexBoard({
   onTurnRight,
   onUnitPos,
   onHoverUnit,
+  deployFacingOrigin = null,
 }) {
   const svgRef = useRef(null);
   const { units = [], terrain = {}, objectives = [], selectedUnitId } = gameState;
@@ -350,6 +377,7 @@ export default function HexBoard({
       if (overlay === 'range-ring')      { overlayFill = '#1565c0'; overlayOpacity = 0.20; }
       if (overlay === 'ram-target')      { overlayFill = '#f50057'; overlayOpacity = 0.55; }
       if (overlay === 'ram-push-hex')    { overlayFill = '#ce93d8'; overlayOpacity = 0.50; }
+      if (overlay === 'deploy-chosen')   { overlayFill = '#29b6f6'; overlayOpacity = 0.70; }
 
       hexCells.push(
         <g key={hk}>
@@ -488,6 +516,9 @@ export default function HexBoard({
             if (!selUnit) return null;
             return <TurnOverlay unit={selUnit} onTurnLeft={onTurnLeft} onTurnRight={onTurnRight} />;
           })()}
+
+          {/* Deploy facing arrows — shown after player picks a deploy hex */}
+          <DeployFacingOverlay deployHex={deployFacingOrigin} />
         </g>
       </svg>
     </div>
