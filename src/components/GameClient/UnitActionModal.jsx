@@ -30,6 +30,8 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
     if (!pendingCombat) return null;
     switch (pendingCombat.step) {
       case 'block-roll': case 'damage-assign': return combatTarget?.playerIndex ?? 0;
+      case 'exp-armor-roll':
+        return pendingCombat.expArmorNextStep === 'ram-damage-rammer' ? (combatRammer?.playerIndex ?? 0) : (combatTarget?.playerIndex ?? 0);
       case 'overheat-assign': case 'overheat-result': return combatAttacker?.playerIndex ?? 0;
       case 'ram-damage-rammer': return combatRammer?.playerIndex ?? 0;
       case 'ram-damage-target': return combatTarget?.playerIndex ?? 0;

@@ -116,7 +116,7 @@ function PlayingView() {
   function handleHexClick(q, r) {
     // Ram push resolution — push chooser clicks a purple hex
     if (pendingCombat?.step === 'ram-push') {
-      const isChooser = !isOnline || localPlayerIndex === pendingCombat.pushChooserIndex;
+      const isChooser = localPlayerIndex == null || localPlayerIndex === pendingCombat.pushChooserIndex;
       if (isChooser && (pendingCombat.validPushHexes ?? []).some(h => h.q === q && h.r === r)) {
         dispatch({ type: 'RESOLVE_RAM_PUSH', q, r });
       }

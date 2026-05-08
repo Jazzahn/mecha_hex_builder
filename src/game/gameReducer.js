@@ -131,7 +131,7 @@ function startRamPushOrEnd(state, rammerId, targetId, targetTypeId, rammerTakes,
       .filter(u => !u.destroyed && !u.surrendered && !ramIds.has(u.id))
       .map(u => hexKey(u.q, u.r))
   );
-  const validPushHexes = hexNeighbors(pushedUnit.q, pushedUnit.r).filter(({ q, r }) =>
+  const validPushHexes = hexNeighbors(target.q, target.r).filter(({ q, r }) =>
     inBounds(q, r) &&
     !thirdOccupied.has(hexKey(q, r)) &&
     state.terrain[hexKey(q, r)]?.type !== 'blocking'
@@ -217,9 +217,10 @@ function makeCombatState(attackerId, weaponList) {
     remainingDamage: 0,
     coverPenalty: 0,
     blastTargetIds: [],
-    lastExpArmorSave: null,
     lockedUpgradeKey: null,
     pendingOverheatWounds: 0,
+    expArmorRolls: [],
+    expArmorNextStep: null,
   };
 }
 
@@ -825,9 +826,16 @@ export function gameReducer(state, action) {
         ));
       }
 
+      const logMsg = `${target.name} blocks [${pc.blockRolls.join(', ')}] — ${blocks}/${pc.hits} saved. ${weapon.name} deals ${totalDamage} damage.`;
+      if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor')) {
+        return addLog(
+          { ...state, pendingCombat: { ...pc, step: 'exp-armor-roll', blocks, netDamage: totalDamage, remainingDamage: totalDamage, blastTargetIds, expArmorRolls: [], expArmorNextStep: 'damage-assign' } },
+          logMsg
+        );
+      }
       return addLog(
         { ...state, pendingCombat: { ...pc, step: 'damage-assign', blocks, netDamage: totalDamage, remainingDamage: totalDamage, blastTargetIds } },
-        `${target.name} blocks [${pc.blockRolls.join(', ')}] — ${blocks}/${pc.hits} saved. ${weapon.name} deals ${totalDamage} damage.`
+        logMsg
       );
     }
 
@@ -835,6 +843,65 @@ export function gameReducer(state, action) {
       const pc = state.pendingCombat;
       if (!pc || pc.step !== 'overheat-result') return state;
       return { ...state, pendingCombat: { ...pc, step: 'overheat-assign' } };
+    }
+
+    case 'ROLL_EXP_ARMOR_DICE': {
+      const pc = state.pendingCombat;
+      if (!pc || pc.step !== 'exp-armor-roll' || pc.expArmorRolls.length > 0) return state;
+      return { ...state, pendingCombat: { ...pc, expArmorRolls: rollDice(pc.remainingDamage) } };
+    }
+
+    case 'ADVANCE_EXP_ARMOR': {
+      const pc = state.pendingCombat;
+      if (!pc || pc.step !== 'exp-armor-roll' || pc.expArmorRolls.length === 0) return state;
+      const saves = pc.expArmorRolls.filter(v => v >= 5).length;
+      const netDamage = pc.remainingDamage - saves;
+      const expTarget = state.units.find(u => u.id === pc.targetId);
+      const expRammer = state.units.find(u => u.id === pc.rammerId);
+      const saveLabel = saves > 0 ? `${saves} saved` : 'none saved';
+
+      if (pc.expArmorNextStep === 'damage-assign') {
+        const logText = `${expTarget?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        if (netDamage <= 0) {
+          return checkAnnihilation(transitionOrOverheat(addLog(state, logText), { remainingDamage: 0, netDamage: 0 }));
+        }
+        return addLog(
+          { ...state, pendingCombat: { ...pc, step: 'damage-assign', remainingDamage: netDamage, netDamage } },
+          logText
+        );
+      }
+
+      if (pc.expArmorNextStep === 'ram-damage-target') {
+        const logText = `${expTarget?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        if (netDamage <= 0) {
+          const rammerUnit = state.units.find(u => u.id === pc.rammerId);
+          if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
+            const hasRammerExp = hasActiveUpgrade(rammerUnit.armyUnit, rammerUnit.slotDamage, 'experimentalArmor');
+            const newPc = hasRammerExp
+              ? { ...pc, step: 'exp-armor-roll', remainingDamage: pc.rammerTakes, expArmorRolls: [], expArmorNextStep: 'ram-damage-rammer', lockedUpgradeKey: null }
+              : { ...pc, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null };
+            return addLog({ ...state, pendingCombat: newPc }, logText);
+          }
+          return startRamPushOrEnd(addLog(state, logText), pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
+        }
+        return addLog(
+          { ...state, pendingCombat: { ...pc, step: 'ram-damage-target', remainingDamage: netDamage } },
+          logText
+        );
+      }
+
+      if (pc.expArmorNextStep === 'ram-damage-rammer') {
+        const logText = `${expRammer?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        if (netDamage <= 0) {
+          return startRamPushOrEnd(addLog(state, logText), pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
+        }
+        return addLog(
+          { ...state, pendingCombat: { ...pc, step: 'ram-damage-rammer', remainingDamage: netDamage } },
+          logText
+        );
+      }
+
+      return state;
     }
 
     case 'ASSIGN_DAMAGE': {
@@ -870,32 +937,7 @@ export function gameReducer(state, action) {
         const { slotKey } = action;
         if (pc.lockedUpgradeKey && pc.lockedUpgradeKey !== slotKey) return state;
 
-        // Experimental Armor: roll 5+ to ignore this point of damage
-        const damagedUnit = state.units.find(u => u.id === damagedId);
-        let ramState = state;
-        if (hasActiveUpgrade(damagedUnit.armyUnit, damagedUnit.slotDamage, 'experimentalArmor')) {
-          const saveRoll = rollDice(1)[0];
-          const newRemaining = pc.remainingDamage - 1;
-          if (saveRoll >= 5) {
-            const savedState = addLog(
-              { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: true } } },
-              `${damagedUnit.name}'s Experimental Armor saves! (rolled ${saveRoll})`
-            );
-            if (newRemaining <= 0) {
-              if (!isRammer) {
-                const rammerUnit = savedState.units.find(u => u.id === pc.rammerId);
-                if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
-                  return { ...savedState, pendingCombat: { ...savedState.pendingCombat, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null } };
-                }
-              }
-              return startRamPushOrEnd(savedState, pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
-            }
-            return { ...savedState, pendingCombat: { ...savedState.pendingCombat, remainingDamage: newRemaining } };
-          }
-          ramState = { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: false } } };
-        }
-
-        const result = applyOneDamage(ramState, damagedId, slotKey);
+        const result = applyOneDamage(state, damagedId, slotKey);
         if (!result) return state;
         const { newState, newUnits, unitDestroyed, newLocked } = result;
         const newRemaining = pc.remainingDamage - 1;
@@ -907,6 +949,10 @@ export function gameReducer(state, action) {
         if (!isRammer) {
           const rammerUnit = afterCheck.units.find(u => u.id === pc.rammerId);
           if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
+            const hasRammerExp = hasActiveUpgrade(rammerUnit.armyUnit, rammerUnit.slotDamage, 'experimentalArmor');
+            if (hasRammerExp) {
+              return { ...afterCheck, pendingCombat: { ...afterCheck.pendingCombat, step: 'exp-armor-roll', remainingDamage: pc.rammerTakes, expArmorRolls: [], expArmorNextStep: 'ram-damage-rammer', lockedUpgradeKey: null } };
+            }
             return { ...afterCheck, pendingCombat: { ...afterCheck.pendingCombat, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null } };
           }
         }
@@ -921,21 +967,6 @@ export function gameReducer(state, action) {
       const [loc, idxStr] = slotKey.split(':');
       const upgradeId = target.armyUnit.slots[loc]?.[Number(idxStr)];
       if (!upgradeId) return state;
-
-      // Experimental Armor: roll 5+ to ignore this point of damage
-      const hasExpArmor = hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor');
-      if (hasExpArmor) {
-        const saveRoll = rollDice(1)[0];
-        const newRemaining = pc.remainingDamage - 1;
-        if (saveRoll >= 5) {
-          const savedState = addLog(state, `${target.name}'s Experimental Armor saves! (rolled ${saveRoll})`);
-          if (newRemaining <= 0) {
-            return transitionOrOverheat(savedState, { remainingDamage: 0, lastExpArmorSave: { roll: saveRoll, saved: true } });
-          }
-          return { ...savedState, pendingCombat: { ...savedState.pendingCombat, remainingDamage: newRemaining, step: 'damage-assign', lastExpArmorSave: { roll: saveRoll, saved: true } } };
-        }
-        state = { ...state, pendingCombat: { ...pc, lastExpArmorSave: { roll: saveRoll, saved: false } } };
-      }
 
       // Ammo Box: first time in round target's Ammo Box weapon takes damage
       const isAmmoBox = ALL_UPGRADES[upgradeId]?.special?.includes('Ammo Box');
@@ -1022,7 +1053,8 @@ export function gameReducer(state, action) {
 
       const { rammerTakes, targetTakes } = calcRamDamage(rammer, target);
 
-      const newState = addLog(state,
+      const newState = addLog(
+        { ...state, pendingAction: null, selectedUnitId: null },
         `${rammer.name} rams ${target.name}! Assign ${targetTakes} damage to ${target.name}, then ${rammerTakes} to ${rammer.name}.`
       );
 
@@ -1032,8 +1064,14 @@ export function gameReducer(state, action) {
       }
 
       // Defender (target) assigns damage first, then rammer takes self-inflicted damage
-      const firstStep      = targetTakes > 0 ? 'ram-damage-target' : 'ram-damage-rammer';
+      const targetHasExpArmor = targetTakes > 0 && hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor');
+      const rammerHasExpArmor = targetTakes === 0 && rammerTakes > 0 && hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'experimentalArmor');
       const firstRemaining = targetTakes > 0 ? targetTakes : rammerTakes;
+      const firstStep = targetHasExpArmor ? 'exp-armor-roll'
+        : targetTakes > 0                 ? 'ram-damage-target'
+        : rammerHasExpArmor               ? 'exp-armor-roll'
+        :                                   'ram-damage-rammer';
+      const expArmorNextStep = targetTakes > 0 ? 'ram-damage-target' : 'ram-damage-rammer';
 
       return {
         ...newState,
@@ -1046,6 +1084,8 @@ export function gameReducer(state, action) {
           targetTakes,
           remainingDamage: firstRemaining,
           lockedUpgradeKey: null,
+          expArmorRolls: firstStep === 'exp-armor-roll' ? [] : undefined,
+          expArmorNextStep: firstStep === 'exp-armor-roll' ? expArmorNextStep : undefined,
         },
       };
     }

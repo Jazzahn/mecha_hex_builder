@@ -14,6 +14,8 @@ function getCombatStepController(gameState) {
     case 'block-roll':
     case 'damage-assign':
       return target?.playerIndex ?? null;
+    case 'exp-armor-roll':
+      return pc.expArmorNextStep === 'ram-damage-rammer' ? (rammer?.playerIndex ?? null) : (target?.playerIndex ?? null);
     case 'overheat-assign':
     case 'overheat-result':
       return attacker?.playerIndex ?? null;

@@ -127,6 +127,8 @@ io.on('connection', (socket) => {
         case 'block-roll':
         case 'damage-assign':
           combatController = target?.playerIndex ?? null; break;
+        case 'exp-armor-roll':
+          combatController = pendingCombat.expArmorNextStep === 'ram-damage-rammer' ? (rammer?.playerIndex ?? null) : (target?.playerIndex ?? null); break;
         case 'overheat-assign':
         case 'overheat-result':
           combatController = attacker?.playerIndex ?? null; break;
