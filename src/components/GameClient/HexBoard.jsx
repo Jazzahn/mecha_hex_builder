@@ -12,10 +12,14 @@ import heavyMechBlue   from '../../assets/units/Heavy_blue.png';
 import assaultMechBlue from '../../assets/units/Assault_blue.png';
 import mediumMechBlue  from '../../assets/units/Medium_blue.png';
 import lightMechBlue   from '../../assets/units/Light_blue.png';
+import groundVehBlue   from '../../assets/units/Ground_Veh_blue.png';
+import heavyVehBlue    from '../../assets/units/Heavy_Veh_blue.png';
 import heavyMechRed    from '../../assets/units/Heavy_red.png';
 import assaultMechRed  from '../../assets/units/Assault_red.png';
 import mediumMechRed   from '../../assets/units/Medium_red.png';
 import lightMechRed    from '../../assets/units/Light_red.png';
+import groundVehRed    from '../../assets/units/Ground_Veh_red.png';
+import heavyVehRed     from '../../assets/units/Heavy_Veh_red.png';
 import overlayDifficult1 from '../../assets/terrain/overlay_difficult_1.png';
 import overlayDifficult2 from '../../assets/terrain/overlay_difficult_2.png';
 import overlayDifficult3 from '../../assets/terrain/overlay_difficult_3.png';
@@ -77,8 +81,8 @@ const TYPE_ABBREV = {
 };
 
 const UNIT_SPRITES = [
-  { heavy: heavyMechBlue,  assault: assaultMechBlue, medium: mediumMechBlue,  light: lightMechBlue  },
-  { heavy: heavyMechRed,   assault: assaultMechRed,  medium: mediumMechRed,   light: lightMechRed   },
+  { heavy: heavyMechBlue,  assault: assaultMechBlue, medium: mediumMechBlue,  light: lightMechBlue,  groundVehicle: groundVehBlue,  heavyVehicle: heavyVehBlue  },
+  { heavy: heavyMechRed,   assault: assaultMechRed,  medium: mediumMechRed,   light: lightMechRed,   groundVehicle: groundVehRed,   heavyVehicle: heavyVehRed   },
 ];
 
 const TREE_SHADOW  = 'drop-shadow(2px 4px 3px rgba(0,0,0,0.50))';
