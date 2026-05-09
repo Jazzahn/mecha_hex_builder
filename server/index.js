@@ -1,10 +1,32 @@
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { join, dirname } from 'path';
 import { gameReducer, buildOnlineInitialState } from '../src/game/gameReducer.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const distDir = join(__dirname, '..', 'dist');
+
 const app = express();
-app.get('/', (_req, res) => res.send('ok'));
+
+// Hashed assets can be cached long-term; index.html must never be cached so
+// browsers always fetch the latest entry point after a deploy.
+app.use('/assets', express.static(join(distDir, 'assets'), { maxAge: '1y', immutable: true }));
+app.use(express.static(distDir, { maxAge: 0, setHeaders(res, filePath) {
+  if (filePath.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+} }));
+
+// Health check for Railway
+app.get('/health', (_req, res) => res.send('ok'));
+
+// SPA fallback — serve index.html for any non-asset route
+app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(join(distDir, 'index.html'));
+});
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
