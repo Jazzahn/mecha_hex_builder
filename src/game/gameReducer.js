@@ -804,9 +804,11 @@ export function gameReducer(state, action) {
         newState = addLog(newState, `${target.name} is in cover: −${coverPenalty} att die.`);
       }
 
-      const evaThresholdForLog = parseStatValue(UNIT_TYPES[target.typeId].eva);
+      const isAccurate = weapon.special?.includes('Accurate');
+      const evaThresholdForLog = parseStatValue(UNIT_TYPES[target.typeId].eva) - (isAccurate ? 1 : 0);
       const hitsForLog = countSuccesses(rolls, evaThresholdForLog);
-      newState = addLog(newState, `${attacker.name} fires ${weapon.name} at ${target.name}: [${rolls.join(', ')}] → ${hitsForLog} hit${hitsForLog !== 1 ? 's' : ''}`);
+      const accurateNote = isAccurate ? ' (Accurate)' : '';
+      newState = addLog(newState, `${attacker.name} fires ${weapon.name}${accurateNote} at ${target.name}: [${rolls.join(', ')}] → ${hitsForLog} hit${hitsForLog !== 1 ? 's' : ''}`);
 
       // Overheating: 1s on the hit roll wound the attacker
       // Heat Sinks cancel up to 3 total overheat results per activation (tracked via heatSinkCanceled)
@@ -845,9 +847,9 @@ export function gameReducer(state, action) {
       const pc = state.pendingCombat;
       if (!pc || pc.step !== 'hit-roll' || pc.hitRolls.length === 0) return state;
       const target = state.units.find(u => u.id === pc.targetId);
-      const evaThreshold = parseStatValue(UNIT_TYPES[target.typeId].eva);
-      const hits = countSuccesses(pc.hitRolls, evaThreshold);
       const weapon = pc.weaponList[pc.selectedWeaponIdx].weapon;
+      const evaThreshold = parseStatValue(UNIT_TYPES[target.typeId].eva) - (weapon.special?.includes('Accurate') ? 1 : 0);
+      const hits = countSuccesses(pc.hitRolls, evaThreshold);
       if (hits === 0) {
         return transitionOrOverheat(
           addLog(state, `${weapon.name} misses ${target.name}! (0 hits)`),
@@ -870,8 +872,9 @@ export function gameReducer(state, action) {
       const target = state.units.find(u => u.id === pc.targetId);
       const attacker = state.units.find(u => u.id === pc.attackerId);
       const weapon = pc.weaponList[pc.selectedWeaponIdx].weapon;
-      const strPenalty = parseStatValue(pc.weaponList[pc.selectedWeaponIdx].weapon.str);
-      const blockThreshold = parseStatValue(UNIT_TYPES[target.typeId].tou) + strPenalty;
+      const strPenalty = parseStatValue(weapon.str);
+      const isLightArms = weapon.special?.includes('Light Arms');
+      const blockThreshold = parseStatValue(UNIT_TYPES[target.typeId].tou) + strPenalty - (isLightArms ? 1 : 0);
       const blocks = countSuccesses(pc.blockRolls, blockThreshold);
       const netHits = pc.hits - blocks;
       const totalDamage = netHits * damagePerHit(weapon);
