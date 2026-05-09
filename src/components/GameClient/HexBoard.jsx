@@ -25,6 +25,8 @@ import overlayDifficult2 from '../../assets/terrain/overlay_difficult_2.png';
 import overlayDifficult3 from '../../assets/terrain/overlay_difficult_3.png';
 import overlayCover1 from '../../assets/terrain/overlay_cover_1.png';
 import overlayCover2 from '../../assets/terrain/overlay_cover_2.png';
+import overlayBlocking1 from '../../assets/terrain/blocking_1.png';
+import overlayBlocking2 from '../../assets/terrain/blocking_2.png';
 import overlayElev1E  from '../../assets/terrain/overlay_elevation_1_e.png';
 import overlayElev1NE from '../../assets/terrain/overlay_elevation_1_ne.png';
 import overlayElev1NW from '../../assets/terrain/overlay_elevation_1_nw.png';
@@ -56,6 +58,7 @@ const SHADOW_NW = [null, shadowNW1, shadowNW2, shadowNW3];
 
 const DIFFICULT_VARIANTS = [overlayDifficult1, overlayDifficult2, overlayDifficult3];
 const COVER_VARIANTS = [overlayCover1, overlayCover2];
+const BLOCKING_VARIANTS = [overlayBlocking1, overlayBlocking2];
 // Each array ordered E, NE, NW, W, SW, SE — matches facing direction indices 0–5
 const ELEVATION_SIDES = [
   [overlayElev1E, overlayElev1NE, overlayElev1NW, overlayElev1W, overlayElev1SW, overlayElev1SE],
@@ -66,6 +69,30 @@ const ELEVATION_SIDES = [
 // Pointy-top hex image dimensions at HEX_SIZE=24
 const HEX_IMG_W = HEX_SIZE * Math.sqrt(3);
 const HEX_IMG_H = HEX_SIZE * 2;
+
+// Reflection transform for mirroring a sprite along a hex face.
+// Each hex face has a specific angle: E/W = 90°, NE/SW = 30°, NW/SE = 150°.
+// Reflects about that line passing through (cx, cy) = (x, y) hex center.
+// SVG reflection matrix about line at angle θ through (cx,cy):
+//   a=cos2θ  b=sin2θ  c=sin2θ  d=-cos2θ
+//   e=cx*(1-cos2θ)-cy*sin2θ  f=-cx*sin2θ+cy*(1+cos2θ)
+const _S3H = Math.sqrt(3) / 2;
+function reflectTransform(side, x, y) {
+  if (side === 0 || side === 3) {
+    // θ=90°: horizontal flip about x
+    return `translate(${x}, 0) scale(-1, 1) translate(${-x}, 0)`;
+  }
+  if (side === 1 || side === 4) {
+    // θ=30°: reflect along NE–SW axis
+    const e = 0.5 * x - _S3H * y;
+    const f = -_S3H * x + 1.5 * y;
+    return `matrix(0.5,${_S3H},${_S3H},-0.5,${e},${f})`;
+  }
+  // side 2 or 5 — θ=150°: reflect along NW–SE axis
+  const e = 0.5 * x + _S3H * y;
+  const f = _S3H * x + 1.5 * y;
+  return `matrix(0.5,${-_S3H},${-_S3H},-0.5,${e},${f})`;
+}
 
 const TERRAIN_COLORS = {
   cover:     'rgba(46,125,50,0.35)',
@@ -332,6 +359,7 @@ export default function HexBoard({
   // base hex content so shadows project onto neighbouring lower hexes correctly)
   const hexCells = [];
   const elevSprites = [];
+  const mirroredElevSprites = [];
   const terrainOverlays = [];
   const shadowSprites = [];
   for (let r = 0; r < BOARD_ROWS; r++) {
@@ -365,6 +393,17 @@ export default function HexBoard({
             clipPath={`url(#hc-${hk})`}
             preserveAspectRatio="xMidYMid slice"
             style={{ pointerEvents: 'none', filter: TREE_SHADOW }}
+          />
+        );
+      } else if (terrainEntry?.type === 'blocking') {
+        terrainOverlays.push(
+          <image key={`to-${hk}`}
+            href={BLOCKING_VARIANTS[(q * 5 + r * 11) % 2]}
+            x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+            width={HEX_IMG_W} height={HEX_IMG_H}
+            clipPath={`url(#hc-${hk})`}
+            preserveAspectRatio="xMidYMid slice"
+            style={{ pointerEvents: 'none' }}
           />
         );
       } else if (terrainFill) {
@@ -474,6 +513,28 @@ export default function HexBoard({
           });
         });
       }
+
+      // Mirrored elevation sprites: for each face touching a higher hex, render
+      // the level-1 cliff sprite reflected along the shared hex face so the
+      // base of the cliff is visible from the ground level.
+      for (let d = 0; d < 6; d++) {
+        const n = hexNeighborAt(q, r, d);
+        const nElev = terrain[hexKey(n.q, n.r)]?.elevation ?? 0;
+        if (nElev <= myElev) continue;
+        const oppSide = (d + 3) % 6;
+        mirroredElevSprites.push(
+          <image
+            key={`me-${hk}-${d}`}
+            href={ELEVATION_SIDES[0][oppSide]}
+            x={x - HEX_IMG_W / 2} y={y - HEX_SIZE}
+            width={HEX_IMG_W} height={HEX_IMG_H}
+            clipPath={`url(#hc-${hk})`}
+            preserveAspectRatio="xMidYMid slice"
+            style={{ pointerEvents: 'none' }}
+            transform={reflectTransform(d, x, y)}
+          />
+        );
+      }
     }
   }
 
@@ -496,6 +557,9 @@ export default function HexBoard({
 
           {/* 2. Elevation side sprites */}
           {elevSprites}
+
+          {/* 2b. Mirrored cliff base on lower hexes touching elevation */}
+          {mirroredElevSprites}
 
           {/* 3. Terrain overlays (cover/difficult) */}
           {terrainOverlays}
