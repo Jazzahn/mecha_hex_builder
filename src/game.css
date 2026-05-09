@@ -1014,6 +1014,15 @@
   padding: 1px 6px;
 }
 
+.combat-bonus {
+  font-size: 0.72rem;
+  background: #1a2a18;
+  border: 1px solid #1b5e20;
+  color: #a5d6a7;
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
 /* Blast warning inline in block-roll */
 .combat-blast-warn {
   color: #ffb74d;

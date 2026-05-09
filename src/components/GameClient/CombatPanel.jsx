@@ -65,14 +65,16 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
   const weapon = pc.weaponList[pc.selectedWeaponIdx]?.weapon;
   const target = units.find(u => u.id === pc.targetId);
   const targetType = target ? UNIT_TYPES[target.typeId] : null;
-  const evaThreshold = targetType ? parseStatValue(targetType.eva) : 4;
+  const baseEva = targetType ? parseStatValue(targetType.eva) : 4;
+  const isAccurate = weapon?.special?.includes('Accurate');
+  const evaThreshold = baseEva - (isAccurate ? 1 : 0);
 
   const isIndirect = weapon?.special?.includes('Indirect');
   const penaltyDie = isIndirect && hasMoved;
   const att = Math.max(1, (weapon?.att ?? 0) - (pc.coverPenalty ?? 0) - (penaltyDie ? 1 : 0));
 
   const rolled = pc.hitRolls.length > 0;
-  const hits = rolled ? pc.hitRolls.filter(v => v >= evaThreshold).length : 0;
+  const hits = rolled ? pc.hitRolls.filter(v => v === 6 || v >= evaThreshold).length : 0;
 
   return (
     <div className="combat-step">
@@ -84,10 +86,11 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
       <div className="combat-stat-row">
         Roll {att} dice · Hit on {evaThreshold}+
       </div>
-      {(pc.coverPenalty > 0 || penaltyDie) && (
+      {(pc.coverPenalty > 0 || penaltyDie || isAccurate) && (
         <div className="combat-modifiers">
           {pc.coverPenalty > 0 && <span className="combat-penalty">Cover −{pc.coverPenalty} die</span>}
           {penaltyDie && <span className="combat-penalty">Indirect −1 die</span>}
+          {isAccurate && <span className="combat-bonus">Accurate +1 to hit</span>}
         </div>
       )}
 
@@ -98,7 +101,7 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
       ) : (
         <>
           <div className="combat-dice-row">
-            {pc.hitRolls.map((v, i) => <DieBadge key={i} value={v} success={v >= evaThreshold} />)}
+            {pc.hitRolls.map((v, i) => <DieBadge key={i} value={v} success={v === 6 || v >= evaThreshold} />)}
           </div>
           <div className="combat-result">
             <strong>{hits}</strong> hit{hits !== 1 ? 's' : ''} of {pc.hitRolls.length} dice
@@ -123,7 +126,8 @@ function BlockRoll({ pc, units, dispatch, isController }) {
   const tou = targetType ? parseStatValue(targetType.tou) : 4;
   const weapon = pc.weaponList[pc.selectedWeaponIdx]?.weapon;
   const strPenalty = weapon ? parseStatValue(weapon.str) : 0;
-  const blockThreshold = tou + strPenalty;
+  const isLightArms = weapon?.special?.includes('Light Arms');
+  const blockThreshold = tou + strPenalty - (isLightArms ? 1 : 0);
   const dpH = weapon ? damagePerHit(weapon) : 1;
 
   const rolled = pc.blockRolls.length > 0;
@@ -139,6 +143,7 @@ function BlockRoll({ pc, units, dispatch, isController }) {
       <div className="combat-stat-row">
         {target?.name} rolls {pc.hits} block dice · Save on {thresholdLabel}
         {strPenalty > 0 && <span className="combat-penalty"> · Str {strPenalty} penalty</span>}
+        {isLightArms && <span className="combat-bonus"> · Light Arms +1 toughness</span>}
       </div>
 
       {!isController && !rolled && (
