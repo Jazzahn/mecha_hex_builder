@@ -96,7 +96,8 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const hasBoostJets = hasActiveUpgrade(selectedUnit.armyUnit, selectedUnit.slotDamage, 'boostJets');
   const canInitiateAction = !pendingAction && !pendingCombat && !hasFired;
   const inStepping = pendingAction?.remainingMoves != null;
-  const postMove = pendingAction != null && pendingAction.remainingMoves == null;
+  const isJumpLand = pendingAction?.action === 'jump-land';
+  const postMove = pendingAction != null && pendingAction.remainingMoves == null && !isJumpLand;
   const isCruise = pendingAction?.action === 'cruise';
   const canShoot = availableWeapons.length > 0 && !selectedUnit.hasCruised && !pendingCombat;
   const postFire = hasFired && !pendingAction && !pendingCombat;
@@ -176,6 +177,20 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
           {!hasFired && (
             <button className="action-btn action-btn--cancel" onClick={() => dispatch({ type: 'CANCEL_MOVE' })}>Cancel Move</button>
           )}
+        </div>
+      )}
+
+      {isMyTurn && !pendingCombat && isJumpLand && (
+        <div className="action-facing">
+          <div className="action-buttons-label">Choose landing facing:</div>
+          <div className="action-facing-grid">
+            {['E','NE','NW','W','SW','SE'].map((label, f) => (
+              <button key={f} className="action-btn action-btn--move"
+                onClick={() => dispatch({ type: 'JUMP_LAND', facing: f })}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -390,6 +390,12 @@
   padding: 10px 14px;
   border-bottom: 1px solid #2e2e32;
 }
+.action-facing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
 /* ── Phase progress ───────────────────────────────────── */
 .phase-progress {
   display: flex;

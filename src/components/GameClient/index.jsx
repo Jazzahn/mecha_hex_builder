@@ -89,34 +89,41 @@ function PlayingView() {
 
   if (pendingAction?.remainingMoves != null && selectedUnit) {
     const { remainingMoves, isJumping } = pendingAction;
-    const stepCost = (fromQ, fromR, toQ, toR, isForward) => {
-      if (isJumping) return isForward ? 1 : 2;
-      const t = terrain[hexKey(toQ, toR)];
-      if (t?.type === 'blocking') return null;
-      let c = isForward ? 1 : 2;
-      if (t?.type === 'difficult') c++;
-      const elDiff = (t?.elevation ?? 0) - (terrain[hexKey(fromQ, fromR)]?.elevation ?? 0);
-      if (elDiff > 1) return null;
-      if (elDiff > 0) c += elDiff;
-      return c;
-    };
-    const isOccupied = (q, r) =>
-      !isJumping &&
-      units.some(u => !u.destroyed && !u.surrendered && u.id !== selectedUnit.id && u.q === q && u.r === r);
 
-    const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
-    if (inBounds(fwd.q, fwd.r) && !isOccupied(fwd.q, fwd.r)) {
-      const cost = stepCost(selectedUnit.q, selectedUnit.r, fwd.q, fwd.r, true);
-      if (cost !== null)
-        overlayHexes.set(hexKey(fwd.q, fwd.r), cost <= remainingMoves ? 'step-forward' : 'step-blocked');
-    }
+    if (isJumping) {
+      for (let dir = 0; dir < 6; dir++) {
+        const nb = hexNeighborAt(selectedUnit.q, selectedUnit.r, dir);
+        if (inBounds(nb.q, nb.r))
+          overlayHexes.set(hexKey(nb.q, nb.r), remainingMoves >= 1 ? 'step-forward' : 'step-blocked');
+      }
+    } else {
+      const stepCost = (fromQ, fromR, toQ, toR, isForward) => {
+        const t = terrain[hexKey(toQ, toR)];
+        if (t?.type === 'blocking') return null;
+        let c = isForward ? 1 : 2;
+        if (t?.type === 'difficult') c++;
+        const elDiff = (t?.elevation ?? 0) - (terrain[hexKey(fromQ, fromR)]?.elevation ?? 0);
+        if (elDiff > 1) return null;
+        if (elDiff > 0) c += elDiff;
+        return c;
+      };
+      const isOccupied = (q, r) =>
+        units.some(u => !u.destroyed && !u.surrendered && u.id !== selectedUnit.id && u.q === q && u.r === r);
 
-    const bwdFacing = (selectedUnit.facing + 3) % 6;
-    const bwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, bwdFacing);
-    if (inBounds(bwd.q, bwd.r) && !isOccupied(bwd.q, bwd.r)) {
-      const cost = stepCost(selectedUnit.q, selectedUnit.r, bwd.q, bwd.r, false);
-      if (cost !== null)
-        overlayHexes.set(hexKey(bwd.q, bwd.r), cost <= remainingMoves ? 'step-back' : 'step-blocked');
+      const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
+      if (inBounds(fwd.q, fwd.r) && !isOccupied(fwd.q, fwd.r)) {
+        const cost = stepCost(selectedUnit.q, selectedUnit.r, fwd.q, fwd.r, true);
+        if (cost !== null)
+          overlayHexes.set(hexKey(fwd.q, fwd.r), cost <= remainingMoves ? 'step-forward' : 'step-blocked');
+      }
+
+      const bwdFacing = (selectedUnit.facing + 3) % 6;
+      const bwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, bwdFacing);
+      if (inBounds(bwd.q, bwd.r) && !isOccupied(bwd.q, bwd.r)) {
+        const cost = stepCost(selectedUnit.q, selectedUnit.r, bwd.q, bwd.r, false);
+        if (cost !== null)
+          overlayHexes.set(hexKey(bwd.q, bwd.r), cost <= remainingMoves ? 'step-back' : 'step-blocked');
+      }
     }
   }
 
@@ -196,6 +203,13 @@ function PlayingView() {
         return;
       }
 
+      if (pendingAction.isJumping) {
+        for (let dir = 0; dir < 6; dir++) {
+          const nb = hexNeighborAt(selectedUnit.q, selectedUnit.r, dir);
+          if (nb.q === q && nb.r === r) { dispatch({ type: 'STEP_MOVE', direction: dir }); return; }
+        }
+        return;
+      }
       const fwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, selectedUnit.facing);
       const bwdFacing = (selectedUnit.facing + 3) % 6;
       const bwd = hexNeighborAt(selectedUnit.q, selectedUnit.r, bwdFacing);

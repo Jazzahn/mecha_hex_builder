@@ -388,18 +388,29 @@ function advancePhaseIfDone(state) {
 }
 
 // Called when jump movement ends (END_STEP_MOVE or moves exhausted).
-// Applies fall damage (capped at 1) and marks hasJumped on the unit.
+// Applies 1 heat damage (heat sinks absorb if available), then transitions to jump-land for facing selection.
 function endJump(state) {
   const unit = state.units.find(u => u.id === state.selectedUnitId);
-  if (!unit) return { ...state, pendingAction: { action: 'move', moved: true } };
-  const startEl  = state.pendingAction?.jumpStartElevation ?? 0;
-  const landEl   = state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0;
-  let newUnits   = state.units.map(u => u.id === unit.id ? { ...u, hasJumped: true } : u);
-  let newState   = { ...state, units: newUnits, pendingAction: { action: 'move', moved: true } };
-  if (landEl < startEl) {
-    newState = addLog(newState, `${unit.name} takes 1 falling damage landing from a jump!`);
-    const { units: afterFall, objectives: afterObj, logs } = autoAssignDamage(newState.units, newState.objectives, unit.id, 1);
-    newState = { ...newState, units: afterFall, objectives: afterObj };
+  if (!unit) return { ...state, pendingAction: { action: 'jump-land' } };
+
+  const hasHS = hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'heatSinks');
+  const budgetUsed = unit.heatSinkCanceled ?? 0;
+  const budgetRemaining = hasHS ? Math.max(0, 3 - budgetUsed) : 0;
+
+  let newState = state;
+
+  if (budgetRemaining > 0) {
+    const newBudgetUsed = budgetUsed + 1;
+    newState = {
+      ...newState,
+      units: newState.units.map(u => u.id === unit.id ? { ...u, heatSinkCanceled: newBudgetUsed } : u),
+    };
+    const remaining = 3 - newBudgetUsed;
+    newState = addLog(newState, `${unit.name} Heat Sinks absorb jump landing heat (${remaining} budget left).`);
+  } else {
+    newState = addLog(newState, `${unit.name} takes 1 heat damage from jump landing!`);
+    const { units: afterHeat, objectives: afterObj, logs } = autoAssignDamage(newState.units, newState.objectives, unit.id, 1);
+    newState = { ...newState, units: afterHeat, objectives: afterObj };
     for (const l of logs) newState = addLog(newState, l);
     const afterCheck = checkAnnihilation(newState);
     if (afterCheck.phase === 'over') return afterCheck;
@@ -408,12 +419,13 @@ function endJump(state) {
       const activated = afterCheck.units.map(u => u.id === unit.id ? { ...u, activated: true } : u);
       return advancePhaseIfDone(addLog(
         { ...afterCheck, units: activated, selectedUnitId: null, pendingAction: null },
-        `${unit.name} (P${unit.playerIndex + 1}) is destroyed on landing!`
+        `${unit.name} (P${unit.playerIndex + 1}) destroyed by jump heat!`
       ));
     }
-    return afterCheck;
+    newState = afterCheck;
   }
-  return newState;
+
+  return { ...newState, pendingAction: { action: 'jump-land' } };
 }
 
 export function gameReducer(state, action) {
@@ -644,17 +656,19 @@ export function gameReducer(state, action) {
       const unit = state.units.find(u => u.id === state.selectedUnitId);
       if (!unit) return state;
 
-      const isForward = action.direction === 'forward';
-      const facingDir = isForward ? unit.facing : (unit.facing + 3) % 6;
+      // Jump uses absolute direction 0-5; normal move uses 'forward'/'backward' relative to facing
+      const facingDir = pa.isJumping
+        ? action.direction
+        : (action.direction === 'forward' ? unit.facing : (unit.facing + 3) % 6);
       const dest = hexNeighborAt(unit.q, unit.r, facingDir);
       const { q: nq, r: nr } = dest;
 
       if (!inBounds(nq, nr)) return state;
 
-      let cost = isForward ? 1 : 2;
-      if (pa.isJumping) {
-        // Jump: fly over occupied hexes, all terrain, and elevation restrictions
-      } else {
+      let cost = 1;
+      if (!pa.isJumping) {
+        const isForward = action.direction === 'forward';
+        cost = isForward ? 1 : 2;
         const occ = occupiedSetExcluding(state.units, unit.id);
         if (occ.has(hexKey(nq, nr))) return state;
         const t = state.terrain[hexKey(nq, nr)];
@@ -726,6 +740,15 @@ export function gameReducer(state, action) {
       if (!pa) return state;
       if (pa.isJumping && pa.moved) return endJump(state);
       return { ...state, pendingAction: { action: pa.action, moved: pa.moved } };
+    }
+
+    case 'JUMP_LAND': {
+      const unit = state.units.find(u => u.id === state.selectedUnitId);
+      if (!unit || state.pendingAction?.action !== 'jump-land') return state;
+      const newUnits = state.units.map(u =>
+        u.id === unit.id ? { ...u, facing: action.facing, hasJumped: true } : u
+      );
+      return { ...state, units: newUnits, pendingAction: { action: 'move', moved: true } };
     }
 
     case 'CANCEL_MOVE': {
@@ -805,8 +828,8 @@ export function gameReducer(state, action) {
       }
 
       const isAccurate = weapon.special?.includes('Accurate');
-      const evaThresholdForLog = parseStatValue(UNIT_TYPES[target.typeId].eva) - (isAccurate ? 1 : 0);
-      const hitsForLog = countSuccesses(rolls, evaThresholdForLog);
+      const evaThresholdForLog = parseStatValue(UNIT_TYPES[target.typeId].eva);
+      const hitsForLog = countSuccesses(rolls, evaThresholdForLog) * (isAccurate ? 2 : 1);
       const accurateNote = isAccurate ? ' (Accurate)' : '';
       newState = addLog(newState, `${attacker.name} fires ${weapon.name}${accurateNote} at ${target.name}: [${rolls.join(', ')}] → ${hitsForLog} hit${hitsForLog !== 1 ? 's' : ''}`);
 
@@ -848,8 +871,9 @@ export function gameReducer(state, action) {
       if (!pc || pc.step !== 'hit-roll' || pc.hitRolls.length === 0) return state;
       const target = state.units.find(u => u.id === pc.targetId);
       const weapon = pc.weaponList[pc.selectedWeaponIdx].weapon;
-      const evaThreshold = parseStatValue(UNIT_TYPES[target.typeId].eva) - (weapon.special?.includes('Accurate') ? 1 : 0);
-      const hits = countSuccesses(pc.hitRolls, evaThreshold);
+      const _isAccurate = weapon.special?.includes('Accurate');
+      const evaThreshold = parseStatValue(UNIT_TYPES[target.typeId].eva);
+      const hits = countSuccesses(pc.hitRolls, evaThreshold) * (_isAccurate ? 2 : 1);
       if (hits === 0) {
         return transitionOrOverheat(
           addLog(state, `${weapon.name} misses ${target.name}! (0 hits)`),
@@ -877,7 +901,8 @@ export function gameReducer(state, action) {
       const blockThreshold = parseStatValue(UNIT_TYPES[target.typeId].tou) + strPenalty - (isLightArms ? 1 : 0);
       const blocks = countSuccesses(pc.blockRolls, blockThreshold);
       const netHits = pc.hits - blocks;
-      const totalDamage = netHits * damagePerHit(weapon);
+      const isDeadly = weapon.special?.includes('Deadly');
+      const totalDamage = isDeadly && netHits > 0 ? netHits + 1 : netHits;
 
       if (totalDamage === 0) {
         return transitionOrOverheat(
