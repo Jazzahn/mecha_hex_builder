@@ -23,7 +23,7 @@ app.use(express.static(distDir, { maxAge: 0, setHeaders(res, filePath) {
 app.get('/health', (_req, res) => res.send('ok'));
 
 // SPA fallback — serve index.html for any non-asset route
-app.get('*', (_req, res) => {
+app.get('/{*path}', (_req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(join(distDir, 'index.html'));
 });
