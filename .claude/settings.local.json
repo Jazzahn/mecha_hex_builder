@@ -17,7 +17,9 @@
       "Bash(del \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\components\\\\GameClient\\\\ActionPanel.jsx\")",
       "Bash(python -c \"import pdfplumber; pdf = pdfplumber.open\\('h:/Projects/MechaArmyBuilder/Mecha HEX - Core Rules.pdf'\\); [print\\(f'--- Page {i+1} ---\\\\n{p.extract_text\\(\\)}'\\) for i, p in enumerate\\(pdf.pages\\)]; pdf.close\\(\\)\")",
       "Bash(python3 -c \"import pdfplumber; pdf = pdfplumber.open\\('h:/Projects/MechaArmyBuilder/Mecha HEX - Core Rules.pdf'\\); [print\\(f'--- Page {i+1} ---\\\\n{p.extract_text\\(\\)}'\\) for i, p in enumerate\\(pdf.pages\\)]; pdf.close\\(\\)\")",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
