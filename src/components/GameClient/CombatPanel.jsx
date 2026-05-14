@@ -1,5 +1,5 @@
 import { UNIT_TYPES } from '../../data/gameData';
-import { parseStatValue, getAllSlots, damagePerHit } from '../../game/combat';
+import { parseStatValue, getAllSlots, damagePerHit, getMinRangePenalty } from '../../game/combat';
 
 function DieBadge({ value, success }) {
   return (
@@ -63,15 +63,16 @@ function TargetSelect({ pc, dispatch }) {
 
 function HitRoll({ pc, units, dispatch, hasMoved }) {
   const weapon = pc.weaponList[pc.selectedWeaponIdx]?.weapon;
+  const attacker = units.find(u => u.id === pc.attackerId);
   const target = units.find(u => u.id === pc.targetId);
   const targetType = target ? UNIT_TYPES[target.typeId] : null;
   const baseEva = targetType ? parseStatValue(targetType.eva) : 4;
   const isAccurate = weapon?.special?.includes('Accurate');
   const evaThreshold = baseEva - (isAccurate ? 1 : 0);
 
-  const isIndirect = weapon?.special?.includes('Indirect');
-  const penaltyDie = isIndirect && hasMoved;
-  const att = Math.max(1, (weapon?.att ?? 0) - (pc.coverPenalty ?? 0) - (penaltyDie ? 1 : 0));
+  const minRangePenalty = (attacker && target && weapon) ? getMinRangePenalty(attacker, target, weapon) : 0;
+  const indirectPenalty = pc.indirectPenalty ?? 0;
+  const att = Math.max(1, (weapon?.att ?? 0) - (pc.coverPenalty ?? 0) - indirectPenalty - minRangePenalty);
 
   const rolled = pc.hitRolls.length > 0;
   const hits = rolled ? pc.hitRolls.filter(v => v === 6 || v >= evaThreshold).length : 0;
@@ -86,10 +87,11 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
       <div className="combat-stat-row">
         Roll {att} dice · Hit on {evaThreshold}+
       </div>
-      {(pc.coverPenalty > 0 || penaltyDie || isAccurate) && (
+      {(pc.coverPenalty > 0 || indirectPenalty > 0 || isAccurate || minRangePenalty > 0) && (
         <div className="combat-modifiers">
           {pc.coverPenalty > 0 && <span className="combat-penalty">Cover −{pc.coverPenalty} die</span>}
-          {penaltyDie && <span className="combat-penalty">Indirect −1 die</span>}
+          {indirectPenalty > 0 && <span className="combat-penalty">Indirect −{indirectPenalty} die</span>}
+          {minRangePenalty > 0 && <span className="combat-penalty">Min Range −{minRangePenalty} die</span>}
           {isAccurate && <span className="combat-bonus">Accurate +1 to hit</span>}
         </div>
       )}

@@ -421,9 +421,11 @@ export default function HexBoard({
       if (overlay === 'reachable')       { overlayFill = '#76ff03'; overlayOpacity = 0.28; }
       if (overlay === 'deploy-valid')    { overlayFill = '#29b6f6'; overlayOpacity = 0.35; }
       if (overlay === 'deploy-invalid')  { overlayFill = '#ef5350'; overlayOpacity = 0.18; }
-      if (overlay === 'valid-target')    { overlayFill = '#ff6f00'; overlayOpacity = 0.45; }
-      if (overlay === 'combat-target')   { overlayFill = '#e53935'; overlayOpacity = 0.35; }
-      if (overlay === 'range-ring')      { overlayFill = '#1565c0'; overlayOpacity = 0.20; }
+      if (overlay === 'valid-target')      { overlayFill = '#ff6f00'; overlayOpacity = 0.45; }
+      if (overlay === 'indirect-target')   { overlayFill = '#ce93d8'; overlayOpacity = 0.50; }
+      if (overlay === 'combat-target')     { overlayFill = '#e53935'; overlayOpacity = 0.35; }
+      if (overlay === 'range-ring')        { overlayFill = '#1565c0'; overlayOpacity = 0.20; }
+      if (overlay === 'range-ring-indirect') { overlayFill = '#7b1fa2'; overlayOpacity = 0.18; }
       if (overlay === 'ram-target')      { overlayFill = '#f50057'; overlayOpacity = 0.55; }
       if (overlay === 'ram-push-hex')    { overlayFill = '#ce93d8'; overlayOpacity = 0.50; }
       if (overlay === 'deploy-chosen')   { overlayFill = '#29b6f6'; overlayOpacity = 0.70; }

@@ -67,6 +67,15 @@ export function getCoverPenalty(target, _attacker, terrain) {
   return 0;
 }
 
+// Att dice penalty for firing within a weapon's minimum range.
+// Penalty = (minRange - distance + 1), minimum 1 when at exactly minRange.
+export function getMinRangePenalty(attacker, target, weapon) {
+  if (!weapon.minRange) return 0;
+  const dist = hexDistance(attacker.q, attacker.r, target.q, target.r);
+  if (dist > weapon.minRange) return 0;
+  return weapon.minRange - dist + 1;
+}
+
 // Mechs (and structures) occupy 2 elevation levels; ground vehicles occupy 1
 export function unitHeight(typeId) {
   return (typeId === 'groundVehicle' || typeId === 'heavyVehicle') ? 1 : 2;
@@ -95,13 +104,16 @@ export function canWeaponTarget(attacker, target, weapon, terrain) {
   const dist = hexDistance(attacker.q, attacker.r, target.q, target.r);
   if (dist < 1 || dist > weapon.range) return false;
 
-  const isIndirect = weapon.special?.includes('Indirect') || !!attacker.hasJumped;
+  const isIndirectWeapon = weapon.special?.includes('Indirect');
+  const isJumpIndirect = !!attacker.hasJumped;
   const hasTurret = UNIT_TYPES[attacker.typeId]?.special?.includes('Turret');
 
-  if (!hasTurret && !isIndirect) {
+  // Turrets and jump-indirect fire in any direction; indirect weapons still need front arc
+  if (!hasTurret && !isJumpIndirect) {
     if (!inFrontArc(attacker.q, attacker.r, attacker.facing, target.q, target.r)) return false;
   }
-  if (!isIndirect) {
+  // Indirect weapons and jump-indirect can fire without LOS; all others need LOS
+  if (!isIndirectWeapon && !isJumpIndirect) {
     if (!checkLOS(attacker.q, attacker.r, target.q, target.r, terrain,
         unitHeight(attacker.typeId), unitHeight(target.typeId))) return false;
   }

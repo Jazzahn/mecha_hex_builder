@@ -132,9 +132,15 @@ export function validateArmy(army) {
 
   const mechaUnits = army.units.filter(u => MECHA_UNIT_IDS.includes(u.typeId));
   const vehicleUnits = army.units.filter(u => ['groundVehicle', 'heavyVehicle'].includes(u.typeId));
+  const gvUnits = army.units.filter(u => u.typeId === 'groundVehicle');
 
   if (vehicleUnits.length > mechaUnits.length) {
     errors.push(`Too many vehicles: ${vehicleUnits.length} vehicles but only ${mechaUnits.length} mecha.`);
+  }
+
+  const maxGVs = Math.floor(army.pointLimit / 50);
+  if (gvUnits.length > maxGVs) {
+    errors.push(`Too many ground vehicles: ${gvUnits.length} GVs but max is ${maxGVs} (1 per 50pts).`);
   }
 
   const heroTaken = {};

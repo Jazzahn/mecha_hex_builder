@@ -4,7 +4,7 @@ import {
   getEquippedWeapons, canWeaponTarget, rollDice,
   countSuccesses, countOverheats, parseStatValue,
   damagePerHit, getAllSlots, damageThreshold, isUnitDestroyed,
-  hasActiveUpgrade, getCoverPenalty, calcRamDamage,
+  hasActiveUpgrade, getCoverPenalty, getMinRangePenalty, checkLOS, unitHeight, calcRamDamage,
 } from './combat';
 
 export const PLAY_PHASES = [
@@ -219,6 +219,8 @@ function makeCombatState(attackerId, weaponList) {
     netDamage: 0,
     remainingDamage: 0,
     coverPenalty: 0,
+    minRangePenalty: 0,
+    indirectPenalty: 0,
     blastTargetIds: [],
     lockedUpgradeKey: null,
     pendingOverheatWounds: 0,
@@ -814,10 +816,16 @@ export function gameReducer(state, action) {
       const target = state.units.find(u => u.id === pc.targetId);
 
       const coverPenalty = getCoverPenalty(target, attacker, state.terrain);
-      const isIndirect = weapon.special?.includes('Indirect') || !!attacker.hasJumped;
+      const minRangePenalty = getMinRangePenalty(attacker, target, weapon);
+      const isIndirectWeapon = weapon.special?.includes('Indirect');
+      const isJumpIndirect = !!attacker.hasJumped;
       const hasMoved = !!state.pendingAction?.moved;
-      let att = weapon.att - coverPenalty;
-      if (isIndirect && hasMoved) att--;
+      const hasLOS = checkLOS(attacker.q, attacker.r, target.q, target.r, state.terrain,
+        unitHeight(attacker.typeId), unitHeight(target.typeId));
+      // Indirect weapon penalty: -1 die when firing without LOS (true indirect arc)
+      // Jump-indirect penalty: -1 die when the unit moved before firing
+      const indirectPenalty = (isIndirectWeapon && !hasLOS) || (isJumpIndirect && hasMoved) ? 1 : 0;
+      let att = weapon.att - coverPenalty - minRangePenalty - indirectPenalty;
       att = Math.max(1, att);
 
       const rolls = rollDice(att);
@@ -825,6 +833,13 @@ export function gameReducer(state, action) {
 
       if (coverPenalty > 0) {
         newState = addLog(newState, `${target.name} is in cover: −${coverPenalty} att die.`);
+      }
+      if (minRangePenalty > 0) {
+        newState = addLog(newState, `${weapon.name} within minimum range: −${minRangePenalty} att die.`);
+      }
+      if (indirectPenalty > 0) {
+        const reason = isIndirectWeapon && !hasLOS ? 'indirect fire (no LOS)' : 'fired after jump';
+        newState = addLog(newState, `${weapon.name} ${reason}: −1 att die.`);
       }
 
       const isAccurate = weapon.special?.includes('Accurate');
@@ -858,12 +873,12 @@ export function gameReducer(state, action) {
           if (wounds > 0) {
             newState = addLog(newState, `${attacker.name} suffers ${wounds} overheat wound${wounds > 1 ? 's' : ''}! (assigned after target damage)`);
             // Store wounds; don't interrupt the hit flow — overheat resolved after defender assigns damage
-            return { ...newState, pendingCombat: { ...pc, hitRolls: rolls, coverPenalty, pendingOverheatWounds: wounds } };
+            return { ...newState, pendingCombat: { ...pc, hitRolls: rolls, coverPenalty, minRangePenalty, indirectPenalty, pendingOverheatWounds: wounds } };
           }
         }
       }
 
-      return { ...newState, pendingCombat: { ...pc, hitRolls: rolls, coverPenalty } };
+      return { ...newState, pendingCombat: { ...pc, hitRolls: rolls, coverPenalty, minRangePenalty, indirectPenalty } };
     }
 
     case 'ADVANCE_HIT': {

@@ -128,9 +128,20 @@ function PlayingView() {
   }
 
   if (pendingCombat?.step === 'target-select') {
+    const shooter = units.find(u => u.id === pendingCombat.attackerId);
+    const selWeapon = pendingCombat.selectedWeaponIdx != null
+      ? pendingCombat.weaponList[pendingCombat.selectedWeaponIdx]?.weapon : null;
+    const isIndirectWeapon = selWeapon?.special?.includes('Indirect');
     pendingCombat.validTargets.forEach(targetId => {
       const u = units.find(x => x.id === targetId);
-      if (u) overlayHexes.set(hexKey(u.q, u.r), 'valid-target');
+      if (!u) return;
+      if (isIndirectWeapon && shooter) {
+        const hasLOS = checkLOS(shooter.q, shooter.r, u.q, u.r, terrain,
+          unitHeight(shooter.typeId), unitHeight(u.typeId));
+        overlayHexes.set(hexKey(u.q, u.r), hasLOS ? 'valid-target' : 'indirect-target');
+      } else {
+        overlayHexes.set(hexKey(u.q, u.r), 'valid-target');
+      }
     });
   }
 
@@ -160,16 +171,19 @@ function PlayingView() {
     const attacker = units.find(u => u.id === pendingCombat.attackerId);
     if (attacker) {
       const weapon = hoveredWeaponEntry.weapon;
-      const isIndirect = weapon.special?.includes('Indirect');
+      const isIndirectWeapon = weapon.special?.includes('Indirect');
+      const isJumpIndirect = !!attacker.hasJumped;
       const hasTurret = UNIT_TYPES[attacker.typeId]?.special?.includes('Turret');
       const attackerH = unitHeight(attacker.typeId);
       for (let r = 0; r < BOARD_ROWS; r++) {
         for (let q = 0; q < BOARD_COLS; q++) {
           const dist = hexDistance(attacker.q, attacker.r, q, r);
           if (dist < 1 || dist > weapon.range) continue;
-          if (!hasTurret && !isIndirect && !inFrontArc(attacker.q, attacker.r, attacker.facing, q, r)) continue;
-          if (!isIndirect && !checkLOS(attacker.q, attacker.r, q, r, terrain, attackerH, 2)) continue;
-          overlayHexes.set(hexKey(q, r), 'range-ring');
+          // Turrets and jump-indirect bypass arc; indirect weapons still need front arc
+          if (!hasTurret && !isJumpIndirect && !inFrontArc(attacker.q, attacker.r, attacker.facing, q, r)) continue;
+          const hasLOS = checkLOS(attacker.q, attacker.r, q, r, terrain, attackerH, 2);
+          if (!isIndirectWeapon && !isJumpIndirect && !hasLOS) continue;
+          overlayHexes.set(hexKey(q, r), (isIndirectWeapon && !hasLOS) ? 'range-ring-indirect' : 'range-ring');
         }
       }
     }

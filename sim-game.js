@@ -13,7 +13,7 @@ import { buildOnlineInitialState, gameReducer, PLAY_PHASES } from './src/game/ga
 import { UNIT_TYPES, ALL_UPGRADES, WEAPONS }                  from './src/data/gameData.js';
 import { hexKey, hexDistance, isDeployZone, inBounds,
          BOARD_COLS, BOARD_ROWS, vectorToFacing }             from './src/game/hexMath.js';
-import { getEquippedWeapons, canWeaponTarget,
+import { getEquippedWeapons, canWeaponTarget, hasActiveUpgrade,
          getAllSlots, parseStatValue, damagePerHit }           from './src/game/combat.js';
 
 // ─── Balance patches ──────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ const ARMIES = {
       rarm:  ['streakSRMRack', 'lb2xAC'],                       // 1+1 = 2/2
     }),
     unit('light', 'Sprint', {
-      torso: ['boostJets', 'machineGunArray', 'streakSRMRack'],  // 1+1+1 = 3/3
+      torso: ['boostJets', 'heatSinks', 'streakSRMRack'],        // 1+1+1 = 3/3 (HS absorbs jump heat)
       larm:  ['streakSRMRack'],                                  // 1/1
       rarm:  ['streakSRMRack'],                                  // 1/1
     }),
@@ -275,11 +275,11 @@ const ARMIES = {
     }),
     unit('medium', 'Harrier', {
       torso: ['boostJets', 'mediumPulseLaser'],                  // 1+2 = 3/3
-      larm:  ['lb2xAC', 'streakSRMRack'],                       // 1+1 = 2/2
+      larm:  ['heatSinks', 'streakSRMRack'],                     // 1+1 = 2/2 (HS absorbs jump heat)
       rarm:  ['lb2xAC', 'streakSRMRack'],                       // 1+1 = 2/2
     }),
     unit('light', 'Kestrel', {
-      torso: ['boostJets', 'smallPulseLaser', 'erSmallLaser'],   // 1+1+1 = 3/3
+      torso: ['boostJets', 'smallPulseLaser', 'heatSinks'],      // 1+1+1 = 3/3 (HS absorbs jump heat)
       larm:  ['streakSRMRack'],                                  // 1/1
       rarm:  ['streakSRMRack'],                                  // 1/1
     }),
@@ -323,16 +323,114 @@ const ARMIES = {
       rarm:  ['ultraAC10'],                                      // 3/3
     }),
     unit('light', 'Odd One', {
-      torso: ['boostJets', 'erSmallLaser', 'ultraAC2'],          // 1+1+1 = 3/3
+      torso: ['boostJets', 'heatSinks', 'ultraAC2'],             // 1+1+1 = 3/3 (HS absorbs jump heat)
       larm:  ['lrm5'],                                           // 1/1
       rarm:  ['streakSRMRack'],                                  // 1/1
     }),
   ]),
 };
 
+// ─── Unit roster & budget-tier armies ────────────────────────────────────────
+// Slot capacity:  assault 5/4/4  heavy 4/3/3  medium 3/2/2  light 3/1/1
+//                 groundVehicle single/1   heavyVehicle single/2
+// Unit pts:       assault 100  heavy 80  medium 60  light 40  gv 10  hv 20
+
+const ROSTER = {
+  // ── Assault (100 pts) ──────────────────────────────────────────────────
+  asr_laser:     unit('assault', 'Pyro',     { torso: ['largePulseLaser','heatSinks','heatSinks'],     larm: ['mediumPulseLaser','mediumLaser'],          rarm: ['mediumPulseLaser','mediumLaser'] }),
+  asr_ballistic: unit('assault', 'Bastion',  { torso: ['ultraAC10','extraArmor','extraArmor'],         larm: ['autocannon10','extraArmor','lb2xAC'],       rarm: ['autocannon10','extraArmor','lb2xAC'] }),
+  asr_gauss:     unit('assault', 'Headshot', { torso: ['ppc','heatSinks','lb2xAC'],                    larm: ['gaussRifle','lb2xAC'],                     rarm: ['gaussRifle','lb2xAC'] }),
+  asr_indirect:  unit('assault', 'Typhoon',  { torso: ['arrowIVArtillery','lrm5','lrm5'],              larm: ['lrm10','autocannon10'],                    rarm: ['lrm10','autocannon10'] }),
+  asr_brawler:   unit('assault', 'Bruiser',  { torso: ['autocannon20','extraArmor','lb2xAC'],          larm: ['autocannon10','streakSRMRack','lb2xAC'],   rarm: ['autocannon10','streakSRMRack','lb2xAC'] }),
+
+  // ── Heavy (80 pts) ─────────────────────────────────────────────────────
+  hvy_laser:     unit('heavy',   'Torch',    { torso: ['largePulseLaser','heatSinks'],                 larm: ['mediumPulseLaser','erSmallLaser'],          rarm: ['mediumPulseLaser','erSmallLaser'] }),
+  hvy_ballistic: unit('heavy',   'Grinder',  { torso: ['ultraAC10','machineGunArray'],                 larm: ['lb5xAC','machineGunArray'],                rarm: ['lb5xAC','machineGunArray'] }),
+  hvy_ultra:     unit('heavy',   'Rampart',  { torso: ['lb5xAC','lb2xAC','lb2xAC'],                   larm: ['ultraAC5','lb2xAC'],                       rarm: ['ultraAC5','lb2xAC'] }),
+  hvy_mixed:     unit('heavy',   'Adapter',  { torso: ['ppc','heatSinks'],                            larm: ['autocannon10','streakSRMRack'],             rarm: ['autocannon10','streakSRMRack'] }),
+  hvy_lrm:       unit('heavy',   'Warcloud', { torso: ['lrm20','machineGunArray'],                     larm: ['ultraAC10'],                               rarm: ['ultraAC10'] }),
+
+  // ── Medium (60 pts) ────────────────────────────────────────────────────
+  med_pulse:     unit('medium',  'Harrier',  { torso: ['boostJets','mediumPulseLaser'],                larm: ['heatSinks','streakSRMRack'],               rarm: ['lb2xAC','streakSRMRack'] }),
+  med_ballistic: unit('medium',  'Wedge',    { torso: ['autocannon10','streakSRMRack'],                larm: ['autocannon2','streakSRMRack'],             rarm: ['autocannon2','streakSRMRack'] }),
+  med_lrm:       unit('medium',  'Squall',   { torso: ['lrm10','autocannon2'],                         larm: ['lrm5','erSmallLaser'],                     rarm: ['lrm5','erSmallLaser'] }),
+  med_boost:     unit('medium',  'Blitz',    { torso: ['highTunedEngine','lb5xAC'],                    larm: ['autocannon10','autocannon2'],              rarm: ['autocannon10','autocannon2'] }),
+
+  // ── Light (40 pts) ─────────────────────────────────────────────────────
+  lgt_fast:      unit('light',   'Kestrel',  { torso: ['boostJets','heatSinks','smallPulseLaser'],     larm: ['streakSRMRack'],                           rarm: ['streakSRMRack'] }),
+  lgt_lb:        unit('light',   'Picket',   { torso: ['lb2xAC','erSmallLaser','extraArmor'],          larm: ['lb2xAC'],                                  rarm: ['lb2xAC'] }),
+  lgt_streak:    unit('light',   'Sprint',   { torso: ['streakSRMRack','smallPulseLaser','erSmallLaser'], larm: ['streakSRMRack'],                        rarm: ['lb2xAC'] }),
+  lgt_lrm:       unit('light',   'Drizzle',  { torso: ['lrm5','smallPulseLaser','ultraAC2'],           larm: ['lrm5'],                                    rarm: ['streakSRMRack'] }),
+
+  // ── Ground Vehicle (10 pts, single slot) ──────────────────────────────
+  gv_lrm:        unit('groundVehicle', 'LRM Buggy',   { single: ['lrm5'] }),
+  gv_streak:     unit('groundVehicle', 'SRM Scout',   { single: ['streakSRMRack'] }),
+  gv_ac:         unit('groundVehicle', 'AC Scout',    { single: ['autocannon2'] }),
+  gv_laser:      unit('groundVehicle', 'Laser Scout', { single: ['smallPulseLaser'] }),
+
+  // ── Heavy Vehicle (20 pts, 2 slots) ──────────────────────────────────
+  hv_ac:         unit('heavyVehicle', 'Gun Tank',     { single: ['autocannon10'] }),
+  hv_lrm:        unit('heavyVehicle', 'LRM Tank',     { single: ['lrm10'] }),
+  hv_streak:     unit('heavyVehicle', 'SRM Tank',     { single: ['streakSRMRack','streakSRMRack'] }),
+  hv_laser:      unit('heavyVehicle', 'Laser Tank',   { single: ['mediumPulseLaser'] }),
+};
+
+// Helper: point cost of an army
+const UNIT_PTS = { assault: 100, heavy: 80, medium: 60, light: 40, groundVehicle: 15, heavyVehicle: 25 };
+function armyPts(a) { return a.units.reduce((s, u) => s + (UNIT_PTS[u.typeId] ?? 0), 0); }
+
+const R = ROSTER; // shorthand
+const TIER_ARMIES = {
+  200: [
+    //                             pts  composition
+    army('Laser Spike',      [R.asr_laser,     R.med_pulse,     R.lgt_fast]),                                             // 200: 100+60+40
+    army('Iron Defense',     [R.asr_ballistic, R.med_ballistic, R.hv_ac,       R.gv_ac]),                                 // 200: 100+60+25+15
+    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.lgt_streak]),                                           // 200: 80+80+40
+    army('Indirect Barrage', [R.asr_indirect,  R.med_lrm,       R.lgt_lrm]),                                              // 200: 100+60+40
+    army('Speed Blitz',      [R.hvy_ultra,     R.med_boost,     R.lgt_fast,    R.gv_ac]),                                 // 200: 80+60+40+15 = 195
+    army('Gauss Sniper',     [R.asr_gauss,     R.med_lrm,       R.lgt_lrm]),                                              // 200: 100+60+40
+    army('Vehicle Swarm',    [R.lgt_fast,      R.lgt_streak,    R.lgt_lb,      R.lgt_lrm,   R.hv_lrm,  R.gv_streak]),    // 200: 40+40+40+40+25+15 (4 mechs, 1 HV+1 GV)
+    army('Close Brawler',    [R.asr_brawler,   R.med_ballistic, R.lgt_streak]),                                           // 200: 100+60+40
+  ],
+  250: [
+    army('Laser Spike',      [R.asr_laser,     R.hvy_laser,     R.lgt_fast,    R.gv_laser,  R.gv_laser]),                 // 250: 100+80+40+15+15
+    army('Iron Defense',     [R.asr_ballistic, R.hvy_ultra,     R.lgt_lb,      R.gv_ac,     R.gv_ac]),                    // 250: 100+80+40+15+15
+    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.lgt_lb,      R.hv_ac,     R.hv_ac]),                    // 250: 80+80+40+25+25
+    army('Indirect Barrage', [R.asr_indirect,  R.hvy_lrm,       R.lgt_lrm,     R.gv_lrm,    R.gv_lrm]),                  // 250: 100+80+40+15+15
+    army('Speed Blitz',      [R.hvy_ultra,     R.med_boost,     R.lgt_fast,    R.lgt_streak, R.gv_laser, R.gv_laser]),    // 250: 80+60+40+40+15+15
+    army('Gauss Sniper',     [R.asr_gauss,     R.hvy_mixed,     R.lgt_lrm,     R.gv_lrm,    R.gv_lrm]),                  // 250: 100+80+40+15+15
+    army('Vehicle Swarm',    [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.gv_streak, R.gv_streak]),              // 250: 80+80+60+15+15
+    army('Close Brawler',    [R.asr_brawler,   R.hvy_ballistic, R.lgt_streak,  R.gv_streak, R.gv_streak]),                // 250: 100+80+40+15+15
+  ],
+  300: [
+    army('Laser Spike',      [R.asr_laser,     R.hvy_laser,     R.med_pulse,   R.lgt_fast,   R.gv_laser]),                // 300: 100+80+60+40+15 = 295
+    army('Iron Defense',     [R.asr_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_lb,   R.gv_ac]),                   // 300: 100+80+60+40+15 = 295
+    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_streak, R.hv_ac]),                 // 300: 80+80+60+40+25 = 285
+    army('Indirect Barrage', [R.asr_indirect,  R.hvy_lrm,       R.med_lrm,     R.lgt_lrm,    R.gv_lrm]),                 // 300: 100+80+60+40+15 = 295
+    army('Speed Blitz',      [R.hvy_ultra,     R.hvy_ballistic, R.med_boost,   R.lgt_fast,   R.lgt_streak]),              // 300: 80+80+60+40+40
+    army('Gauss Sniper',     [R.asr_gauss,     R.hvy_mixed,     R.med_lrm,     R.lgt_lrm,    R.gv_lrm]),                  // 300: 100+80+60+40+15 = 295
+    army('Vehicle Swarm',    [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_lb,   R.hv_lrm]),                  // 300: 80+80+60+40+25 = 285
+    army('Close Brawler',    [R.asr_brawler,   R.hvy_ballistic, R.med_ballistic, R.lgt_streak, R.gv_streak]),             // 300: 100+80+60+40+15 = 295
+  ],
+};
+
+// Verify all tier armies are within budget and rule limits
+for (const [budget, armies] of Object.entries(TIER_ARMIES)) {
+  for (const a of armies) {
+    const pts = armyPts(a);
+    if (pts > Number(budget)) console.warn(`[budget] ${a.armyName} at ${budget}pts is over budget: ${pts}pts`);
+    const gvCount = a.units.filter(u => u.typeId === 'groundVehicle').length;
+    const maxGVs = Math.floor(Number(budget) / 50);
+    if (gvCount > maxGVs) console.warn(`[gv-cap] ${a.armyName} at ${budget}pts has ${gvCount} GVs but max is ${maxGVs}`);
+    const mechaCount = a.units.filter(u => ['assault','heavy','medium','light'].includes(u.typeId)).length;
+    const vehCount = a.units.filter(u => ['groundVehicle','heavyVehicle'].includes(u.typeId)).length;
+    if (vehCount > mechaCount) console.warn(`[veh-cap] ${a.armyName} at ${budget}pts has ${vehCount} vehicles but only ${mechaCount} mecha`);
+  }
+}
+
 // ─── AI: expected damage estimate (no dice, pure math) ───────────────────────
 
-function weaponED(weapon, target) {
+function weaponED(weapon, target, dist = 99) {
   const isAccurate = weapon.special?.includes('Accurate');
   const light      = weapon.special?.includes('Light Arms') ? 1 : 0;
   const accurateDoubles = isAccurate && globalThis.__simRules?.accurate === 'double';
@@ -341,7 +439,9 @@ function weaponED(weapon, target) {
   const hitR  = Math.max(0, (7 - eva) / 6);
   const blkR  = Math.max(0, (7 - blk) / 6);
   const hitMult = accurateDoubles ? 2 : 1;
-  return weapon.att * hitR * hitMult * (1 - blkR) * damagePerHit(weapon);
+  const minRangePenalty = weapon.minRange && dist <= weapon.minRange ? weapon.minRange - dist + 1 : 0;
+  const effectiveAtt = Math.max(1, weapon.att - minRangePenalty);
+  return effectiveAtt * hitR * hitMult * (1 - blkR) * damagePerHit(weapon);
 }
 
 // ─── AI: slot damage helper ────────────────────────────────────────────────────
@@ -360,7 +460,8 @@ function pickShot(attacker, weaponList, enemies, terrain) {
     if (we.disabled) continue;
     for (const enemy of enemies) {
       if (!canWeaponTarget(attacker, enemy, we.weapon, terrain)) continue;
-      const ed = weaponED(we.weapon, enemy);
+      const dist = hexDistance(attacker.q, attacker.r, enemy.q, enemy.r);
+      const ed = weaponED(we.weapon, enemy, dist);
       if (ed > bestED) { bestED = ed; best = { wi, targetId: enemy.id }; }
     }
   }
@@ -433,9 +534,31 @@ function aiMoveStep(state) {
     hexDistance(unit.q, unit.r, e.q, e.r) < hexDistance(unit.q, unit.r, b.q, b.r) ? e : b);
 
   const desired = vectorToFacing(unit.q, unit.r, target.q, target.r);
+  const distToTarget = hexDistance(unit.q, unit.r, target.q, target.r);
 
-  // Turn toward target if not facing it
-  if (unit.facing !== desired) {
+  const hasTurret = UNIT_TYPES[unit.typeId]?.special?.includes('Turret');
+
+  if (pa.isJumping) {
+    // Jump: fly directly toward target (any direction, cost 1, terrain ignored)
+    if (distToTarget <= 1) return gameReducer(state, { type: 'END_STEP_MOVE' });
+
+    const before = hexKey(unit.q, unit.r);
+    const moved  = gameReducer(state, { type: 'STEP_MOVE', direction: desired });
+    const afterUnit = moved.units.find(u => u.id === unit.id);
+
+    if (hexKey(afterUnit.q, afterUnit.r) === before) return gameReducer(state, { type: 'END_STEP_MOVE' });
+
+    // If SP exhausted the reducer already triggered endJump → jump-land; just return the new state
+    if (moved.pendingAction?.action === 'jump-land') return moved;
+
+    const distAfter = hexDistance(afterUnit.q, afterUnit.r, target.q, target.r);
+    if (distAfter <= 1) return gameReducer(moved, { type: 'END_STEP_MOVE' });
+
+    return moved;
+  }
+
+  // Normal movement — turret units skip turning (can shoot any direction; save SP for movement)
+  if (!hasTurret && unit.facing !== desired) {
     const leftTurns  = (desired - unit.facing + 6) % 6;
     const rightTurns = (unit.facing - desired + 6) % 6;
     return gameReducer(state, { type: 'STEP_TURN', dir: leftTurns <= rightTurns ? 'left' : 'right' });
@@ -562,14 +685,25 @@ function aiStep(state) {
 
     const pa = state.pendingAction;
 
-    // No action started yet — start a move action (allows shooting after)
+    // No action started yet — use jump if available, otherwise normal move
     if (!pa) {
-      return gameReducer(state, { type: 'START_ACTION', action: 'move' });
+      const hasJump = hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'boostJets');
+      return gameReducer(state, { type: 'START_ACTION', action: 'move', isJumping: hasJump || undefined });
     }
 
     // Still have SP — keep moving
     if (pa.remainingMoves) {
       return aiMoveStep(state);
+    }
+
+    // Jump-land: choose facing toward nearest enemy then commit
+    if (pa.action === 'jump-land') {
+      const enemies = state.units.filter(u => u.playerIndex !== unit.playerIndex && !u.destroyed && !u.surrendered);
+      const target  = enemies.length
+        ? enemies.reduce((b, e) => hexDistance(unit.q, unit.r, e.q, e.r) < hexDistance(unit.q, unit.r, b.q, b.r) ? e : b)
+        : null;
+      const facing = target ? vectorToFacing(unit.q, unit.r, target.q, target.r) : unit.facing;
+      return gameReducer(state, { type: 'JUMP_LAND', facing });
     }
 
     // Movement done — try to shoot
@@ -645,6 +779,7 @@ function runGame(army0, army1, statsA, statsB) {
     const pi = nameToPlayer.get(unitName);
     if (pi == null) continue;
     const side = pi === 0 ? statsA : statsB;
+    if (!side) continue;
     side.weaponFired[wname] = (side.weaponFired[wname] ?? 0) + 1;
     side.weaponHits[wname]  = (side.weaponHits[wname]  ?? 0) + parseInt(hitsStr);
   }
@@ -665,6 +800,49 @@ function runGame(army0, army1, statsA, statsB) {
   return { winner, round: state.round, dmg, destroyed, log: state.log };
 }
 
+// ─── Round-robin runner ───────────────────────────────────────────────────────
+
+function runRoundRobin(armies, gamesPerMatchup) {
+  const wins   = Object.fromEntries(armies.map(a => [a.armyName, 0]));
+  const played = Object.fromEntries(armies.map(a => [a.armyName, 0]));
+  let totalMatchups = 0, failedMatchups = 0;
+
+  for (let i = 0; i < armies.length; i++) {
+    for (let j = i + 1; j < armies.length; j++) {
+      const a = armies[i], b = armies[j];
+      let wA = 0, wB = 0, fail = 0;
+      for (let g = 0; g < gamesPerMatchup; g++) {
+        const r = runGame(a, b, null, null);
+        if (!r) { fail++; continue; }
+        if (r.winner === 0) wA++;
+        else if (r.winner === 1) wB++;
+      }
+      const done = gamesPerMatchup - fail;
+      if (done > 0) {
+        wins[a.armyName]   += 100 * wA / done;
+        wins[b.armyName]   += 100 * wB / done;
+        played[a.armyName]++;
+        played[b.armyName]++;
+      }
+      totalMatchups++;
+      failedMatchups += (fail > gamesPerMatchup / 2 ? 1 : 0);
+    }
+  }
+
+  const sorted = armies.slice().sort((a, b) =>
+    (wins[b.armyName] / (played[b.armyName] || 1)) - (wins[a.armyName] / (played[a.armyName] || 1))
+  );
+
+  const COL = 22;
+  for (const a of sorted) {
+    const avg = played[a.armyName] ? wins[a.armyName] / played[a.armyName] : 0;
+    const pts = armyPts(a);
+    const unitDesc = a.units.map(u => u.typeId.replace('groundVehicle','GV').replace('heavyVehicle','HV')).join('+');
+    console.log(`  ${a.armyName.padEnd(COL)} ${avg.toFixed(1).padStart(5)}%   ${pts}pts  [${unitDesc}]`);
+  }
+  if (failedMatchups) console.log(`  (${failedMatchups}/${totalMatchups} matchups had >50% timeouts)`);
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 const rawArgs = process.argv.slice(2).filter(a => a !== '--logs');
@@ -672,13 +850,28 @@ const showLogs = process.argv.includes('--logs');
 const [nArg = '100', nameA = 'ironwall', nameB = 'sharpshot'] = rawArgs;
 const N = Math.max(1, parseInt(nArg));
 
+applyPatches();
+
+// ── Budget-tier mode: npx tsx sim-game.js [games] tiers ──────────────────────
+if (nameA === 'tiers') {
+  console.log(`Budget tier round-robin — ${N} games per matchup\n`);
+  for (const budget of [200, 250, 300]) {
+    const tierArmies = TIER_ARMIES[budget];
+    const matchups = tierArmies.length * (tierArmies.length - 1) / 2;
+    console.log(`══ ${budget}pt Budget (${tierArmies.length} armies, ${matchups} matchups) ════════════════════`);
+    runRoundRobin(tierArmies, N);
+    console.log();
+  }
+  process.exit(0);
+}
+
+// ── Named-army mode: npx tsx sim-game.js [games] [armyA] [armyB] ─────────────
 const army0 = ARMIES[nameA];
 const army1 = ARMIES[nameB];
 
 if (!army0) { console.error(`Unknown army: ${nameA}\nAvailable: ${Object.keys(ARMIES).join(', ')}`); process.exit(1); }
 if (!army1) { console.error(`Unknown army: ${nameB}\nAvailable: ${Object.keys(ARMIES).join(', ')}`); process.exit(1); }
 
-applyPatches();
 console.log(`Simulating ${N} games: ${army0.armyName} vs ${army1.armyName}\n`);
 
 const statsA = { weaponFired: {}, weaponHits: {} };
