@@ -1242,6 +1242,9 @@ export function gameReducer(state, action) {
       ));
     }
 
+    case 'APPLY_BOT_STEP':
+      return action.nextState;
+
     default:
       return state;
   }

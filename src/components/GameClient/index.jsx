@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { GameProvider, useGame, isActivePlayer } from '../../store/gameContext';
 import GameSetup from './GameSetup';
+import BotController from './BotController';
 import TerrainEditor from './TerrainEditor';
 import ObjectiveSetup from './ObjectiveSetup';
 import DeployPhase from './DeployPhase';
@@ -410,7 +411,7 @@ export default function GameClient({ onExit }) {
           <button className="game-nav-back" onClick={onExit}>← Army Builder</button>
           <span className="game-nav-title">Mecha: HEX — Battle</span>
         </div>
-        <GameSetup onStart={(names, armies) => setGameConfig({ names, armies })} />
+        <GameSetup onStart={(names, armies, botPlayerIndex) => setGameConfig({ names, armies, botPlayerIndex })} />
       </div>
     );
   }
@@ -421,7 +422,13 @@ export default function GameClient({ onExit }) {
         <button className="game-nav-back" onClick={onExit}>← Army Builder</button>
         <span className="game-nav-title">Mecha: HEX — Battle</span>
       </div>
-      <GameProvider playerNames={gameConfig.names} armies={gameConfig.armies}>
+      <GameProvider
+        playerNames={gameConfig.names}
+        armies={gameConfig.armies}
+        localPlayerIndex={gameConfig.botPlayerIndex != null ? 0 : null}
+        botPlayerIndex={gameConfig.botPlayerIndex ?? null}
+      >
+        {gameConfig.botPlayerIndex != null && <BotController botPlayerIndex={gameConfig.botPlayerIndex} />}
         <GameInner />
       </GameProvider>
     </div>

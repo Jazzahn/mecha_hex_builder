@@ -30,8 +30,9 @@ function ArmySlot({ label, colorClass, army, onLoad, onClear }) {
 }
 
 export default function GameSetup({ onStart }) {
-  const [playerNames, setPlayerNames] = useState(['Player 1', 'Player 2']);
+  const [playerNames, setPlayerNames] = useState(['Player 1', 'Bot']);
   const [armies, setArmies] = useState([null, null]);
+  const [vsBot, setVsBot] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -63,20 +64,45 @@ export default function GameSetup({ onStart }) {
       setError('Player 1 needs an army. Load one above.');
       return;
     }
-    if (!armies[1] || armies[1].units.length === 0) {
+    if (!vsBot && (!armies[1] || armies[1].units.length === 0)) {
       setError('Player 2 needs an army. Load one above.');
       return;
     }
+    if (vsBot && (!armies[1] || armies[1].units.length === 0)) {
+      // Use a copy of P1's army for the bot if no P2 army is loaded
+      const botArmy = JSON.parse(JSON.stringify(armies[0]));
+      botArmy.armyName = 'Bot Army';
+      setError('');
+      onStart(playerNames, [JSON.parse(JSON.stringify(armies[0])), botArmy], vsBot ? 1 : null);
+      return;
+    }
     setError('');
-    onStart(playerNames, armies.map(a => JSON.parse(JSON.stringify(a))));
+    onStart(playerNames, armies.map(a => JSON.parse(JSON.stringify(a))), vsBot ? 1 : null);
   }
 
-  const canStart = armies[0]?.units.length > 0 && armies[1]?.units.length > 0;
+  const canStart = armies[0]?.units.length > 0 && (vsBot || armies[1]?.units.length > 0);
 
   return (
     <div className="game-setup">
       <div className="game-setup-card">
         <h1 className="game-setup-title">Mecha: HEX — Battle Setup</h1>
+
+        <div className="game-setup-section">
+          <h2>Game Mode</h2>
+          <div className="game-setup-mode">
+            <label className="game-setup-mode-toggle">
+              <input
+                type="checkbox"
+                checked={vsBot}
+                onChange={e => {
+                  setVsBot(e.target.checked);
+                  setPlayerNames(prev => [prev[0], e.target.checked ? 'Bot' : 'Player 2']);
+                }}
+              />
+              <span>Play vs Bot (AI controls Player 2)</span>
+            </label>
+          </div>
+        </div>
 
         <div className="game-setup-section">
           <h2>Player Names</h2>
@@ -89,6 +115,7 @@ export default function GameSetup({ onStart }) {
                   value={playerNames[i]}
                   onChange={e => setPlayerNames(prev => prev.map((n, j) => j === i ? e.target.value : n))}
                   maxLength={24}
+                  readOnly={vsBot && i === 1}
                 />
               </label>
             ))}
@@ -108,13 +135,33 @@ export default function GameSetup({ onStart }) {
               onLoad={() => loadArmy(0)}
               onClear={() => clearArmy(0)}
             />
-            <ArmySlot
-              label="Player 2 Army (Red)"
-              colorClass="army-slot--p1"
-              army={armies[1]}
-              onLoad={() => loadArmy(1)}
-              onClear={() => clearArmy(1)}
-            />
+            {vsBot ? (
+              <div className="army-slot army-slot--p1 army-slot--bot">
+                <div className="army-slot-label">Bot Army (Red)</div>
+                <div className="army-slot-loaded">
+                  {armies[1] ? (
+                    <>
+                      <div className="army-slot-name">{armies[1].armyName}</div>
+                      <div className="army-slot-detail">{armies[1].units.length} units · {armies[1].pointLimit}pts</div>
+                      <button className="army-slot-clear" onClick={() => clearArmy(1)}>✕ Clear</button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="army-slot-hint">Will mirror your army if none loaded</div>
+                      <button className="army-slot-load" onClick={() => loadArmy(1)}>Load saved army for bot</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <ArmySlot
+                label="Player 2 Army (Red)"
+                colorClass="army-slot--p1"
+                army={armies[1]}
+                onLoad={() => loadArmy(1)}
+                onClear={() => clearArmy(1)}
+              />
+            )}
           </div>
         </div>
 
