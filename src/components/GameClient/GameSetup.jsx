@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { generateBotArmy } from '../../game/generateBotArmy';
 
 function tryLoad(key) {
   try {
@@ -69,11 +70,9 @@ export default function GameSetup({ onStart }) {
       return;
     }
     if (vsBot && (!armies[1] || armies[1].units.length === 0)) {
-      // Use a copy of P1's army for the bot if no P2 army is loaded
-      const botArmy = JSON.parse(JSON.stringify(armies[0]));
-      botArmy.armyName = 'Bot Army';
+      const botArmy = generateBotArmy(armies[0].pointLimit);
       setError('');
-      onStart(playerNames, [JSON.parse(JSON.stringify(armies[0])), botArmy], vsBot ? 1 : null);
+      onStart(playerNames, [JSON.parse(JSON.stringify(armies[0])), botArmy], 1);
       return;
     }
     setError('');

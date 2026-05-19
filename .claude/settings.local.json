@@ -20,7 +20,10 @@
       "Bash(npx tsx *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(Get-ChildItem \"h:\\\\Projects\\\\MechaArmyBuilder\" -Exclude node_modules)",
+      "Bash(Select-Object Name)",
+      "PowerShell(git -C \"h:\\\\Projects\\\\MechaArmyBuilder\" log --oneline -20)"
     ]
   }
 }

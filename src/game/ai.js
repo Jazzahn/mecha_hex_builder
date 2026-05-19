@@ -1,5 +1,5 @@
 import { UNIT_TYPES } from '../data/gameData';
-import { hexDistance, hexKey, isDeployZone, BOARD_COLS, BOARD_ROWS, vectorToFacing } from './hexMath';
+import { hexDistance, hexKey, hexNeighborAt, inBounds, isDeployZone, BOARD_COLS, BOARD_ROWS, vectorToFacing } from './hexMath';
 import { getEquippedWeapons, canWeaponTarget, hasActiveUpgrade, getAllSlots, parseStatValue, damagePerHit } from './combat';
 import { gameReducer, PLAY_PHASES } from './gameReducer';
 
@@ -71,6 +71,26 @@ function aiDeploy(state) {
   return s;
 }
 
+function canMoveTo(state, unit, q, r) {
+  if (!inBounds(q, r)) return false;
+  if (state.terrain[hexKey(q, r)]?.type === 'blocking') return false;
+  const occupied = new Set(state.units.filter(u => u.id !== unit.id && !u.destroyed).map(u => hexKey(u.q, u.r)));
+  if (occupied.has(hexKey(q, r))) return false;
+  const fromEl = state.terrain[hexKey(unit.q, unit.r)]?.elevation ?? 0;
+  const toEl   = state.terrain[hexKey(q, r)]?.elevation ?? 0;
+  if (toEl - fromEl > 1) return false;
+  return true;
+}
+
+function bestMoveDir(state, unit, target) {
+  const dirs = [0, 1, 2, 3, 4, 5];
+  const passable = dirs
+    .map(dir => { const nb = hexNeighborAt(unit.q, unit.r, dir); return { dir, q: nb.q, r: nb.r }; })
+    .filter(({ q, r }) => canMoveTo(state, unit, q, r))
+    .sort((a, b) => hexDistance(a.q, a.r, target.q, target.r) - hexDistance(b.q, b.r, target.q, target.r));
+  return passable[0] ?? null;
+}
+
 function aiMoveStep(state) {
   const pa   = state.pendingAction;
   const unit = state.units.find(u => u.id === state.selectedUnitId);
@@ -83,14 +103,14 @@ function aiMoveStep(state) {
   const target = enemies.reduce((b, e) =>
     hexDistance(unit.q, unit.r, e.q, e.r) < hexDistance(unit.q, unit.r, b.q, b.r) ? e : b);
 
-  const desired      = vectorToFacing(unit.q, unit.r, target.q, target.r);
   const distToTarget = hexDistance(unit.q, unit.r, target.q, target.r);
   const hasTurret    = UNIT_TYPES[unit.typeId]?.special?.includes('Turret');
 
   if (pa.isJumping) {
     if (distToTarget <= 1) return gameReducer(state, { type: 'END_STEP_MOVE' });
-    const before = hexKey(unit.q, unit.r);
-    const moved  = gameReducer(state, { type: 'STEP_MOVE', direction: desired });
+    const desired = vectorToFacing(unit.q, unit.r, target.q, target.r);
+    const before  = hexKey(unit.q, unit.r);
+    const moved   = gameReducer(state, { type: 'STEP_MOVE', direction: desired });
     const afterUnit = moved.units.find(u => u.id === unit.id);
     if (hexKey(afterUnit.q, afterUnit.r) === before) return gameReducer(state, { type: 'END_STEP_MOVE' });
     if (moved.pendingAction?.action === 'jump-land') return moved;
@@ -98,6 +118,14 @@ function aiMoveStep(state) {
     if (distAfter <= 1) return gameReducer(moved, { type: 'END_STEP_MOVE' });
     return moved;
   }
+
+  if (distToTarget <= 1) return gameReducer(state, { type: 'END_STEP_MOVE' });
+
+  // Pick the passable neighbor that gets closest to the target
+  const best = bestMoveDir(state, unit, target);
+  if (!best) return gameReducer(state, { type: 'END_STEP_MOVE' });
+
+  const desired = best.dir;
 
   if (!hasTurret && unit.facing !== desired) {
     const leftTurns  = (desired - unit.facing + 6) % 6;
