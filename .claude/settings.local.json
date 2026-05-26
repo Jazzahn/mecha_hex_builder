@@ -23,7 +23,12 @@
       "Bash(npx vite *)",
       "Bash(Get-ChildItem \"h:\\\\Projects\\\\MechaArmyBuilder\" -Exclude node_modules)",
       "Bash(Select-Object Name)",
-      "PowerShell(git -C \"h:\\\\Projects\\\\MechaArmyBuilder\" log --oneline -20)"
+      "PowerShell(git -C \"h:\\\\Projects\\\\MechaArmyBuilder\" log --oneline -20)",
+      "Bash(curl -s \"https://ogulkokan.github.io/retro-terminal/css/global-styles.css\")",
+      "Bash(curl -s \"https://ogulkokan.github.io/retro-terminal/css/terminal-styles.css\")",
+      "Bash(curl -s \"https://ogulkokan.github.io/retro-terminal/css/cursor-styles.css\")",
+      "WebFetch(domain:i0.wp.com)",
+      "Bash(grep -E '\\\\.\\(jsx|js\\)$')"
     ]
   }
 }

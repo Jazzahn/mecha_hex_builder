@@ -353,7 +353,7 @@ function PlayingView() {
 }
 
 function GameOver() {
-  const { gameState } = useGame();
+  const { gameState, onExit } = useGame();
   const { objectives, units, playerNames, log } = gameState;
 
   const scores = [0, 1].map(pi =>
@@ -385,6 +385,9 @@ function GameOver() {
       <div className="game-over-log">
         {log.map((e, i) => <div key={i}><b>R{e.round}:</b> {e.text}</div>)}
       </div>
+      {onExit && (
+        <button className="game-over-menu-btn" onClick={onExit}>← Back to Menu</button>
+      )}
     </div>
   );
 }
@@ -401,15 +404,15 @@ export function GameInner() {
   }
 }
 
-export default function GameClient({ onExit }) {
-  const [gameConfig, setGameConfig] = useState(null);
+export default function GameClient({ onExit, initialConfig = null }) {
+  const [gameConfig, setGameConfig] = useState(initialConfig);
 
   if (!gameConfig) {
     return (
       <div className="game-root">
         <div className="game-nav">
-          <button className="game-nav-back" onClick={onExit}>← Army Builder</button>
-          <span className="game-nav-title">Mecha: HEX — Battle</span>
+          <button className="game-nav-back" onClick={onExit}>← Menu</button>
+          <span className="game-nav-title">Mecha: HEX — Battle Setup</span>
         </div>
         <GameSetup onStart={(names, armies, botPlayerIndex) => setGameConfig({ names, armies, botPlayerIndex })} />
       </div>
@@ -418,15 +421,12 @@ export default function GameClient({ onExit }) {
 
   return (
     <div className="game-root">
-      <div className="game-nav">
-        <button className="game-nav-back" onClick={onExit}>← Army Builder</button>
-        <span className="game-nav-title">Mecha: HEX — Battle</span>
-      </div>
       <GameProvider
         playerNames={gameConfig.names}
         armies={gameConfig.armies}
         localPlayerIndex={gameConfig.botPlayerIndex != null ? 0 : null}
         botPlayerIndex={gameConfig.botPlayerIndex ?? null}
+        onExit={onExit}
       >
         {gameConfig.botPlayerIndex != null && <BotController botPlayerIndex={gameConfig.botPlayerIndex} />}
         <GameInner />

@@ -227,7 +227,7 @@ function OnlineGame({ playerIndex, initialState, onExit }) {
   if (disconnected) return <DisconnectedScreen onExit={onExit} />;
 
   return (
-    <OnlineGameProvider playerIndex={playerIndex} initialState={initialState}>
+    <OnlineGameProvider playerIndex={playerIndex} initialState={initialState} onExit={onExit}>
       <GameInner />
     </OnlineGameProvider>
   );
@@ -277,7 +277,7 @@ export default function OnlineClient({ onExit }) {
     return (
       <div className="game-root">
         <div className="game-nav">
-          <button className="game-nav-back" onClick={handleExit}>← Army Builder</button>
+          <button className="game-nav-back" onClick={handleExit}>← Menu</button>
           <span className="game-nav-title">Mecha: HEX — Online Battle</span>
         </div>
         <OnlineGame playerIndex={playerIndex} initialState={initialState} onExit={handleExit} />
@@ -306,7 +306,7 @@ export default function OnlineClient({ onExit }) {
   return (
     <div className="online-root">
       <div className="game-nav">
-        <button className="game-nav-back" onClick={onExit}>← Army Builder</button>
+        <button className="game-nav-back" onClick={onExit}>← Menu</button>
         <span className="game-nav-title">Mecha: HEX — Online</span>
       </div>
       <div className="online-content">

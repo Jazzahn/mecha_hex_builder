@@ -8,21 +8,24 @@ import UnitCard from './components/UnitCard';
 import ValidationPanel from './components/ValidationPanel';
 import UpgradeLibrary from './components/UpgradeLibrary';
 import PrintView from './components/PrintView';
+import SplashScreen from './components/SplashScreen';
 import GameClient from './components/GameClient/index.jsx';
 import OnlineClient from './components/OnlineClient/index.jsx';
-import { ALL_UPGRADES, KEYWORDS, getSlotCost } from './data/gameData';
+import { generateBotArmy } from './game/generateBotArmy';
+import { ALL_UPGRADES, getSlotCost } from './data/gameData';
 import { canAddToZone } from './utils/validation';
 import Tooltip from './components/Tooltip';
 import './App.css';
 import './game.css';
+import './splash.css';
 
 const PHASE_ORDER = [
-  { label: 'Vehicles', filter: u => ['groundVehicle', 'heavyVehicle'].includes(u.typeId) },
-  { label: 'Light Mecha', filter: u => u.typeId === 'light' },
-  { label: 'Medium Mecha', filter: u => u.typeId === 'medium' },
-  { label: 'Heavy Mecha', filter: u => u.typeId === 'heavy' },
+  { label: 'Vehicles',      filter: u => ['groundVehicle', 'heavyVehicle'].includes(u.typeId) },
+  { label: 'Light Mecha',   filter: u => u.typeId === 'light' },
+  { label: 'Medium Mecha',  filter: u => u.typeId === 'medium' },
+  { label: 'Heavy Mecha',   filter: u => u.typeId === 'heavy' },
   { label: 'Assault Mecha', filter: u => u.typeId === 'assault' },
-  { label: 'Structures', filter: u => ['armedStructure', 'unarmedStructure', 'fortifiedStructure'].includes(u.typeId) },
+  { label: 'Structures',    filter: u => ['armedStructure', 'unarmedStructure', 'fortifiedStructure'].includes(u.typeId) },
 ];
 
 function slotCostLabel(upgrade) {
@@ -57,7 +60,15 @@ function DragPreview({ upgradeId }) {
   );
 }
 
-function ArmyBuilderInner({ onPlayClick, onOnlineClick }) {
+function ActiveDragOverlay() {
+  const { activeDragId } = useBuilder();
+  if (!activeDragId) return null;
+  return <DragPreview upgradeId={activeDragId} />;
+}
+
+// ── Army builder inner — shared by both vsbot and builder modes ───────────────
+
+function ArmyBuilderInner({ onPlayClick, onOnlineClick, playLabel }) {
   const { army, dispatch, load } = useArmy();
   const { setActiveDragId } = useBuilder();
 
@@ -76,22 +87,24 @@ function ArmyBuilderInner({ onPlayClick, onOnlineClick }) {
     setActiveDragId(null);
     if (!over) return;
     const upgradeId = active.data.current?.upgradeId;
-    const unitId = over.data.current?.unitId;
-    const location = over.data.current?.location;
+    const unitId    = over.data.current?.unitId;
+    const location  = over.data.current?.location;
     if (!upgradeId || !unitId || !location) return;
     const unit = army.units.find(u => u.id === unitId);
     if (!unit || !canAddToZone(unit, location, upgradeId)) return;
     dispatch({ type: 'ADD_UPGRADE', unitId, location, upgradeId });
   }
 
-  function handleDragCancel() {
-    setActiveDragId(null);
-  }
+  function handleDragCancel() { setActiveDragId(null); }
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <div className="screen-only">
-        <ArmyHeader onPlayClick={onPlayClick} onOnlineClick={onOnlineClick} />
+        <ArmyHeader
+          onPlayClick={onPlayClick ? () => onPlayClick(army) : null}
+          onOnlineClick={onOnlineClick ?? null}
+          playLabel={playLabel}
+        />
         <div className="main-layout">
           <aside className="sidebar">
             <AddUnitPanel />
@@ -118,7 +131,6 @@ function ArmyBuilderInner({ onPlayClick, onOnlineClick }) {
         </div>
       </div>
       <DragOverlay dropAnimation={null}>
-        {/* rendered by activeDragId via context — read inside DragOverlay */}
         <ActiveDragOverlay />
       </DragOverlay>
       <div className="print-only">
@@ -128,30 +140,81 @@ function ArmyBuilderInner({ onPlayClick, onOnlineClick }) {
   );
 }
 
-function ActiveDragOverlay() {
-  const { activeDragId } = useBuilder();
-  if (!activeDragId) return null;
-  return <DragPreview upgradeId={activeDragId} />;
+function ArmyBuilderPage({ mode, onBack, onLaunchBotGame }) {
+  return (
+    <div className="mode-page">
+      <div className="mode-nav">
+        <button className="mode-nav-back" onClick={onBack}>← Menu</button>
+        <span className="mode-nav-title">
+          {mode === 'vsbot' ? 'Vs Bots — Army Builder' : 'Army Builder'}
+        </span>
+      </div>
+      <ArmyProvider>
+        <BuilderProvider>
+          <ArmyBuilderInner
+            onPlayClick={mode === 'vsbot' ? onLaunchBotGame : null}
+            playLabel={mode === 'vsbot' ? '▶ Play vs Bot' : undefined}
+          />
+        </BuilderProvider>
+      </ArmyProvider>
+    </div>
+  );
 }
 
-export default function App() {
-  const [page, setPage] = useState('builder'); // 'builder' | 'game' | 'online'
+// ── Root app ─────────────────────────────────────────────────────────────────
 
-  if (page === 'game') {
-    return <GameClient onExit={() => setPage('builder')} />;
+export default function App() {
+  const [page, setPage]               = useState(null);   // null | 'vsbot' | 'builder' | 'game' | 'online'
+  const [showSplash, setShowSplash]   = useState(true);
+  const [vsBotConfig, setVsBotConfig] = useState(null);
+
+  function handleSplashSelect(mode) {
+    setPage(mode);
   }
-  if (page === 'online') {
-    return <OnlineClient onExit={() => setPage('builder')} />;
+
+  function handleSplashDone() {
+    setShowSplash(false);
+  }
+
+  function handleBackToMenu() {
+    setPage(null);
+    setVsBotConfig(null);
+    setShowSplash(true);
+  }
+
+  function handleLaunchBotGame(army) {
+    if (!army.units.length) return;
+    const botArmy = generateBotArmy(army.pointLimit);
+    setVsBotConfig({
+      names: [army.armyName || 'Player 1', 'Bot'],
+      armies: [JSON.parse(JSON.stringify(army)), botArmy],
+      botPlayerIndex: 1,
+    });
+    setPage('game');
   }
 
   return (
-    <ArmyProvider>
-      <BuilderProvider>
-        <ArmyBuilderInner
-          onPlayClick={() => setPage('game')}
-          onOnlineClick={() => setPage('online')}
+    <>
+      {/* Page content renders behind the splash while it animates open */}
+      {page === 'vsbot' && (
+        <ArmyBuilderPage mode="vsbot" onBack={handleBackToMenu} onLaunchBotGame={handleLaunchBotGame} />
+      )}
+      {page === 'builder' && (
+        <ArmyBuilderPage mode="builder" onBack={handleBackToMenu} />
+      )}
+      {page === 'game' && vsBotConfig && (
+        <GameClient
+          onExit={handleBackToMenu}
+          initialConfig={vsBotConfig}
         />
-      </BuilderProvider>
-    </ArmyProvider>
+      )}
+      {page === 'online' && (
+        <OnlineClient onExit={handleBackToMenu} />
+      )}
+
+      {showSplash && (
+        <SplashScreen onSelect={handleSplashSelect} onDone={handleSplashDone} />
+      )}
+    </>
   );
 }

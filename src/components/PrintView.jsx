@@ -77,8 +77,8 @@ function MechaBlock({ unit }) {
       </thead>
       <tbody>
         <tr>
-          <SlotList unit={unit} location="torso" label="Torso" />
           <SlotList unit={unit} location="larm" label="L.Arm" />
+          <SlotList unit={unit} location="torso" label="Torso" />
           <SlotList unit={unit} location="rarm" label="R.Arm" />
         </tr>
       </tbody>

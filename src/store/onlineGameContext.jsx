@@ -30,7 +30,7 @@ function getCombatStepController(gameState) {
   }
 }
 
-export function OnlineGameProvider({ playerIndex, initialState, children }) {
+export function OnlineGameProvider({ playerIndex, initialState, onExit = null, children }) {
   const [gameState, setGameState] = useState(initialState ?? null);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function OnlineGameProvider({ playerIndex, initialState, children }) {
   }
 
   return (
-    <GameContext.Provider value={{ gameState, dispatch, localPlayerIndex: playerIndex }}>
+    <GameContext.Provider value={{ gameState, dispatch, localPlayerIndex: playerIndex, onExit }}>
       {children}
     </GameContext.Provider>
   );

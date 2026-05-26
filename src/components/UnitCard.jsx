@@ -17,7 +17,7 @@ export default function UnitCard({ unit }) {
   }
 
   const locationLabels = isMecha
-    ? [['torso', 'Torso'], ['larm', 'L.Arm'], ['rarm', 'R.Arm']]
+    ? [['larm', 'L.Arm'], ['torso', 'Torso'], ['rarm', 'R.Arm']]
     : [['single', 'Upgrades']];
 
   return (

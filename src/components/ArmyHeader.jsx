@@ -2,7 +2,7 @@ import { useArmy } from '../store/armyStore';
 import { useBuilder } from '../store/builderContext';
 import { calcPoints } from '../utils/validation';
 
-export default function ArmyHeader({ onPlayClick, onOnlineClick }) {
+export default function ArmyHeader({ onPlayClick, onOnlineClick, playLabel }) {
   const { army, dispatch, save, load } = useArmy();
   const { printLegend, setPrintLegend } = useBuilder();
   const spent = calcPoints(army);
@@ -58,20 +58,16 @@ export default function ArmyHeader({ onPlayClick, onOnlineClick }) {
             Print legend
           </label>
           <button onClick={() => window.print()} title="Print roster">Print</button>
-          <button
-            className="play-btn"
-            onClick={onPlayClick}
-            title="Launch local game"
-          >
-            ▶ Play
-          </button>
-          <button
-            className="play-btn play-btn--online"
-            onClick={onOnlineClick}
-            title="Play online"
-          >
-            ⬡ Online
-          </button>
+          {onPlayClick && (
+            <button className="play-btn" onClick={onPlayClick} title="Launch game">
+              {playLabel ?? '▶ Play'}
+            </button>
+          )}
+          {onOnlineClick && (
+            <button className="play-btn play-btn--online" onClick={onOnlineClick} title="Play online">
+              ⬡ Online
+            </button>
+          )}
         </div>
       </div>
     </header>

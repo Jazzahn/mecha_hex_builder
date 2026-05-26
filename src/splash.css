@@ -1,0 +1,131 @@
+/* ── Splash overlay ──────────────────────────────────────────────────────────── */
+
+/* Fullscreen backdrop — centers the stage, lets page content show through */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Stage locks to the images' native 4:3 ratio and scales to fit the viewport */
+.splash-stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 4 / 3));
+  height: min(100vh, calc(100vw * 3 / 4));
+  overflow: hidden;
+}
+
+/* Door halves — fill the stage at natural image scale */
+.splash-door {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.2s;
+}
+
+.splash-door--left.splash-opening  { transform: translateX(-100%); }
+.splash-door--right.splash-opening { transform: translateX(100%);  }
+
+/* UI layer — logo + buttons sit above the doors */
+.splash-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  transition: opacity 0.25s ease;
+}
+
+.splash-ui--fade {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Logo fills the stage at the same scale as the door images */
+.splash-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Buttons sit at the bottom center of the stage */
+.splash-buttons {
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.5rem;
+  white-space: nowrap;
+}
+
+.splash-btn {
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(8, 7, 0, 0.88);
+  color: #FFA128;
+  border: 2px solid #FFA128;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  backdrop-filter: blur(4px);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+.splash-btn:hover {
+  background: #FFA128;
+  border-color: #FFD080;
+  color: #080700;
+}
+
+.splash-btn:active {
+  background: #cc8822;
+}
+
+/* ── Mode nav bar (Back to Menu + page title) ────────────────────────────────── */
+
+.mode-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: #080700;
+  border-bottom: 1px solid #2e2400;
+  min-height: 2.5rem;
+}
+
+.mode-nav-back {
+  background: transparent;
+  border: 1px solid #5a4200;
+  color: #FFA128;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-nav-back:hover {
+  background: #FFA128;
+  color: #080700;
+  border-color: #FFA128;
+}
+
+.mode-nav-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #D48C3C;
+  text-transform: uppercase;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+}

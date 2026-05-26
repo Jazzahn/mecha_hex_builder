@@ -3,10 +3,10 @@ import { gameReducer, buildInitialState } from '../game/gameReducer';
 
 export const GameContext = createContext(null);
 
-export function GameProvider({ playerNames, armies, localPlayerIndex = null, botPlayerIndex = null, children }) {
+export function GameProvider({ playerNames, armies, localPlayerIndex = null, botPlayerIndex = null, onExit = null, children }) {
   const [gameState, dispatch] = useReducer(gameReducer, buildInitialState(playerNames, armies));
   return (
-    <GameContext.Provider value={{ gameState, dispatch, localPlayerIndex, botPlayerIndex }}>
+    <GameContext.Provider value={{ gameState, dispatch, localPlayerIndex, botPlayerIndex, onExit }}>
       {children}
     </GameContext.Provider>
   );
