@@ -255,6 +255,7 @@ export default function HexBoard({
   onTurnRight,
   onUnitPos,
   onHoverUnit,
+  onHoverHex,
   deployFacingOrigin = null,
   explosions = [],
 }) {
@@ -328,7 +329,17 @@ export default function HexBoard({
   }
 
   function handleMouseMove(e) {
-    if (!dragRef.current.active) return;
+    if (!dragRef.current.active) {
+      if (onHoverHex) {
+        const { x: sx, y: sy } = toSVGCoords(e);
+        const cx = (sx - panRef.current.x) / zoomRef.current;
+        const cy = (sy - panRef.current.y) / zoomRef.current;
+        const { q, r } = pixelToHex(cx, cy);
+        if (inBounds(q, r)) onHoverHex(q, r, e.clientX, e.clientY);
+        else onHoverHex(null);
+      }
+      return;
+    }
     const { x, y } = toSVGCoords(e);
     const dx = x - dragRef.current.lastX;
     const dy = y - dragRef.current.lastY;
@@ -551,7 +562,7 @@ export default function HexBoard({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={() => { handleMouseUp(); onHoverHex?.(null); }}
       >
         <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
           {/* 1. Grass + borders + labels */}

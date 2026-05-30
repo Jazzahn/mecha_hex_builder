@@ -9,6 +9,7 @@ import ValidationPanel from './components/ValidationPanel';
 import UpgradeLibrary from './components/UpgradeLibrary';
 import PrintView from './components/PrintView';
 import SplashScreen from './components/SplashScreen';
+import RulesModal from './components/RulesModal';
 import GameClient from './components/GameClient/index.jsx';
 import OnlineClient from './components/OnlineClient/index.jsx';
 import { generateBotArmy } from './game/generateBotArmy';
@@ -18,6 +19,7 @@ import Tooltip from './components/Tooltip';
 import './App.css';
 import './game.css';
 import './splash.css';
+import './rules.css';
 
 const PHASE_ORDER = [
   { label: 'Vehicles',      filter: u => ['groundVehicle', 'heavyVehicle'].includes(u.typeId) },
@@ -167,6 +169,7 @@ export default function App() {
   const [page, setPage]               = useState(null);   // null | 'vsbot' | 'builder' | 'game' | 'online'
   const [showSplash, setShowSplash]   = useState(true);
   const [vsBotConfig, setVsBotConfig] = useState(null);
+  const [showRules, setShowRules]     = useState(false);
 
   function handleSplashSelect(mode) {
     setPage(mode);
@@ -213,8 +216,9 @@ export default function App() {
       )}
 
       {showSplash && (
-        <SplashScreen onSelect={handleSplashSelect} onDone={handleSplashDone} />
+        <SplashScreen onSelect={handleSplashSelect} onDone={handleSplashDone} onRules={() => setShowRules(true)} />
       )}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
     </>
   );
 }

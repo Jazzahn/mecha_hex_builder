@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mecha: HEX — Record Sheets</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+@page { size: letter; margin: 12mm 14mm; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  background: #ccc;
+  color: #111;
+  font-size: 9pt;
+  line-height: 1.3;
+}
+
+/* ── Sheet ── */
+.sheet {
+  width: 183mm;
+  min-height: 257mm;
+  margin: 0 auto 12mm;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #111;
+  page-break-after: always;
+}
+
+/* ── Header ── */
+.sheet-header {
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: stretch;
+}
+.header-title {
+  flex: 1;
+  padding: 4mm 6mm 3mm;
+}
+.header-game {
+  font-size: 7pt;
+  letter-spacing: 0.25em;
+  color: #aaa;
+  text-transform: uppercase;
+}
+.header-name {
+  font-size: 22pt;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin-top: 0.5mm;
+}
+.header-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 4mm 6mm 3mm;
+  border-left: 1px solid #444;
+  min-width: 44mm;
+  text-align: right;
+}
+.header-variant { font-size: 8pt; color: #bbb; letter-spacing: 0.1em; }
+.header-type    { font-size: 10pt; font-weight: bold; color: #e8a030; letter-spacing: 0.06em; margin-top: 1mm; }
+.header-pts     { font-size: 8pt; color: #999; margin-top: 0.5mm; }
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #111;
+}
+.stat-block {
+  padding: 3mm 6mm;
+  border-right: 1px solid #ccc;
+}
+.stat-block:last-child { border-right: none; }
+.stat-block-label {
+  font-size: 6.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 1mm;
+  margin-bottom: 2mm;
+}
+.stat-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1mm;
+}
+.stat-key  { color: #555; font-size: 8.5pt; }
+.stat-val  { font-size: 10pt; font-weight: bold; }
+.stat-note { font-size: 7pt; color: #888; font-weight: normal; }
+
+/* ══════════════════════════════════════════════════════════════
+   CRITICAL HIT TABLE
+   Three columns (L-ARM | TORSO | R-ARM).
+   Each equipment item shows N damage circles on its left —
+   one per slot it occupies. Cross off all circles → item disabled.
+══════════════════════════════════════════════════════════════ */
+.crit-section {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  border-bottom: 2px solid #111;
+}
+.crit-col {
+  border-right: 1px solid #aaa;
+  display: flex;
+  flex-direction: column;
+}
+.crit-col:last-child { border-right: none; }
+
+.crit-col-hdr {
+  background: #111;
+  color: white;
+  font-size: 7pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 1.5mm 2mm;
+}
+
+.crit-items {
+  padding: 3mm 4mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+}
+
+/* One row per equipment item */
+.crit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5mm;
+  padding-bottom: 2.5mm;
+  border-bottom: 1px solid #e8e8e8;
+}
+.crit-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Damage circles cluster — count equals slot cost */
+.ci-circles {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5mm;
+  flex-shrink: 0;
+  padding-top: 0.5mm;
+}
+.ci-row {
+  display: flex;
+  gap: 1.5mm;
+}
+.ci-circle {
+  width: 7mm;
+  height: 7mm;
+  border: 1.5px solid #111;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Equipment info */
+.ci-info   { flex: 1; min-width: 0; }
+.ci-name   { font-size: 8pt; font-weight: bold; line-height: 1.2; }
+.ci-stats  { font-size: 7pt; color: #444; margin-top: 0.5mm; line-height: 1.4; }
+.ci-kw     { font-size: 6.5pt; color: #777; font-style: italic; margin-top: 0.5mm; line-height: 1.4; }
+.ci-desc   { font-size: 6.5pt; color: #555; font-style: italic; margin-top: 0.5mm; line-height: 1.4; }
+
+/* Slot-count label under the circles */
+.ci-slabel {
+  font-size: 6pt;
+  color: #999;
+  text-align: center;
+  letter-spacing: 0.05em;
+  margin-top: 0.5mm;
+}
+
+/* ── Damage rule callout ── */
+.damage-rule {
+  background: #f4f4f4;
+  border-top: 1px solid #ccc;
+  font-size: 7pt;
+  color: #555;
+  padding: 2mm 6mm;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+.damage-rule strong { color: #111; }
+
+/* ── Keywords reference ── */
+.keywords-section {
+  padding: 3mm 6mm 2mm;
+  border-bottom: 1px solid #ccc;
+}
+.section-title {
+  font-size: 6.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #777;
+  margin-bottom: 2.5mm;
+}
+.keywords-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1mm 6mm;
+  font-size: 7.5pt;
+}
+.kw-entry { display: flex; gap: 2mm; }
+.kw-name  { font-weight: bold; min-width: 22mm; color: #222; flex-shrink: 0; }
+.kw-desc  { color: #555; }
+
+/* ── Pilot / Notes footer ── */
+.footer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: auto;
+}
+.footer-block {
+  padding: 3mm 6mm;
+  border-top: 1px solid #aaa;
+  border-right: 1px solid #aaa;
+}
+.footer-block:last-child { border-right: none; }
+.footer-label {
+  font-size: 6.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 2mm;
+}
+.pilot-line {
+  display: flex;
+  gap: 2mm;
+  margin-bottom: 3.5mm;
+  align-items: baseline;
+}
+.pilot-line-label { font-size: 7.5pt; color: #555; min-width: 14mm; flex-shrink: 0; }
+.pilot-line-blank { flex: 1; border-bottom: 1px solid #999; }
+.notes-box {
+  min-height: 14mm;
+  border: 1px solid #ccc;
+  padding: 1.5mm;
+  font-size: 7.5pt;
+  color: #999;
+  font-style: italic;
+}
+
+@media print  { body { background: white; padding: 0; } .sheet { margin: 0; box-shadow: none; } }
+@media screen { body { padding: 10mm; } .sheet { box-shadow: 0 4px 16px rgba(0,0,0,0.25); } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ LOCUST ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">LOCUST</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">LCT-1V</div>
+      <div class="header-type">Light Mecha</div>
+      <div class="header-pts">40 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>    <span class="stat-val">6 hex <span class="stat-note">(5 + HTE)</span></span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">10 hex <span class="stat-note">(8 + HTE)</span></span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>    <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>   <span class="stat-val">5+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span> <span class="stat-val">5+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">5</span></div>
+    </div>
+  </div>
+
+  <!-- CRITICAL HIT TABLE -->
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 1 slot</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Small Laser</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Machine Gun Array</div>
+            <div class="ci-stats">Rng 3 · Att 8 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Relentless · Light Arms</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">High Tuned Engine</div>
+            <div class="ci-desc">+1 hex walk, +2 hex cruise/ram</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 1 slot</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Small Laser</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Relentless</span><span class="kw-desc">Split attacks to different targets; declare all before rolling.</span></div>
+      <div class="kw-entry"><span class="kw-name">Light Arms</span><span class="kw-desc">Defenders gain +1 to Toughness rolls vs. this weapon.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Fast scout. Survive on evasion — don't stand still.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ HUNCHBACK ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">HUNCHBACK</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">HBK-4G</div>
+      <div class="header-type">Medium Mecha</div>
+      <div class="header-pts">60 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>    <span class="stat-val">4 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">6 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>    <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>   <span class="stat-val">4+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span> <span class="stat-val">4+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">7</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 2 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-slabel">2sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Autocannon/20</div>
+            <div class="ci-stats">Rng 4 · Att 6 · Str 3</div>
+            <div class="ci-kw">Ammo Box · Relentless · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 2 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-slabel">2sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Relentless</span><span class="kw-desc">Split attacks to different targets; declare all before rolling.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Brawler. Get to 4 hex range — the AC/20 at full power will end the fight.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ MARAUDER ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">MARAUDER</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">MAD-3R</div>
+      <div class="header-type">Heavy Mecha</div>
+      <div class="header-pts">80 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>    <span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">5 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>    <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>   <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span> <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">10</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-slabel">2sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Ultra AC/5</div>
+            <div class="ci-stats">Rng 9 · Att 6 · Str 1</div>
+            <div class="ci-kw">Ammo Box · Relentless</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Reinforced Frame</div>
+            <div class="ci-desc">−1 damage when ramming or being rammed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Relentless</span><span class="kw-desc">Split attacks to different targets; declare all before rolling.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Twin PPC platform. Heat Sinks are critical — keep them alive. Stay at range 9.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ ATLAS ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">ATLAS</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">AS7-D</div>
+      <div class="header-type">Assault Mecha</div>
+      <div class="header-pts">100 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>    <span class="stat-val">2 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>    <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>   <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span> <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">13</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Autocannon/20</div>
+            <div class="ci-stats">Rng 4 · Att 6 · Str 3</div>
+            <div class="ci-kw">Ammo Box · Relentless · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Extra Armor</div>
+            <div class="ci-desc">This upgrade takes 3 damage to disable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 5 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-slabel">2sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Extra Armor</div>
+            <div class="ci-desc">This upgrade takes 3 damage to disable</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Reinforced Frame</div>
+            <div class="ci-desc">−1 damage when ramming or being rammed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">LRM-20</div>
+            <div class="ci-stats">Rng 9 · Att 6 · Str 0 · Min 2</div>
+            <div class="ci-kw">Ammo Box · Indirect</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Streak SRM Rack</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Accurate · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Relentless</span><span class="kw-desc">Split attacks to different targets; declare all before rolling.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Indirect</span><span class="kw-desc">May shoot through obstacles; ignores cover from obstructions.</span></div>
+      <div class="kw-entry"><span class="kw-name">Accurate</span><span class="kw-desc">Add +1 to hit rolls (e.g. hits Eva 4+ on a 3+).</span></div>
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Death of a city. AC/20 at close range, LRM-20 at distance. Slow — force enemies to come to you.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ JENNER ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">JENNER</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">JR7-D</div>
+      <div class="header-type">Light Mecha</div>
+      <div class="header-pts">40 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">5 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">8 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">Yes <span class="stat-note">(Boost Jets)</span></span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">5+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">5+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">5</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 1 slot</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Small Laser</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Boost Jets</div>
+            <div class="ci-desc">May Jump when taking a move action</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 1 slot</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Streak SRM Rack</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Accurate · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Accurate</span><span class="kw-desc">Add +1 to hit rolls (e.g. hits Eva 4+ on a 3+).</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Jump-capable skirmisher. Use jets to gain elevation and high ground for shots.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ GRIFFIN ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">GRIFFIN</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">GRF-1N</div>
+      <div class="header-type">Medium Mecha</div>
+      <div class="header-pts">60 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">4 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">6 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">Yes <span class="stat-note">(Boost Jets)</span></span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">4+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">4+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">7</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 2 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">LRM-10</div>
+            <div class="ci-stats">Rng 9 · Att 4 · Str 0 · Min 2</div>
+            <div class="ci-kw">Ammo Box · Indirect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 2 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Boost Jets</div>
+            <div class="ci-desc">May Jump when taking a move action</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Indirect</span><span class="kw-desc">May shoot through obstacles; ignores cover from obstructions.</span></div>
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Jump to high ground, then PPC + LRM at range 9. Use Indirect to fire over obstacles.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ WARHAMMER ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">WARHAMMER</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">WHM-6R</div>
+      <div class="header-type">Heavy Mecha</div>
+      <div class="header-pts">80 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">5 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">10</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Streak SRM Rack</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Accurate · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Accurate</span><span class="kw-desc">Add +1 to hit rolls (e.g. hits Eva 4+ on a 3+).</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Twin PPC at range, SRM + laser up close. Heat Sinks are the lifeline — protect the torso.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ CATAPULT ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">CATAPULT</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">CPLT-C1</div>
+      <div class="header-type">Heavy Mecha</div>
+      <div class="header-pts">80 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">5 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">Yes <span class="stat-note">(Boost Jets)</span></span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">10</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">LRM-20</div>
+            <div class="ci-stats">Rng 9 · Att 6 · Str 0 · Min 2</div>
+            <div class="ci-kw">Ammo Box · Indirect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Boost Jets</div>
+            <div class="ci-desc">May Jump when taking a move action</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Small Laser</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">LRM-20</div>
+            <div class="ci-stats">Rng 9 · Att 6 · Str 0 · Min 2</div>
+            <div class="ci-kw">Ammo Box · Indirect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Indirect</span><span class="kw-desc">May shoot through obstacles; ignores cover from sight obstructions.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Artillery platform. Stay behind cover and fire Indirect. Jump to reposition when threatened.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ TIMBER WOLF ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">TIMBER WOLF</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">Mad Cat · Clan</div>
+      <div class="header-type">Heavy Mecha</div>
+      <div class="header-pts">80 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">5 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">3+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">10</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">ER Medium Laser</div>
+            <div class="ci-stats">Rng 9 · Att 3 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">LRM-20</div>
+            <div class="ci-stats">Rng 9 · Att 6 · Str 0 · Min 2</div>
+            <div class="ci-kw">Ammo Box · Indirect</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 3 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">ER Medium Laser</div>
+            <div class="ci-stats">Rng 9 · Att 3 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Streak SRM Rack</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Accurate · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+      <div class="kw-entry"><span class="kw-name">Indirect</span><span class="kw-desc">May shoot through obstacles; ignores cover from obstructions.</span></div>
+      <div class="kw-entry"><span class="kw-name">Accurate</span><span class="kw-desc">Add +1 to hit rolls (e.g. hits Eva 4+ on a 3+).</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Omni-mech flexibility. ER lasers at range 9, LRM-20 indirect, SRM at close range. Heat management is key.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ BATTLEMASTER ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">BATTLEMASTER</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">BLR-1G</div>
+      <div class="header-type">Assault Mecha</div>
+      <div class="header-pts">100 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">2 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">13</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Pulse Laser</div>
+            <div class="ci-stats">Rng 6 · Att 6 · Str 1</div>
+            <div class="ci-kw">Overheating · Accurate</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 5 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div><div class="ci-slabel">2sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Medium Laser</div>
+            <div class="ci-stats">Rng 6 · Att 4 · Str 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Streak SRM Rack</div>
+            <div class="ci-stats">Rng 3 · Att 3 · Str 0</div>
+            <div class="ci-kw">Ammo Box · Accurate · Deadly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Accurate</span><span class="kw-desc">Add +1 to hit rolls (e.g. hits Eva 4+ on a 3+).</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+      <div class="kw-entry"><span class="kw-name">Ammo Box</span><span class="kw-desc">+1 damage the first time this item is hit each round.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Overwhelming mid-range firepower. 5 laser weapons means extreme heat pressure — Heat Sinks are everything.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ AWESOME ═══ -->
+<div class="sheet">
+  <div class="sheet-header">
+    <div class="header-title">
+      <div class="header-game">Mecha: HEX &nbsp;·&nbsp; Record Sheet</div>
+      <div class="header-name">AWESOME</div>
+    </div>
+    <div class="header-meta">
+      <div class="header-variant">AWS-8Q</div>
+      <div class="header-type">Assault Mecha</div>
+      <div class="header-pts">100 pts base</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-block-label">Movement</div>
+      <div class="stat-line"><span class="stat-key">Walk</span>        <span class="stat-val">2 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Cruise / Ram</span><span class="stat-val">3 hex</span></div>
+      <div class="stat-line"><span class="stat-key">Jump</span>        <span class="stat-val">—</span></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-block-label">Combat</div>
+      <div class="stat-line"><span class="stat-key">Evasion</span>    <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Toughness</span>  <span class="stat-val">2+</span></div>
+      <div class="stat-line"><span class="stat-key">Total Slots</span><span class="stat-val">13</span></div>
+    </div>
+  </div>
+
+  <div class="crit-section">
+    <div class="crit-col">
+      <div class="crit-col-hdr">Left Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Torso — 5 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Extra Armor</div>
+            <div class="ci-desc">This upgrade takes 3 damage to disable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="crit-col">
+      <div class="crit-col-hdr">Right Arm — 4 slots</div>
+      <div class="crit-items">
+        <div class="crit-item">
+          <div class="ci-circles">
+            <div class="ci-row"><span class="ci-circle"></span><span class="ci-circle"></span></div>
+            <div class="ci-row"><span class="ci-circle"></span></div>
+            <div class="ci-slabel">3sl</div>
+          </div>
+          <div class="ci-info">
+            <div class="ci-name">PPC</div>
+            <div class="ci-stats">Rng 9 · Att 2 · Str 3 · Min 1</div>
+            <div class="ci-kw">Overheating · Deadly</div>
+          </div>
+        </div>
+        <div class="crit-item">
+          <div class="ci-circles"><div class="ci-row"><span class="ci-circle"></span></div><div class="ci-slabel">1sl</div></div>
+          <div class="ci-info">
+            <div class="ci-name">Heat Sinks</div>
+            <div class="ci-desc">Cancel up to 3 Overheat results per activation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="damage-rule">
+    <strong>Damage:</strong> When a location is hit, cross off one circle in that column — player's choice of which item. When all circles on an item are crossed off, that item is <strong>disabled</strong>. When all circles in a location are crossed off, the location is <strong>destroyed</strong>.
+  </div>
+
+  <div class="keywords-section">
+    <div class="section-title">Keyword Reference</div>
+    <div class="keywords-grid">
+      <div class="kw-entry"><span class="kw-name">Overheating</span><span class="kw-desc">Each 1 to hit = Overheat: take 1 wound, destroy a Heat Sink.</span></div>
+      <div class="kw-entry"><span class="kw-name">Deadly</span><span class="kw-desc">Always deals +1 damage per hit.</span></div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-block">
+      <div class="footer-label">Pilot</div>
+      <div class="pilot-line"><span class="pilot-line-label">Name</span><span class="pilot-line-blank"></span></div>
+      <div class="pilot-line"><span class="pilot-line-label">Hero / Title</span><span class="pilot-line-blank"></span></div>
+    </div>
+    <div class="footer-block">
+      <div class="footer-label">Notes</div>
+      <div class="notes-box">Triple PPC. Simple and brutal. Stay at range 9 and never close to melee. Protect those Heat Sinks.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

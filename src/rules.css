@@ -1,0 +1,312 @@
+/* ── Rules Modal ─────────────────────────────────────────────────────────────── */
+
+.rules-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(8, 7, 0, 0.92);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.rules-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1000px;
+  background: var(--term-bg2);
+  border-left: 1px solid var(--term-border2);
+  border-right: 1px solid var(--term-border2);
+  overflow: hidden;
+}
+
+.rules-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.2rem;
+  background: var(--term-bg);
+  border-bottom: 1px solid var(--term-border2);
+  flex-shrink: 0;
+}
+
+.rules-header-title {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  color: var(--term-bright);
+  text-transform: uppercase;
+}
+
+.rules-close-btn {
+  background: transparent;
+  border: 1px solid var(--term-border2);
+  color: var(--term-text);
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.rules-close-btn:hover {
+  background: var(--term-error);
+  border-color: var(--term-error);
+  color: var(--term-bg);
+}
+
+/* ToC nav */
+.rules-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.5rem 1.2rem;
+  background: var(--term-bg3);
+  border-bottom: 1px solid var(--term-border);
+  flex-shrink: 0;
+}
+
+.rules-toc-link {
+  font-family: var(--font);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--term-dim);
+  text-decoration: none;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+}
+.rules-toc-link:hover {
+  color: var(--term-text);
+  border-color: var(--term-border2);
+}
+
+/* Scrollable body */
+.rules-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  scroll-behavior: smooth;
+}
+
+/* Section */
+.rules-section {
+  position: relative;
+  border-top: 1px solid var(--term-border2);
+  padding-top: 1.6rem;
+  scroll-margin-top: 1rem;
+}
+
+.rules-section-title {
+  position: absolute;
+  top: -0.6em;
+  left: 0;
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--term-bright);
+  background: var(--term-bg2);
+  padding: 0 0.6em;
+}
+.rules-section-title::before { content: '│ '; color: var(--term-border2); }
+.rules-section-title::after  { content: ' │'; color: var(--term-border2); }
+
+.rules-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.rules-section-body p {
+  font-family: var(--font);
+  font-size: 0.82rem;
+  color: var(--term-text);
+  line-height: 1.55;
+}
+
+.rules-section-divider {
+  border-top: 1px solid var(--term-border);
+  margin: 0.5rem 0;
+}
+
+/* Rule rows */
+.rules-row {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.5rem;
+  font-family: var(--font);
+  font-size: 0.81rem;
+  line-height: 1.5;
+}
+
+.rules-row-label {
+  color: var(--term-dim);
+  letter-spacing: 0.06em;
+  padding-top: 0.05em;
+}
+
+.rules-row-text {
+  color: var(--term-text);
+}
+
+/* Note / caption text */
+.rules-note {
+  font-family: var(--font);
+  font-size: 0.73rem;
+  color: var(--term-dim);
+  line-height: 1.45;
+  margin-top: 0.3rem;
+}
+
+/* Tables */
+.rules-scroll-x {
+  overflow-x: auto;
+}
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.rules-table th {
+  color: var(--term-bright);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0.25rem 0.6rem;
+  border-bottom: 1px solid var(--term-border2);
+  background: var(--term-bg3);
+}
+
+.rules-table td {
+  color: var(--term-text);
+  padding: 0.22rem 0.6rem;
+  border-bottom: 1px solid var(--term-border);
+}
+
+.rules-table tr:hover td {
+  background: var(--term-surface);
+}
+
+.rules-dim {
+  color: var(--term-dim) !important;
+  font-size: 0.74rem;
+  white-space: normal;
+}
+
+/* Keywords */
+.rules-keyword-entry {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.5rem;
+  font-family: var(--font);
+  font-size: 0.81rem;
+  line-height: 1.5;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--term-border);
+}
+
+.rules-keyword-name {
+  color: var(--term-bright);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.rules-keyword-rule {
+  color: var(--term-text);
+}
+
+/* Upgrades */
+.rules-upgrade-entry {
+  border: 1px solid var(--term-border);
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.4rem;
+  background: var(--term-surface);
+}
+
+.rules-upgrade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.2rem;
+}
+
+.rules-upgrade-name {
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--term-bright);
+  letter-spacing: 0.06em;
+}
+
+.rules-upgrade-cost {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  color: var(--term-dim);
+  letter-spacing: 0.04em;
+}
+
+.rules-upgrade-rule {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--term-text);
+  line-height: 1.5;
+}
+
+/* ── Terrain Tooltip ─────────────────────────────────────────────────────────── */
+
+.terrain-tooltip {
+  position: absolute;
+  z-index: 200;
+  pointer-events: none;
+  background: rgba(8, 7, 0, 0.96);
+  border: 1px solid var(--term-border2);
+  font-family: var(--font);
+  padding: 0.45rem 0.6rem;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.terrain-tooltip-type {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.terrain-tooltip-rule {
+  font-size: 0.72rem;
+  color: var(--term-dim);
+  line-height: 1.4;
+  margin-bottom: 0.2rem;
+}
+
+.terrain-tooltip-elev {
+  font-size: 0.7rem;
+  color: var(--term-bright);
+  margin-top: 0.25rem;
+}
+
+.terrain-tooltip-units {
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--term-border);
+  padding-top: 0.2rem;
+}
+
+.terrain-tooltip-unit {
+  font-size: 0.7rem;
+  color: var(--term-text);
+  line-height: 1.4;
+}

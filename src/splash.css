@@ -90,6 +90,32 @@
   background: #cc8822;
 }
 
+/* Rules link below main buttons */
+.splash-rules-link {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.splash-rules-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 161, 40, 0.55);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  transition: color 0.15s;
+  text-transform: uppercase;
+}
+.splash-rules-btn:hover {
+  color: #FFA128;
+  background: transparent;
+}
+
 /* ── Mode nav bar (Back to Menu + page title) ────────────────────────────────── */
 
 .mode-nav {

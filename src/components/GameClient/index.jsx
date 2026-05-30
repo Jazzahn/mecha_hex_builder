@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { GameProvider, useGame, isActivePlayer } from '../../store/gameContext';
+import RulesModal from '../RulesModal';
 import GameSetup from './GameSetup';
 import BotController from './BotController';
 import TerrainEditor from './TerrainEditor';
@@ -12,6 +13,51 @@ import { hexKey, hexDistance, hexNeighborAt, inBounds, inFrontArc, BOARD_COLS, B
 import { checkLOS, unitHeight } from '../../game/combat';
 import { PLAY_PHASES } from '../../game/gameReducer';
 import { UNIT_TYPES } from '../../data/gameData';
+
+const TERRAIN_INFO = {
+  cover:     { label: 'Cover',     color: '#33CC77', rule: '−1 Att die to attackers. Higher elevation ignores cover.' },
+  difficult: { label: 'Difficult', color: '#FFCC00', rule: '+1 hex movement cost to enter. Does not block LOS.' },
+  blocking:  { label: 'Blocking',  color: '#888',    rule: 'Impassable. Blocks LOS (Indirect weapons can still target).' },
+  dangerous: { label: 'Dangerous', color: '#FF4444', rule: 'Take 1 damage when entering this hex.' },
+};
+
+function TerrainTooltip({ info, playerNames }) {
+  const { terrainEntry, unitsOnHex, x, y } = info;
+  const ti = terrainEntry?.type ? TERRAIN_INFO[terrainEntry.type] : null;
+  const elev = terrainEntry?.elevation ?? 0;
+
+  const style = {
+    left: x + 12,
+    top: y - 10,
+    transform: x > 400 ? 'translateX(-110%)' : undefined,
+  };
+
+  return (
+    <div className="terrain-tooltip" style={style}>
+      {ti ? (
+        <>
+          <div className="terrain-tooltip-type" style={{ color: ti.color }}>{ti.label}</div>
+          <div className="terrain-tooltip-rule">{ti.rule}</div>
+        </>
+      ) : (
+        <div className="terrain-tooltip-type" style={{ color: '#FFA128' }}>Clear Ground</div>
+      )}
+      {elev > 0 && (
+        <div className="terrain-tooltip-elev">Elevation: {elev}</div>
+      )}
+      {unitsOnHex.length > 0 && (
+        <div className="terrain-tooltip-units">
+          {unitsOnHex.map(u => (
+            <div key={u.id} className="terrain-tooltip-unit"
+              style={{ color: u.playerIndex === 0 ? '#90caf9' : '#ef9a9a' }}>
+              {u.name} [{playerNames[u.playerIndex]}]
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MoralePanel({ pendingMorale, playerNames, dispatch }) {
   const { results } = pendingMorale;
@@ -62,6 +108,8 @@ function PlayingView() {
   const [unitModalPos, setUnitModalPos] = useState(null);
   const [tooltipInfo, setTooltipInfo] = useState(null);
   const [explosions, setExplosions] = useState([]);
+  const [hoveredHexInfo, setHoveredHexInfo] = useState(null);
+  const [showRules, setShowRules] = useState(false);
   const hoverTimerRef = useRef(null);
   const boardAreaRef = useRef(null);
   const prevUnitsRef = useRef(units);
@@ -276,12 +324,23 @@ function PlayingView() {
     }, 1000);
   }
 
+  function handleHoverHex(q, r, clientX, clientY) {
+    if (q === null) { setHoveredHexInfo(null); return; }
+    const rect = boardAreaRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const terrainEntry = terrain[hexKey(q, r)] ?? null;
+    const unitsOnHex = units.filter(u => !u.destroyed && !u.surrendered && u.q === q && u.r === r);
+    if (!terrainEntry && unitsOnHex.length === 0) { setHoveredHexInfo(null); return; }
+    setHoveredHexInfo({ terrainEntry, unitsOnHex, x: clientX - rect.left, y: clientY - rect.top });
+  }
+
   const phase = PLAY_PHASES[phaseIndex];
   const phaseUnits = units.filter(u => phase?.types.includes(u.typeId) && !u.destroyed && !u.surrendered);
   const activatedCount = phaseUnits.filter(u => u.activated).length;
 
   return (
     <div className="game-layout game-layout--playing">
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
       <div className="game-sidebar">
         <div className="sidebar-section">
           <div className="action-panel-status">
@@ -309,6 +368,13 @@ function PlayingView() {
           </div>
         </div>
 
+        <div className="sidebar-section sidebar-section--rules-btn">
+          <button className="sidebar-btn" style={{ width: '100%', textAlign: 'center', letterSpacing: '0.06em' }}
+            onClick={() => setShowRules(true)}>
+            ? Rules Reference
+          </button>
+        </div>
+
         <div className="sidebar-section sidebar-section--log">
           <div className="game-log-label">Battle Log</div>
           <div className="game-log">
@@ -334,8 +400,10 @@ function PlayingView() {
           onTurnRight={() => dispatch({ type: 'STEP_TURN', dir: 'right' })}
           onUnitPos={handleUnitPos}
           onHoverUnit={handleHoverUnit}
+          onHoverHex={handleHoverHex}
           explosions={explosions}
         />
+        {hoveredHexInfo && <TerrainTooltip info={hoveredHexInfo} playerNames={playerNames} />}
         <UnitActionModal
           position={unitModalPos}
           boardWidth={boardAreaRef.current?.offsetWidth}

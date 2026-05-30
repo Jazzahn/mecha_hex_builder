@@ -5,7 +5,7 @@ import logo      from '../assets/ui/Logo_Splash.png';
 
 const ANIM_DURATION = 950; // ms — must match CSS transition total
 
-export default function SplashScreen({ onSelect, onDone }) {
+export default function SplashScreen({ onSelect, onDone, onRules }) {
   const [opening, setOpening] = useState(false);
 
   function handleSelect(mode) {
@@ -36,6 +36,9 @@ export default function SplashScreen({ onSelect, onDone }) {
             <button className="splash-btn" onClick={() => handleSelect('vsbot')}>Vs Bots</button>
             <button className="splash-btn" onClick={() => handleSelect('online')}>Multiplayer</button>
             <button className="splash-btn" onClick={() => handleSelect('builder')}>Army Builder</button>
+          </div>
+          <div className="splash-rules-link">
+            <button className="splash-rules-btn" onClick={onRules}>? Rules Reference</button>
           </div>
         </div>
       </div>
