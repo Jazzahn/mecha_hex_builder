@@ -498,10 +498,10 @@ export function getSlotCost(upgradeId, unitTypeId) {
 }
 
 export const KEYWORDS = {
-  'Accurate':     'Add +1 to hit rolls made with this weapon (e.g., hits Evasion 4+ on a 3+ instead of a 4+).',
+  'Accurate':     'Each hit counts as 2 hits before the block roll.',
   'Ammo Box':     'The first time in a round that a model assigns damage to an upgrade with Ammo Box, assign +1 damage.',
   'Blast':        'If the target is hit, all models within 2 hexes are also hit (friendly or enemy).',
-  'Deadly':       'Always deals +1 damage per hit.',
+  'Deadly':       'Deals +1 damage for the whole attack as long as at least 1 hit goes unblocked.',
   'Indirect':     'May shoot at enemies not in line of sight and ignores cover from sight obstructions. Gets −1 to hit when shooting after moving.',
   'Light Arms':   'This weapon lacks armor penetration. Defenders gain +1 to their Toughness rolls when blocking hits from this weapon.',
   'Overheating':  'Every 1 rolled to hit counts as an Overheat result. On Overheat: suffer 1 wound and destroy a Heatsink (once per activation).',

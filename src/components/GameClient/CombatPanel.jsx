@@ -1,5 +1,5 @@
 import { UNIT_TYPES } from '../../data/gameData';
-import { parseStatValue, getAllSlots, damagePerHit, getMinRangePenalty } from '../../game/combat';
+import { parseStatValue, getAllSlots, getMinRangePenalty } from '../../game/combat';
 
 function DieBadge({ value, success }) {
   return (
@@ -68,7 +68,7 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
   const targetType = target ? UNIT_TYPES[target.typeId] : null;
   const baseEva = targetType ? parseStatValue(targetType.eva) : 4;
   const isAccurate = weapon?.special?.includes('Accurate');
-  const evaThreshold = baseEva - (isAccurate ? 1 : 0);
+  const evaThreshold = baseEva;
 
   const minRangePenalty = (attacker && target && weapon) ? getMinRangePenalty(attacker, target, weapon) : 0;
   const indirectPenalty = pc.indirectPenalty ?? 0;
@@ -92,7 +92,7 @@ function HitRoll({ pc, units, dispatch, hasMoved }) {
           {pc.coverPenalty > 0 && <span className="combat-penalty">Cover −{pc.coverPenalty} die</span>}
           {indirectPenalty > 0 && <span className="combat-penalty">Indirect −{indirectPenalty} die</span>}
           {minRangePenalty > 0 && <span className="combat-penalty">Min Range −{minRangePenalty} die</span>}
-          {isAccurate && <span className="combat-bonus">Accurate +1 to hit</span>}
+          {isAccurate && <span className="combat-bonus">Accurate: each hit counts as 2</span>}
         </div>
       )}
 
@@ -130,12 +130,12 @@ function BlockRoll({ pc, units, dispatch, isController }) {
   const strPenalty = weapon ? parseStatValue(weapon.str) : 0;
   const isLightArms = weapon?.special?.includes('Light Arms');
   const blockThreshold = tou + strPenalty - (isLightArms ? 1 : 0);
-  const dpH = weapon ? damagePerHit(weapon) : 1;
+  const isDeadly = weapon?.special?.includes('Deadly');
 
   const rolled = pc.blockRolls.length > 0;
   const blocks = rolled ? pc.blockRolls.filter(v => v === 6 || v >= blockThreshold).length : 0;
   const netHits = pc.hits - blocks;
-  const totalDamage = netHits * dpH;
+  const totalDamage = isDeadly && netHits > 0 ? netHits + 1 : netHits;
 
   const thresholdLabel = blockThreshold > 6 ? '6 only' : `${blockThreshold}+`;
 
@@ -165,8 +165,8 @@ function BlockRoll({ pc, units, dispatch, isController }) {
             <strong>{blocks}</strong> saved · <strong>{netHits}</strong> hit{netHits !== 1 ? 's' : ''} land
           </div>
           <div className="combat-damage-total">
-            {totalDamage} damage ({dpH}/hit
-            {weapon?.special?.includes('Deadly') ? ', Deadly' : ''})
+            {totalDamage} damage
+            {isDeadly && netHits > 0 && <span className="combat-bonus"> · Deadly +1</span>}
             {weapon?.special?.includes('Blast') && pc.blastTargetIds?.length > 0 && (
               <span className="combat-blast-warn"> · Blast!</span>
             )}

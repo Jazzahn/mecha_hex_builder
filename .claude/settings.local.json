@@ -29,7 +29,8 @@
       "Bash(curl -s \"https://ogulkokan.github.io/retro-terminal/css/cursor-styles.css\")",
       "WebFetch(domain:i0.wp.com)",
       "Bash(grep -E '\\\\.\\(jsx|js\\)$')",
-      "PowerShell(Get-ChildItem -Path \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\\" -Recurse -File | Where-Object { $_.Extension -eq '.js' } | Select-Object -ExpandProperty FullName)"
+      "PowerShell(Get-ChildItem -Path \"h:\\\\Projects\\\\MechaArmyBuilder\\\\src\\\\\" -Recurse -File | Where-Object { $_.Extension -eq '.js' } | Select-Object -ExpandProperty FullName)",
+      "Bash(npm audit *)"
     ]
   }
 }

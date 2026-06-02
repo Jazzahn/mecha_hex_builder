@@ -39,11 +39,11 @@ const WEAPON_TABLE = [
 ];
 
 const KEYWORDS = [
-  { kw: 'Accurate',    rule: 'Add +1 to each hit roll. A hit roll that would normally succeed on a 4+ now succeeds on a 3+.' },
+  { kw: 'Accurate',    rule: 'Each hit counts as 2 hits before the block roll.' },
   { kw: 'Ammo Box',    rule: 'The first time per round that this upgrade takes damage, it takes +1 damage.' },
   { kw: 'Armored',     rule: 'This unit must take an Extra Armor upgrade in every slot (mandatory; costs 1 slot each).' },
   { kw: 'Blast',       rule: 'If the target is hit, all models within 2 hexes of the target are also hit (friend or foe).' },
-  { kw: 'Deadly',      rule: 'Each hit deals +1 damage (1 hit = 2 damage). Bonus stacks with Str.' },
+  { kw: 'Deadly',      rule: 'If at least 1 hit goes unblocked, the whole attack deals +1 damage. Stacks with Str.' },
   { kw: 'Indirect',    rule: 'May target enemies not in LOS; ignores cover from blocking obstructions. Takes −1 att die when fired without LOS.' },
   { kw: 'Light Arms',  rule: 'Lacks armor penetration. Defender gains +1 Toughness die when blocking hits from this weapon.' },
   { kw: 'Overheating', rule: 'Each natural 1 rolled to hit is an Overheat result: the unit suffers 1 damage and may destroy a Heat Sinks upgrade (once per activation).' },
@@ -178,7 +178,7 @@ export default function RulesModal({ onClose }) {
             <RuleRow label="Toughness Roll">For each hit, the defender rolls 1d6. Each die that meets or beats the defender's Tou score blocks 1 hit. Remaining unblocked hits deal damage.</RuleRow>
             <RuleRow label="Damage">Each unblocked hit deals 1 damage to a slot of the defender's choice. A slot is disabled when it has taken damage equal to its slot cost (or 3 for Extra Armor). Disabled upgrades no longer function.</RuleRow>
             <RuleRow label="Strength">A weapon with Str deals +Str damage per unblocked hit. A hit from a Str 2 weapon deals 2 damage to a single slot or split across slots.</RuleRow>
-            <RuleRow label="Deadly">Each hit deals +1 damage (in addition to Str). A Deadly weapon with Str 1 deals 2 damage per hit.</RuleRow>
+            <RuleRow label="Deadly">If at least 1 hit goes unblocked, the whole attack deals +1 damage (not per hit). A Deadly Str 1 weapon that lands 3 net hits deals 5 damage total (3 + 1 Str + 1 Deadly), not 6.</RuleRow>
             <RuleRow label="Cover">A unit in a Cover terrain hex, behind blocking terrain (from the attacker's perspective), or with RAM Armor reduces the attacker's Att by 1. A jumping unit also counts as in cover. Units on higher ground ignore cover granted by lower terrain.</RuleRow>
             <RuleRow label="Minimum Range">Some weapons have a minimum range. Firing within minimum range applies a penalty of −(minRange − distance + 1) to Att, minimum 1 die always fires.</RuleRow>
             <RuleRow label="Shoot Restriction">A unit that Ran cannot Shoot in the same activation. A unit can fire one weapon per activation. Relentless weapons may split their attacks across multiple targets declared before rolling.</RuleRow>
