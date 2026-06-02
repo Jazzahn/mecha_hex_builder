@@ -85,8 +85,8 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   const hasMoved = !!pendingAction?.moved;
 
   const hasHighTuned = hasActiveUpgrade(selectedUnit.armyUnit, selectedUnit.slotDamage, 'highTunedEngine');
-  const effectiveMoveSP   = (unitType?.move   ?? 0) + (hasHighTuned ? 1 : 0);
-  const effectiveCruiseSP = (unitType?.cruise ?? 0) + (hasHighTuned ? 2 : 0);
+  const effectiveMoveSP   = (unitType?.walk   ?? 0) + (hasHighTuned ? 1 : 0);
+  const effectiveCruiseSP = (unitType?.run ?? 0) + (hasHighTuned ? 2 : 0);
 
   const firedKeys = selectedUnit.firedWeaponKeys ?? [];
   const availableWeapons = getEquippedWeapons(selectedUnit.armyUnit, selectedUnit.slotDamage)
@@ -133,7 +133,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
           {!isStructure && (
             <>
               <button className="action-btn action-btn--move" onClick={() => dispatch({ type: 'START_ACTION', action: 'move' })}>
-                Move ({effectiveMoveSP} SP)
+                Walk ({effectiveMoveSP} SP)
               </button>
               {hasBoostJets && (
                 <button className="action-btn action-btn--jump" onClick={() => dispatch({ type: 'START_ACTION', action: 'move', isJumping: true })}>
@@ -141,7 +141,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
                 </button>
               )}
               <button className="action-btn action-btn--cruise" onClick={() => dispatch({ type: 'START_ACTION', action: 'cruise' })}>
-                Cruise ({effectiveCruiseSP} SP)
+                Run ({effectiveCruiseSP} SP)
               </button>
               {!isVehicle && (
                 <button className="action-btn action-btn--ram" onClick={() => dispatch({ type: 'START_ACTION', action: 'ram' })}>

@@ -84,7 +84,7 @@ export default function GameSetup({ onStart }) {
   return (
     <div className="game-setup">
       <div className="game-setup-card">
-        <h1 className="game-setup-title">Mecha: HEX — Battle Setup</h1>
+        <h1 className="game-setup-title">Mechatech — Battle Setup</h1>
 
         <div className="game-setup-section">
           <h2>Game Mode</h2>

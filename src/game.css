@@ -1140,6 +1140,28 @@
   align-items: center;
   justify-content: center;
 }
+
+.reconnecting-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: #3a2800;
+  border-bottom: 1px solid #FFA128;
+  color: #FFA128;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 6px 0;
+  letter-spacing: 0.05em;
+  animation: banner-pulse 1.4s ease-in-out infinite;
+}
+@keyframes banner-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
 .online-lobby,
 .online-waiting,
 .online-disconnected {

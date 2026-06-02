@@ -621,15 +621,15 @@ export function gameReducer(state, action) {
       const unitType = UNIT_TYPES[unit.typeId];
 
       if (act === 'ram') {
-        const sp = unitType.cruise + (hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'highTunedEngine') ? 2 : 0);
+        const sp = unitType.run + (hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'highTunedEngine') ? 2 : 0);
         const updatedUnits = state.units.map(u => u.id === unit.id ? { ...u, hasCruised: true } : u);
         const unitSnapshot = { q: unit.q, r: unit.r, facing: unit.facing, hasCruised: unit.hasCruised, carryingObjective: unit.carryingObjective };
         return { ...state, units: updatedUnits, pendingAction: { action: 'ram', remainingMoves: sp, moved: false, unitSnapshot, objectivesSnapshot: state.objectives } };
       }
 
-      let sp = act === 'cruise' ? unitType.cruise : unitType.move;
+      let sp = act === 'cruise' ? unitType.run : unitType.walk;
 
-      // High Tuned Engine: +1 move, +2 cruise
+      // High Tuned Engine: +1 walk, +2 run
       if (hasActiveUpgrade(unit.armyUnit, unit.slotDamage, 'highTunedEngine')) {
         sp += act === 'cruise' ? 2 : 1;
       }

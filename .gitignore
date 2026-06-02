@@ -25,6 +25,8 @@ dist-ssr
 *.sw?
 
 plan.md
+.dev.vars
+.wrangler
 
 sprite_workingdir/*
 Mecha Hex - Core Rules.pdf

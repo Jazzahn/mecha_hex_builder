@@ -31,7 +31,7 @@ export default function SplashScreen({ onSelect, onDone, onRules }) {
           draggable={false}
         />
         <div className={`splash-ui${opening ? ' splash-ui--fade' : ''}`}>
-          <img className="splash-logo" src={logo} alt="Mecha: HEX" draggable={false} />
+          <img className="splash-logo" src={logo} alt="Mechatech" draggable={false} />
           <div className="splash-buttons">
             <button className="splash-btn" onClick={() => handleSelect('vsbot')}>Vs Bots</button>
             <button className="splash-btn" onClick={() => handleSelect('online')}>Multiplayer</button>

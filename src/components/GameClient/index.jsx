@@ -480,7 +480,7 @@ export default function GameClient({ onExit, initialConfig = null }) {
       <div className="game-root">
         <div className="game-nav">
           <button className="game-nav-back" onClick={onExit}>← Menu</button>
-          <span className="game-nav-title">Mecha: HEX — Battle Setup</span>
+          <span className="game-nav-title">Mechatech — Battle Setup</span>
         </div>
         <GameSetup onStart={(names, armies, botPlayerIndex) => setGameConfig({ names, armies, botPlayerIndex })} />
       </div>

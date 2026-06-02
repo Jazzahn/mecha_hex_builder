@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { GameContext } from './gameContext';
-import { socket } from '../socket';
+import { gameSocket } from '../lib/gameSocket';
 
 // Returns the playerIndex who controls the current combat step, or null if no combat.
 function getCombatStepController(gameState) {
@@ -35,8 +35,13 @@ export function OnlineGameProvider({ playerIndex, initialState, onExit = null, c
 
   useEffect(() => {
     function onStateUpdate(state) { setGameState(state); }
-    socket.on('state-update', onStateUpdate);
-    return () => socket.off('state-update', onStateUpdate);
+    function onReconnected({ gameState }) { setGameState(gameState); }
+    gameSocket.on('state-update', onStateUpdate);
+    gameSocket.on('reconnected',  onReconnected);
+    return () => {
+      gameSocket.off('state-update', onStateUpdate);
+      gameSocket.off('reconnected',  onReconnected);
+    };
   }, []);
 
   function dispatch(action) {
@@ -55,7 +60,7 @@ export function OnlineGameProvider({ playerIndex, initialState, onExit = null, c
       phase === 'over';
 
     if (!canAct) return;
-    socket.emit('dispatch-action', { action });
+    gameSocket.send('dispatch-action', { action });
   }
 
   return (

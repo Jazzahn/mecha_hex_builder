@@ -63,7 +63,7 @@ function MechaBlock({ unit }) {
           </th>
         </tr>
         <tr className="print-stats-row">
-          <td>Spd: {unitType.move}/{unitType.cruise}</td>
+          <td>Spd: {unitType.walk}/{unitType.run}</td>
           <td>Eva: {unitType.eva}</td>
           <td>Tou: {unitType.tou}</td>
         </tr>
@@ -102,7 +102,7 @@ function VehicleBlock({ unit }) {
           </th>
         </tr>
         <tr className="print-stats-row">
-          {unitType.move !== undefined && <td>Spd: {unitType.move}/{unitType.cruise}</td>}
+          {unitType.walk !== undefined && <td>Spd: {unitType.walk}/{unitType.run}</td>}
           <td>Eva: {unitType.eva}</td>
           <td>Tou: {unitType.tou}</td>
         </tr>

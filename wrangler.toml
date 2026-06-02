@@ -1,0 +1,17 @@
+name = "mechatech-server"
+main = "workers/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[durable_objects.bindings]]
+name = "GAME_ROOMS"
+class_name = "GameRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GameRoom"]
+
+[vars]
+# Set NEON_DATABASE_URL in the Cloudflare dashboard (Secrets) for production.
+# For local dev, add to .dev.vars:
+#   NEON_DATABASE_URL=postgres://...

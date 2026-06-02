@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { socket } from '../../socket';
+import { gameSocket } from '../../lib/gameSocket';
 import { OnlineGameProvider } from '../../store/onlineGameContext';
 import { GameInner } from '../GameClient/index.jsx';
 import OnlineArmyBuilder from './OnlineArmyBuilder';
@@ -8,10 +8,10 @@ import OnlineArmyBuilder from './OnlineArmyBuilder';
 
 const POINT_OPTIONS = [100, 150, 200, 250, 300, 400];
 
-function DisconnectedScreen({ onExit }) {
+function DisconnectedScreen({ onExit, reason = 'Opponent disconnected' }) {
   return (
     <div className="online-disconnected">
-      <h2>Opponent disconnected</h2>
+      <h2>{reason}</h2>
       <button className="online-btn" onClick={onExit}>Back to lobby</button>
     </div>
   );
@@ -28,37 +28,49 @@ function Lobby({ onCreated, onJoined }) {
   const [error, setError]             = useState('');
   const [busy, setBusy]               = useState(false);
 
-  // Auto-query room info when code reaches 6 chars
+  // Auto-query room info via HTTP when code reaches 6 chars
   useEffect(() => {
     if (joinCode.length !== 6) { setJoinInfo(null); setJoinLoading(false); return; }
+    let cancelled = false;
     setJoinLoading(true);
     setJoinInfo(null);
-    socket.connect();
-    const onInfo  = info          => { setJoinInfo(info);            setJoinLoading(false); };
-    const onError = ({ message }) => { setJoinInfo({ error: message }); setJoinLoading(false); };
-    socket.once('room-info',       onInfo);
-    socket.once('room-info-error', onError);
-    socket.emit('get-room-info', { code: joinCode });
-    return () => { socket.off('room-info', onInfo); socket.off('room-info-error', onError); };
+    gameSocket.getRoomInfo(joinCode)
+      .then(info => { if (!cancelled) setJoinInfo(info); })
+      .catch(err => { if (!cancelled) setJoinInfo({ error: err.message }); })
+      .finally(() => { if (!cancelled) setJoinLoading(false); });
+    return () => { cancelled = true; };
   }, [joinCode]);
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!displayName.trim()) return;
     setBusy(true); setError('');
-    socket.connect();
-    socket.once('room-created', ({ code }) => { setBusy(false); onCreated(code, displayName.trim(), maxPoints); });
-    socket.emit('create-room', { displayName: displayName.trim(), maxPoints });
+    try {
+      const { code } = await gameSocket.createRoom(displayName.trim(), maxPoints);
+      // Connect WebSocket now so the host receives both-joined when opponent connects
+      gameSocket.connect(code, displayName.trim());
+      onCreated(code, displayName.trim(), maxPoints);
+    } catch (err) {
+      setError(err.message ?? 'Failed to create room');
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleJoin() {
     if (!displayName.trim() || joinCode.length !== 6 || !joinInfo?.maxPoints) return;
     setBusy(true); setError('');
-    socket.once('join-error', ({ message }) => { setBusy(false); setError(message); socket.disconnect(); });
-    socket.once('both-joined', ({ maxPoints: mp, opponentName }) => {
+
+    gameSocket.once('both-joined', ({ maxPoints: mp, opponentName }) => {
       setBusy(false);
       onJoined(1, mp, opponentName);
     });
-    socket.emit('join-room', { code: joinCode, displayName: displayName.trim() });
+    gameSocket.once('disconnect', () => {
+      setBusy(false);
+      setError('Connection lost. Try again.');
+    });
+
+    // Connecting triggers the DO to send both-joined once 2 players are in
+    gameSocket.connect(joinCode, displayName.trim());
   }
 
   const canCreate = displayName.trim().length > 0;
@@ -141,8 +153,8 @@ function WaitingRoom({ code, maxPoints, displayName, onBothJoined }) {
 
   useEffect(() => {
     const handler = ({ maxPoints: mp, opponentName }) => onBothJoined(0, mp, opponentName);
-    socket.on('both-joined', handler);
-    return () => socket.off('both-joined', handler);
+    gameSocket.on('both-joined', handler);
+    return () => gameSocket.off('both-joined', handler);
   }, [onBothJoined]);
 
   function copy() {
@@ -167,42 +179,67 @@ function WaitingRoom({ code, maxPoints, displayName, onBothJoined }) {
 // ── ArmyBuilding screen ───────────────────────────────────────────────────────
 
 function ArmyBuildingScreen({ playerIndex, maxPoints, opponentName, onGameStart, onExit }) {
-  const [opponentReady, setOpponentReady] = useState(false);
-  const [isReady, setIsReady]             = useState(false);
-  const [disconnected, setDisconnected]   = useState(false);
+  const [opponentReady, setOpponentReady]           = useState(false);
+  const [isReady, setIsReady]                       = useState(false);
+  const [endReason, setEndReason]                   = useState(null);
+  const [opponentReconnecting, setOppReconnecting]  = useState(false);
+  const [selfReconnecting, setSelfReconnecting]     = useState(false);
 
   useEffect(() => {
-    const onOppReady   = () => setOpponentReady(true);
-    const onOppUnready = () => setOpponentReady(false);
-    const onStart      = ({ playerIndex: pi, gameState }) => onGameStart(pi, gameState);
-    const onDisconnect = () => setDisconnected(true);
+    const onOppReady        = ()  => setOpponentReady(true);
+    const onOppUnready      = ()  => setOpponentReady(false);
+    const onStart           = ({ playerIndex: pi, gameState }) => onGameStart(pi, gameState);
+    const onDisconnect      = ()  => setEndReason('Opponent disconnected');
+    const onExpired         = ()  => setEndReason('Session expired (3-hour limit reached)');
+    const onOppReconnecting = ()  => setOppReconnecting(true);
+    const onOppReconnected  = ()  => setOppReconnecting(false);
+    const onReconnecting    = ()  => setSelfReconnecting(true);
+    const onReconnected     = ()  => setSelfReconnecting(false);
 
-    socket.on('opponent-ready',        onOppReady);
-    socket.on('opponent-unready',      onOppUnready);
-    socket.on('game-start',            onStart);
-    socket.on('opponent-disconnected', onDisconnect);
+    gameSocket.on('opponent-ready',        onOppReady);
+    gameSocket.on('opponent-unready',      onOppUnready);
+    gameSocket.on('game-start',            onStart);
+    gameSocket.on('opponent-disconnected', onDisconnect);
+    gameSocket.on('disconnect',            onDisconnect);
+    gameSocket.on('session-expired',       onExpired);
+    gameSocket.on('opponent-reconnecting', onOppReconnecting);
+    gameSocket.on('opponent-reconnected',  onOppReconnected);
+    gameSocket.on('reconnecting',          onReconnecting);
+    gameSocket.on('reconnected',           onReconnected);
     return () => {
-      socket.off('opponent-ready',        onOppReady);
-      socket.off('opponent-unready',      onOppUnready);
-      socket.off('game-start',            onStart);
-      socket.off('opponent-disconnected', onDisconnect);
+      gameSocket.off('opponent-ready',        onOppReady);
+      gameSocket.off('opponent-unready',      onOppUnready);
+      gameSocket.off('game-start',            onStart);
+      gameSocket.off('opponent-disconnected', onDisconnect);
+      gameSocket.off('disconnect',            onDisconnect);
+      gameSocket.off('session-expired',       onExpired);
+      gameSocket.off('opponent-reconnecting', onOppReconnecting);
+      gameSocket.off('opponent-reconnected',  onOppReconnected);
+      gameSocket.off('reconnecting',          onReconnecting);
+      gameSocket.off('reconnected',           onReconnected);
     };
   }, [onGameStart]);
 
   function handleReady(army) {
-    socket.emit('player-ready', { army });
+    gameSocket.send('player-ready', { army });
     setIsReady(true);
   }
 
   function handleUnready() {
-    socket.emit('player-unready');
+    gameSocket.send('player-unready');
     setIsReady(false);
   }
 
-  if (disconnected) return <DisconnectedScreen onExit={onExit} />;
+  if (endReason) return <DisconnectedScreen onExit={onExit} reason={endReason} />;
 
   return (
-    <OnlineArmyBuilder
+    <>
+      {(opponentReconnecting || selfReconnecting) && (
+        <div className="reconnecting-banner">
+          {selfReconnecting ? 'Reconnecting…' : 'Opponent reconnecting…'}
+        </div>
+      )}
+      <OnlineArmyBuilder
       maxPoints={maxPoints}
       opponentName={opponentName}
       opponentReady={opponentReady}
@@ -210,24 +247,52 @@ function ArmyBuildingScreen({ playerIndex, maxPoints, opponentName, onGameStart,
       onReady={handleReady}
       onUnready={handleUnready}
     />
+    </>
   );
 }
 
 // ── Online game wrapper ───────────────────────────────────────────────────────
 
 function OnlineGame({ playerIndex, initialState, onExit }) {
-  const [disconnected, setDisconnected] = useState(false);
+  const [endReason, setEndReason]                  = useState(null);
+  const [opponentReconnecting, setOppReconnecting] = useState(false);
+  const [selfReconnecting, setSelfReconnecting]    = useState(false);
 
   useEffect(() => {
-    const handler = () => setDisconnected(true);
-    socket.on('opponent-disconnected', handler);
-    return () => socket.off('opponent-disconnected', handler);
+    const onDisconnect      = () => setEndReason('Opponent disconnected');
+    const onExpired         = () => setEndReason('Session expired (3-hour limit reached)');
+    const onOppReconnecting = () => setOppReconnecting(true);
+    const onOppReconnected  = () => setOppReconnecting(false);
+    const onReconnecting    = () => setSelfReconnecting(true);
+    const onReconnected     = () => setSelfReconnecting(false);
+
+    gameSocket.on('opponent-disconnected', onDisconnect);
+    gameSocket.on('disconnect',            onDisconnect);
+    gameSocket.on('session-expired',       onExpired);
+    gameSocket.on('opponent-reconnecting', onOppReconnecting);
+    gameSocket.on('opponent-reconnected',  onOppReconnected);
+    gameSocket.on('reconnecting',          onReconnecting);
+    gameSocket.on('reconnected',           onReconnected);
+    return () => {
+      gameSocket.off('opponent-disconnected', onDisconnect);
+      gameSocket.off('disconnect',            onDisconnect);
+      gameSocket.off('session-expired',       onExpired);
+      gameSocket.off('opponent-reconnecting', onOppReconnecting);
+      gameSocket.off('opponent-reconnected',  onOppReconnected);
+      gameSocket.off('reconnecting',          onReconnecting);
+      gameSocket.off('reconnected',           onReconnected);
+    };
   }, []);
 
-  if (disconnected) return <DisconnectedScreen onExit={onExit} />;
+  if (endReason) return <DisconnectedScreen onExit={onExit} reason={endReason} />;
 
   return (
     <OnlineGameProvider playerIndex={playerIndex} initialState={initialState} onExit={onExit}>
+      {(opponentReconnecting || selfReconnecting) && (
+        <div className="reconnecting-banner">
+          {selfReconnecting ? 'Reconnecting…' : 'Opponent reconnecting…'}
+        </div>
+      )}
       <GameInner />
     </OnlineGameProvider>
   );
@@ -266,7 +331,7 @@ export default function OnlineClient({ onExit }) {
   }
 
   function handleExit() {
-    socket.disconnect();
+    gameSocket.disconnect();
     setScreen('lobby');
     setRoomCode('');
     setInitialState(null);
@@ -278,7 +343,7 @@ export default function OnlineClient({ onExit }) {
       <div className="game-root">
         <div className="game-nav">
           <button className="game-nav-back" onClick={handleExit}>← Menu</button>
-          <span className="game-nav-title">Mecha: HEX — Online Battle</span>
+          <span className="game-nav-title">Mechatech — Online Battle</span>
         </div>
         <OnlineGame playerIndex={playerIndex} initialState={initialState} onExit={handleExit} />
       </div>
@@ -290,7 +355,7 @@ export default function OnlineClient({ onExit }) {
       <div className="game-root">
         <div className="game-nav">
           <button className="game-nav-back" onClick={handleExit}>← Exit</button>
-          <span className="game-nav-title">Mecha: HEX — Online Match Setup</span>
+          <span className="game-nav-title">Mechatech — Online Match Setup</span>
         </div>
         <ArmyBuildingScreen
           playerIndex={playerIndex}
@@ -307,7 +372,7 @@ export default function OnlineClient({ onExit }) {
     <div className="online-root">
       <div className="game-nav">
         <button className="game-nav-back" onClick={onExit}>← Menu</button>
-        <span className="game-nav-title">Mecha: HEX — Online</span>
+        <span className="game-nav-title">Mechatech — Online</span>
       </div>
       <div className="online-content">
         {screen === 'lobby' && (

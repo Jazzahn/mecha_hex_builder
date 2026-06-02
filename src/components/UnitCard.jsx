@@ -42,10 +42,10 @@ export default function UnitCard({ unit }) {
       {expanded && (
         <div className="unit-card-body">
           <div className="unit-stats">
-            {unitType.move !== undefined && (
+            {unitType.walk !== undefined && (
               <>
-                <div className="stat"><span>Mov</span>{unitType.move}</div>
-                <div className="stat"><span>Crs</span>{unitType.cruise}</div>
+                <div className="stat"><span>Walk</span>{unitType.walk}</div>
+                <div className="stat"><span>Run</span>{unitType.run}</div>
               </>
             )}
             <div className="stat"><span>Eva</span>{unitType.eva}</div>

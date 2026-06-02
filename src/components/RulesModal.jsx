@@ -1,13 +1,13 @@
 const UNIT_TABLE = [
-  { name: 'Assault Mecha', pts: 100, move: 2, cruise: 3, eva: '2+', tou: '2+', slots: 13 },
-  { name: 'Heavy Mecha',   pts: 80,  move: 3, cruise: 5, eva: '3+', tou: '3+', slots: 10 },
-  { name: 'Medium Mecha',  pts: 60,  move: 4, cruise: 6, eva: '4+', tou: '4+', slots: 7  },
-  { name: 'Light Mecha',   pts: 40,  move: 5, cruise: 8, eva: '5+', tou: '5+', slots: 5  },
-  { name: 'Ground Vehicle',pts: 15,  move: 5, cruise: 8, eva: '5+', tou: '5+', slots: 1, special: 'Turret' },
-  { name: 'Heavy Vehicle', pts: 25,  move: 4, cruise: 6, eva: '4+', tou: '4+', slots: 2, special: 'Armored, Turret' },
-  { name: 'Armed Structure', pts: 20, move: '—', cruise: '—', eva: '2+', tou: '4+', slots: 3, special: 'Armored, Turret' },
-  { name: 'Unarmed Structure', pts: 0, move: '—', cruise: '—', eva: '2+', tou: '5+', slots: 1, special: 'Armored, Landing Zone, NPC' },
-  { name: 'Fortified Structure', pts: 0, move: '—', cruise: '—', eva: '2+', tou: '2+', slots: 1, special: 'Armored, NPC' },
+  { name: 'Assault Mecha', pts: 100, walk: 2, run: 3, eva: '2+', tou: '2+', slots: 13 },
+  { name: 'Heavy Mecha',   pts: 80,  walk: 3, run: 5, eva: '3+', tou: '3+', slots: 10 },
+  { name: 'Medium Mecha',  pts: 60,  walk: 4, run: 6, eva: '4+', tou: '4+', slots: 7  },
+  { name: 'Light Mecha',   pts: 40,  walk: 5, run: 8, eva: '5+', tou: '5+', slots: 5  },
+  { name: 'Ground Vehicle',pts: 15,  walk: 5, run: 8, eva: '5+', tou: '5+', slots: 1, special: 'Turret' },
+  { name: 'Heavy Vehicle', pts: 25,  walk: 4, run: 6, eva: '4+', tou: '4+', slots: 2, special: 'Armored, Turret' },
+  { name: 'Armed Structure', pts: 20, walk: '—', run: '—', eva: '2+', tou: '4+', slots: 3, special: 'Armored, Turret' },
+  { name: 'Unarmed Structure', pts: 0, walk: '—', run: '—', eva: '2+', tou: '5+', slots: 1, special: 'Armored, Landing Zone, NPC' },
+  { name: 'Fortified Structure', pts: 0, walk: '—', run: '—', eva: '2+', tou: '2+', slots: 1, special: 'Armored, NPC' },
 ];
 
 const WEAPON_TABLE = [
@@ -55,11 +55,11 @@ const KEYWORDS = [
 ];
 
 const UPGRADES = [
-  { name: 'Boost Jets',          slots: '1–3', rule: 'This mecha may Jump instead of moving normally. Jump: turn to any facing, move up to Move hexes in any direction (ignoring terrain cost and adjacency). Cannot shoot if you jumped and moved.' },
+  { name: 'Boost Jets',          slots: '1–3', rule: 'This mecha may Jump instead of walking normally. Jump: turn to any facing, move up to Walk hexes in any direction (ignoring terrain cost and adjacency). Cannot shoot if you jumped and moved.' },
   { name: 'Experimental Armor',  slots: '2', rule: 'When this unit takes 1 point of damage, roll 1d6. On a 5+ the damage is ignored.' },
   { name: 'Extra Armor',         slots: '1', rule: 'This upgrade takes 3 hits to be disabled (instead of the slot-cost hits). Required for Armored units in every slot.' },
   { name: 'Heat Sinks',          slots: '1', rule: 'Cancel up to 3 Overheat results per activation. Destroyed when used to cancel Overheat.' },
-  { name: 'High Tuned Engine',   slots: '1–2', rule: 'Grants +1 hex on Move actions and +2 hexes on Cruise or Ram actions.' },
+  { name: 'High Tuned Engine',   slots: '1–2', rule: 'Grants +1 hex on Walk actions and +2 hexes on Run or Ram actions.' },
   { name: 'Melee Optimized',     slots: '1', rule: 'Deals +1 damage when ramming or being rammed.' },
   { name: 'Reinforced Frame',    slots: '1', rule: 'Takes −1 damage when ramming or being rammed (minimum 1).' },
   { name: 'Reinforced Hydraulics', slots: '1', rule: 'Enemy models are pushed +1 additional hex when rammed by this unit.' },
@@ -73,7 +73,7 @@ const HEROES = [
 ];
 
 const TITLES = [
-  { name: 'Vanguard', pts: 10, rule: 'When deployed, the unit may immediately take a Move action.' },
+  { name: 'Vanguard', pts: 10, rule: 'When deployed, the unit may immediately take a Walk action.' },
   { name: 'Avenger',  pts: 5,  rule: 'One weapon upgrade of your choice on this unit gains Relentless.' },
   { name: 'Defiant',  pts: 5,  rule: 'When a friendly mecha within 6 hexes is destroyed, you may remove 2 damage from this unit.' },
 ];
@@ -117,7 +117,7 @@ export default function RulesModal({ onClose }) {
         <div className="rules-body">
 
           <Section id="overview" title="Overview">
-            <p>Mecha: HEX is a two-player tactical game played on a hexagonal grid over 4 rounds. Each player commands an army of mecha, vehicles, and structures, competing to hold more objectives than the opponent when the final round ends.</p>
+            <p>Mechatech is a two-player tactical game played on a hexagonal grid over 4 rounds. Each player commands an army of mecha, vehicles, and structures, competing to hold more objectives than the opponent when the final round ends.</p>
           </Section>
 
           <Section id="army-building" title="Army Building">
@@ -132,7 +132,7 @@ export default function RulesModal({ onClose }) {
               <table className="rules-table">
                 <thead>
                   <tr>
-                    <th>Unit</th><th>Pts</th><th>Move</th><th>Cruise</th><th>Eva</th><th>Tou</th><th>Slots</th><th>Special</th>
+                    <th>Unit</th><th>Pts</th><th>Walk</th><th>Run</th><th>Eva</th><th>Tou</th><th>Slots</th><th>Special</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -140,8 +140,8 @@ export default function RulesModal({ onClose }) {
                     <tr key={u.name}>
                       <td>{u.name}</td>
                       <td>{u.pts || '—'}</td>
-                      <td>{u.move}</td>
-                      <td>{u.cruise}</td>
+                      <td>{u.walk}</td>
+                      <td>{u.run}</td>
                       <td>{u.eva}</td>
                       <td>{u.tou}</td>
                       <td>{u.slots}</td>
@@ -151,24 +151,24 @@ export default function RulesModal({ onClose }) {
                 </tbody>
               </table>
             </div>
-            <p className="rules-note">Move and Cruise are in hexes. Eva and Tou are the roll needed on a d6 to succeed (lower = harder to hit/damage).</p>
+            <p className="rules-note">Walk and Run are in hexes. Eva and Tou are the roll needed on a d6 to succeed (lower = harder to hit/damage).</p>
           </Section>
 
           <Section id="turn-structure" title="Turn Structure">
             <RuleRow label="Phases">Each round consists of 5 phases in order: Vehicles → Light Mecha → Medium Mecha → Heavy Mecha → Assault Mecha. Structures act during the phase matching their weapon types.</RuleRow>
             <RuleRow label="Alternating Activations">Within each phase, players alternate activating one eligible unit at a time. The player with initiative activates first.</RuleRow>
             <RuleRow label="Initiative">The player who wins initiative (determined each round) activates first in each phase. Ties are broken in favor of the player who had it last round.</RuleRow>
-            <RuleRow label="Activation">On a unit's activation it may: Move (or Cruise or Ram) AND Shoot (one weapon per activation, unless Relentless). A unit may choose to do only one of these. After activating, the unit is marked and cannot activate again this phase.</RuleRow>
+            <RuleRow label="Activation">On a unit's activation it may: Walk (or Run or Ram) AND Shoot (one weapon per activation, unless Relentless). A unit may choose to do only one of these. After activating, the unit is marked and cannot activate again this phase.</RuleRow>
           </Section>
 
           <Section id="movement" title="Movement">
-            <RuleRow label="Move Action">Move up to Move hexes forward or backward (2 hexes backward costs 1 extra). May also turn one facing step (60°) each time you move forward or backward.</RuleRow>
-            <RuleRow label="Cruise Action">Move up to Cruise hexes in a straight line (facing direction only). You may not turn during a Cruise. You cannot shoot on the same activation you Cruise.</RuleRow>
+            <RuleRow label="Walk Action">Move up to Walk hexes forward or backward (2 hexes backward costs 1 extra). May also turn one facing step (60°) each time you move forward or backward.</RuleRow>
+            <RuleRow label="Run Action">Move up to Run hexes in a straight line (facing direction only). You may not turn during a Run. You cannot shoot on the same activation you Run.</RuleRow>
             <RuleRow label="Facing">Each unit faces one of 6 directions. Front arc = the 3 hexes in front. Weapons can only target the front arc unless the unit has Turret.</RuleRow>
-            <RuleRow label="Turning">During a Move, you may turn 1 step (60°) per hex moved. You do not have to move before turning. Each backward step costs 2 move points instead of 1.</RuleRow>
-            <RuleRow label="Jumping">If the unit has Boost Jets, it may Jump instead of moving. Choose a new facing, then move up to Move hexes in any direction (including diagonals). Jumping ignores terrain movement costs and elevation restrictions but grants cover to the jumping unit.</RuleRow>
+            <RuleRow label="Turning">During a Walk, you may turn 1 step (60°) per hex moved. You do not have to move before turning. Each backward step costs 2 move points instead of 1.</RuleRow>
+            <RuleRow label="Jumping">If the unit has Boost Jets, it may Jump instead of walking. Choose a new facing, then move up to Walk hexes in any direction (including diagonals). Jumping ignores terrain movement costs and elevation restrictions but grants cover to the jumping unit.</RuleRow>
             <RuleRow label="Difficult Terrain">Costs +1 hex of movement to enter (2 total instead of 1).</RuleRow>
-            <RuleRow label="Elevation">Moving up by 1 elevation level costs +1 hex. You cannot move up more than 1 level per hex in a single move action. Moving down costs no extra.</RuleRow>
+            <RuleRow label="Elevation">Moving up by 1 elevation level costs +1 hex. You cannot move up more than 1 level per hex in a single Walk action. Moving down costs no extra.</RuleRow>
             <RuleRow label="Blocking Terrain">Cannot be entered or moved through.</RuleRow>
             <RuleRow label="Stacking">Two active units cannot occupy the same hex. Units may pass through friendly hexes but not end there.</RuleRow>
           </Section>
@@ -181,7 +181,7 @@ export default function RulesModal({ onClose }) {
             <RuleRow label="Deadly">Each hit deals +1 damage (in addition to Str). A Deadly weapon with Str 1 deals 2 damage per hit.</RuleRow>
             <RuleRow label="Cover">A unit in a Cover terrain hex, behind blocking terrain (from the attacker's perspective), or with RAM Armor reduces the attacker's Att by 1. A jumping unit also counts as in cover. Units on higher ground ignore cover granted by lower terrain.</RuleRow>
             <RuleRow label="Minimum Range">Some weapons have a minimum range. Firing within minimum range applies a penalty of −(minRange − distance + 1) to Att, minimum 1 die always fires.</RuleRow>
-            <RuleRow label="Shoot Restriction">A unit that Cruised cannot Shoot in the same activation. A unit can fire one weapon per activation. Relentless weapons may split their attacks across multiple targets declared before rolling.</RuleRow>
+            <RuleRow label="Shoot Restriction">A unit that Ran cannot Shoot in the same activation. A unit can fire one weapon per activation. Relentless weapons may split their attacks across multiple targets declared before rolling.</RuleRow>
           </Section>
 
           <Section id="terrain" title="Terrain">
@@ -201,7 +201,7 @@ export default function RulesModal({ onClose }) {
           </Section>
 
           <Section id="ramming" title="Ramming">
-            <RuleRow label="Ram Action">Instead of a Cruise, a unit may Ram: move up to Cruise hexes in a straight line and, if an enemy ends up in the forward hex, deal ram damage to both units.</RuleRow>
+            <RuleRow label="Ram Action">Instead of a Run, a unit may Ram: move up to Run hexes in a straight line and, if an enemy ends up in the forward hex, deal ram damage to both units.</RuleRow>
             <RuleRow label="Ram Damage">Each unit involved rolls a number of d6 equal to their base Tou value. Each success deals 1 damage to a slot on the opponent. Additional damage from Melee Optimized and reduced damage from Reinforced Frame apply here.</RuleRow>
             <RuleRow label="Push">After a successful ram, the target is pushed 1 hex in the direction of the ram (if the destination is clear). Reinforced Hydraulics pushes +1 additional hex.</RuleRow>
             <RuleRow label="Cannot Shoot">A unit that performs a Ram action cannot Shoot in the same activation.</RuleRow>
