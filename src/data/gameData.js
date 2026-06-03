@@ -134,6 +134,22 @@ export const UPGRADES = {
     slotCost: 1,
     description: 'This upgrade takes 3 damage to be disabled.',
   },
+  reinforcedPlating: {
+    id: 'reinforcedPlating',
+    name: 'Reinforced Plating',
+    isWeapon: false,
+    mechaOnly: false,
+    slotCost: 2,
+    description: 'This upgrade takes 5 damage to be disabled.',
+  },
+  hardenedArmor: {
+    id: 'hardenedArmor',
+    name: 'Hardened Armor',
+    isWeapon: false,
+    mechaOnly: false,
+    slotCost: 3,
+    description: 'This upgrade takes 7 damage to be disabled.',
+  },
   heatSinks: {
     id: 'heatSinks',
     name: 'Heat Sinks',

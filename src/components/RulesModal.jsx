@@ -41,7 +41,7 @@ const WEAPON_TABLE = [
 const KEYWORDS = [
   { kw: 'Accurate',    rule: 'Each hit counts as 2 hits before the block roll.' },
   { kw: 'Ammo Box',    rule: 'The first time per round that this upgrade takes damage, it takes +1 damage.' },
-  { kw: 'Armored',     rule: 'This unit must take an Extra Armor upgrade in every slot (mandatory; costs 1 slot each).' },
+  { kw: 'Armored',     rule: 'This unit must take at least one armor upgrade (Extra Armor, Reinforced Plating, or Hardened Armor).' },
   { kw: 'Blast',       rule: 'If the target is hit, all models within 2 hexes of the target are also hit (friend or foe).' },
   { kw: 'Deadly',      rule: 'If at least 1 hit goes unblocked, the whole attack deals +1 damage. Stacks with Str.' },
   { kw: 'Indirect',    rule: 'May target enemies not in LOS; ignores cover from blocking obstructions. Takes −1 att die when fired without LOS.' },
@@ -57,8 +57,10 @@ const KEYWORDS = [
 const UPGRADES = [
   { name: 'Boost Jets',          slots: '1–3', rule: 'This mecha may Jump instead of walking normally. Jump: turn to any facing, move up to Walk hexes in any direction (ignoring terrain cost and adjacency). Cannot shoot if you jumped and moved.' },
   { name: 'Experimental Armor',  slots: '2', rule: 'When this unit takes 1 point of damage, roll 1d6. On a 5+ the damage is ignored.' },
-  { name: 'Extra Armor',         slots: '1', rule: 'This upgrade takes 3 hits to be disabled (instead of the slot-cost hits). Required for Armored units in every slot.' },
-  { name: 'Heat Sinks',          slots: '1', rule: 'Cancel up to 3 Overheat results per activation. Destroyed when used to cancel Overheat.' },
+  { name: 'Extra Armor',         slots: '1', rule: 'This upgrade takes 3 damage to be disabled. At least one armor upgrade is required on Armored units.' },
+  { name: 'Reinforced Plating', slots: '2', rule: 'This upgrade takes 5 damage to be disabled.' },
+  { name: 'Hardened Armor',     slots: '3', rule: 'This upgrade takes 7 damage to be disabled.' },
+  { name: 'Heat Sinks',         slots: '1', rule: 'Cancel up to 3 Overheat results per activation. Destroyed when used to cancel Overheat. Max 2 per unit.' },
   { name: 'High Tuned Engine',   slots: '1–2', rule: 'Grants +1 hex on Walk actions and +2 hexes on Run or Ram actions.' },
   { name: 'Melee Optimized',     slots: '1', rule: 'Deals +1 damage when ramming or being rammed.' },
   { name: 'Reinforced Frame',    slots: '1', rule: 'Takes −1 damage when ramming or being rammed (minimum 1).' },
@@ -124,7 +126,7 @@ export default function RulesModal({ onClose }) {
             <RuleRow label="Point Limit">Agree on a point limit before the game (default 200 pts). Both armies must not exceed this limit.</RuleRow>
             <RuleRow label="Unit Cost">Each unit costs its Pts value. Heroes and Titles add to the cost of the mecha they are attached to.</RuleRow>
             <RuleRow label="Weapon Slots">Each mecha has slots split across Torso, Left Arm, and Right Arm. Vehicles and structures have a single shared pool. Weapons and upgrades fill slots by their slot cost.</RuleRow>
-            <RuleRow label="Armored Units">Heavy Vehicles and Armed Structures must have an Extra Armor upgrade installed in every slot. This is mandatory and the slot cost is included in the unit's pts.</RuleRow>
+            <RuleRow label="Armored Units">Heavy Vehicles and Armed Structures must have at least one armor upgrade (Extra Armor, Reinforced Plating, or Hardened Armor) installed.</RuleRow>
           </Section>
 
           <Section id="unit-types" title="Unit Types">
@@ -176,7 +178,7 @@ export default function RulesModal({ onClose }) {
           <Section id="combat" title="Combat">
             <RuleRow label="Attack Roll">Roll a number of d6 equal to the weapon's Att value. Each die that meets or beats the target's Eva score is a hit. Accurate weapons treat each success as 2 hits.</RuleRow>
             <RuleRow label="Toughness Roll">For each hit, the defender rolls 1d6. Each die that meets or beats the defender's Tou score blocks 1 hit. Remaining unblocked hits deal damage.</RuleRow>
-            <RuleRow label="Damage">Each unblocked hit deals 1 damage to a slot of the defender's choice. A slot is disabled when it has taken damage equal to its slot cost (or 3 for Extra Armor). Disabled upgrades no longer function.</RuleRow>
+            <RuleRow label="Damage">Each unblocked hit deals 1 damage to a slot of the defender's choice. A slot is disabled when it has taken damage equal to its slot cost (armor upgrades use their own damage threshold: 3 / 5 / 7). Disabled upgrades no longer function.</RuleRow>
             <RuleRow label="Strength">A weapon with Str deals +Str damage per unblocked hit. A hit from a Str 2 weapon deals 2 damage to a single slot or split across slots.</RuleRow>
             <RuleRow label="Deadly">If at least 1 hit goes unblocked, the whole attack deals +1 damage (not per hit). A Deadly Str 1 weapon that lands 3 net hits deals 5 damage total (3 + 1 Str + 1 Deadly), not 6.</RuleRow>
             <RuleRow label="Cover">A unit in a Cover terrain hex, behind blocking terrain (from the attacker's perspective), or with RAM Armor reduces the attacker's Att by 1. A jumping unit also counts as in cover. Units on higher ground ignore cover granted by lower terrain.</RuleRow>

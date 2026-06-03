@@ -8,6 +8,8 @@ import {
   getSlotCost,
 } from '../data/gameData';
 
+const ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
+
 export function calcUnitPoints(unit) {
   const unitType = UNIT_TYPES[unit.typeId];
   const unitPts = unitType?.pts ?? 0;
@@ -76,7 +78,7 @@ export function validateUnit(unit, unitType) {
 
   if (ARMORED_UNIT_IDS.includes(unit.typeId)) {
     const allAssigned = Object.values(unit.slots).flat();
-    if (!allAssigned.includes('extraArmor')) {
+    if (!allAssigned.some(id => ARMOR_IDS.includes(id))) {
       errors.push('Armored units must take Extra Armor.');
     }
   }
@@ -95,6 +97,11 @@ export function validateUnit(unit, unitType) {
   errors.push(...checkSlotLimits(unit, unitType));
 
   const allAssigned = Object.values(unit.slots).flat();
+  const armorTaken = ARMOR_IDS.filter(id => allAssigned.includes(id));
+  if (armorTaken.length > 1) {
+    errors.push('Only one armor upgrade (Extra Armor / Reinforced Plating / Hardened Armor) may be equipped at a time.');
+  }
+
   const counts = {};
   allAssigned.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
   Object.entries(counts).forEach(([id, count]) => {
@@ -103,8 +110,9 @@ export function validateUnit(unit, unitType) {
     if (upgrade.isWeapon && count > 2) {
       errors.push(`"${upgrade.name}" equipped ${count}× — max 2 of any weapon.`);
     }
-    if (!upgrade.isWeapon && count > 1) {
-      errors.push(`"${upgrade.name}" equipped ${count}× — max 1 of any upgrade.`);
+    const upgradeMax = id === 'heatSinks' ? 2 : 1;
+    if (!upgrade.isWeapon && count > upgradeMax) {
+      errors.push(`"${upgrade.name}" equipped ${count}× — max ${upgradeMax} of this upgrade.`);
     }
   });
 
@@ -121,9 +129,11 @@ export function canAddToZone(unit, location, upgradeId) {
   const max = slotsMax(unit, location);
   if (used + cost > max) return false;
   const allAssigned = Object.values(unit.slots).flat();
+  if (ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
   const count = allAssigned.filter(id => id === upgradeId).length;
   if (upgrade.isWeapon && count >= 2) return false;
-  if (!upgrade.isWeapon && count >= 1) return false;
+  const upgradeMax = upgradeId === 'heatSinks' ? 2 : 1;
+  if (!upgrade.isWeapon && count >= upgradeMax) return false;
   return true;
 }
 
