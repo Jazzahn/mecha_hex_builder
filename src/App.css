@@ -189,6 +189,30 @@
 .add-btn-name { font-size: 0.8rem; color: var(--text-bright); }
 .add-btn-pts  { font-size: 0.72rem; color: var(--text-dim); }
 
+.mech-filter {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--term-border);
+  color: var(--term-text);
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  margin-bottom: 2px;
+  outline: none;
+}
+.mech-filter:focus { border-color: var(--term-text); }
+.mech-preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.mech-preset-btn { justify-content: space-between; }
+.preset-tag { font-size: 0.65rem; color: var(--term-dim); letter-spacing: 0.05em; flex-shrink: 0; }
+.mech-no-results { font-size: 0.72rem; color: var(--text-dim); padding: 4px 6px; font-style: italic; }
+
 /* ── Validation Panel ─────────────────────────────────── */
 .validation-panel {
   position: relative;

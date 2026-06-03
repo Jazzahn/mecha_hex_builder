@@ -1,0 +1,148 @@
+// BattleTech → Mechatech translated mech presets.
+// Slots are filled to approximate each mech's canonical BT loadout within Mechatech slot/weapon rules.
+// typeId is derived from tonnage: 20-35t=light, 40-55t=medium, 60-75t=heavy, 80-100t=assault.
+
+export const MECH_PRESETS = [
+  // ── Clan Sea Fox A ─────────────────────────────────────────
+  {
+    id: 'dasher-ii',
+    name: 'Dasher II',
+    model: '',
+    typeId: 'light',
+    tonnage: 20,
+    tech: 'Clan Omni',
+    bv: 522,
+    slots: {
+      torso: ['erSmallLaser', 'erSmallLaser', 'boostJets'],
+      larm:  ['heatSinks'],
+      rarm:  [],
+    },
+  },
+  {
+    id: 'locust-lct7v',
+    name: 'Locust',
+    model: 'LCT-7V',
+    typeId: 'light',
+    tonnage: 20,
+    tech: 'IS',
+    bv: 585,
+    slots: {
+      torso: ['erMediumLaser', 'erSmallLaser'],
+      larm:  ['erSmallLaser'],
+      rarm:  ['heatSinks'],
+    },
+  },
+  {
+    id: 'spider-sdr8m',
+    name: 'Spider',
+    model: 'SDR-8M',
+    typeId: 'light',
+    tonnage: 30,
+    tech: 'IS',
+    bv: 621,
+    slots: {
+      torso: ['mediumLaser', 'boostJets'],
+      larm:  ['smallLaser'],
+      rarm:  ['heatSinks'],
+    },
+  },
+  {
+    id: 'jenner-iic',
+    name: 'Jenner IIC',
+    model: '',
+    typeId: 'light',
+    tonnage: 35,
+    tech: 'Clan',
+    bv: 1047,
+    slots: {
+      torso: ['erMediumLaser', 'erSmallLaser'],
+      larm:  ['erSmallLaser'],
+      rarm:  ['boostJets'],
+    },
+  },
+  {
+    id: 'piranha-5',
+    name: 'Piranha',
+    model: 'Piranha 5',
+    typeId: 'light',
+    tonnage: 20,
+    tech: 'Clan',
+    bv: 1132,
+    slots: {
+      torso: ['machineGunArray', 'machineGunArray', 'erSmallLaser'],
+      larm:  ['erSmallLaser'],
+      rarm:  ['heatSinks'],
+    },
+  },
+  {
+    id: 'havoc-hvcp6',
+    name: 'Havoc',
+    model: 'HVC-P6',
+    typeId: 'light',
+    tonnage: 35,
+    tech: 'IS',
+    bv: 1255,
+    slots: {
+      torso: ['erMediumLaser', 'ultraAC2'],
+      larm:  ['erSmallLaser'],
+      rarm:  ['heatSinks'],
+    },
+  },
+  // ── Clan Sea Fox B ─────────────────────────────────────────
+  {
+    id: 'crab-crb27b',
+    name: 'Crab',
+    model: 'CRB-27b',
+    typeId: 'medium',
+    tonnage: 50,
+    tech: 'IS',
+    bv: 1308,
+    slots: {
+      torso: ['largeLaser'],
+      larm:  ['mediumLaser'],
+      rarm:  ['mediumLaser'],
+    },
+  },
+  {
+    id: 'shadow-hawk-shd7h',
+    name: 'Shadow Hawk',
+    model: 'SHD-7H',
+    typeId: 'medium',
+    tonnage: 55,
+    tech: 'IS',
+    bv: 1394,
+    slots: {
+      torso: ['ultraAC5', 'lrm5'],
+      larm:  ['erMediumLaser'],
+      rarm:  ['boostJets', 'heatSinks'],
+    },
+  },
+  {
+    id: 'griffin-iic',
+    name: 'Griffin IIC',
+    model: '',
+    typeId: 'medium',
+    tonnage: 40,
+    tech: 'Clan Omni',
+    bv: 1608,
+    slots: {
+      torso: ['ppc'],
+      larm:  ['lrm5', 'lrm5'],
+      rarm:  ['boostJets', 'heatSinks'],
+    },
+  },
+  {
+    id: 'gravedigger-gdr1d',
+    name: 'Gravedigger',
+    model: 'GDR-1D',
+    typeId: 'heavy',
+    tonnage: 65,
+    tech: 'IS',
+    bv: 1707,
+    slots: {
+      torso: ['gaussRifle', 'lrm5'],
+      larm:  ['largeLaser'],
+      rarm:  ['mediumLaser', 'heatSinks'],
+    },
+  },
+];

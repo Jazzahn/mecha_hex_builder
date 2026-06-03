@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useCallback } from 'react';
 import { UNIT_TYPES } from '../data/gameData';
+import { MECH_PRESETS } from '../data/mechPresets';
 
 let nextId = 1;
 
@@ -33,6 +34,24 @@ function reducer(state, action) {
       return { ...state, pointLimit: action.limit };
     case 'ADD_UNIT':
       return { ...state, units: [...state.units, makeUnit(action.typeId)] };
+    case 'ADD_PRESET_UNIT': {
+      const preset = MECH_PRESETS.find(p => p.id === action.presetId);
+      if (!preset) return state;
+      const unit = {
+        id: nextId++,
+        typeId: preset.typeId,
+        name: preset.model ? `${preset.name} ${preset.model}` : preset.name,
+        slots: {
+          torso: [...preset.slots.torso],
+          larm:  [...preset.slots.larm],
+          rarm:  [...preset.slots.rarm],
+        },
+        heroId: null,
+        titleId: null,
+        aceCustomSlot: null,
+      };
+      return { ...state, units: [...state.units, unit] };
+    }
     case 'REMOVE_UNIT':
       return { ...state, units: state.units.filter(u => u.id !== action.unitId) };
     case 'SET_UNIT_NAME':
