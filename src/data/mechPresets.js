@@ -15,7 +15,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erSmallLaser', 'erSmallLaser', 'boostJets'],
       larm:  ['heatSinks'],
-      rarm:  [],
+      rarm:  ['erSmallLaser'],
     },
   },
   {
@@ -140,7 +140,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1707,
     slots: {
-      torso: ['gaussRifle', 'lrm5'],
+      torso: ['gaussRifle'],
       larm:  ['largeLaser'],
       rarm:  ['mediumLaser', 'heatSinks'],
     },
@@ -170,7 +170,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1999,
     slots: {
-      torso: ['gaussRifle', 'heatSinks'],
+      torso: ['gaussRifle'],
       larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'extraArmor'],
     },
@@ -184,7 +184,7 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 2110,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -198,7 +198,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2145,
     slots: {
-      torso: ['autocannon20', 'mediumLaser'],
+      torso: ['autocannon20', 'lrm5'],
       larm:  ['largeLaser', 'extraArmor'],
       rarm:  ['streakSRMRack', 'streakSRMRack', 'machineGunArray', 'heatSinks'],
     },
@@ -226,7 +226,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2277,
     slots: {
-      torso: ['largeLaser', 'heatSinks'],
+      torso: ['largeLaser'],
       larm:  ['largeLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -240,7 +240,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2762,
     slots: {
-      torso: ['largeLaser', 'mediumPulseLaser'],
+      torso: ['largeLaser', 'erSmallLaser'],
       larm:  ['largeLaser', 'heatSinks'],
       rarm:  ['mediumPulseLaser', 'erMediumLaser'],
     },
@@ -254,7 +254,7 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 2781,
     slots: {
-      torso: ['largePulseLaser', 'heatSinks'],
+      torso: ['largePulseLaser'],
       larm:  ['largePulseLaser'],
       rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
@@ -339,8 +339,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 807,
     slots: {
-      torso: ['lrm5', 'boostJets'],
-      larm:  ['mediumLaser'],
+      torso: ['lrm5', 'lrm5', 'boostJets'],
+      larm:  ['streakSRMRack'],
       rarm:  ['heatSinks'],
     },
   },
@@ -353,7 +353,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 913,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['streakSRMRack'],
       rarm:  ['heatSinks'],
     },
@@ -395,8 +395,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1061,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
-      larm:  ['mediumLaser'],
+      torso: ['largeLaser'],
+      larm:  ['erSmallLaser'],
       rarm:  ['heatSinks'],
     },
   },
@@ -426,7 +426,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['lrm5', 'mediumLaser'],
       larm:  ['streakSRMRack', 'boostJets'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -439,8 +439,8 @@ export const MECH_PRESETS = [
     bv: 1035,
     slots: {
       torso: ['ultraAC5', 'lrm5'],
-      larm:  ['mediumLaser', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['mediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -452,9 +452,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1041,
     slots: {
-      torso: ['largeLaser', 'streakSRMRack'],
-      larm:  ['mediumLaser', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      torso: ['autocannon20'],
+      larm:  ['mediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -466,9 +466,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1105,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['streakSRMRack', 'boostJets'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -480,9 +480,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1148,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
-      larm:  ['mediumLaser', 'erSmallLaser'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      torso: ['largeLaser'],
+      larm:  ['mediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -495,8 +495,8 @@ export const MECH_PRESETS = [
     bv: 1223,
     slots: {
       torso: ['ultraAC5', 'lrm5'],
-      larm:  ['mediumPulseLaser', 'heatSinks'],
-      rarm:  ['mediumLaser', 'erSmallLaser'],
+      larm:  ['mediumPulseLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -522,9 +522,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1359,
     slots: {
-      torso: ['largeLaser', 'boostJets'],
-      larm:  ['mediumLaser', 'erSmallLaser'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      torso: ['largeLaser'],
+      larm:  ['erMediumLaser'],
+      rarm:  ['boostJets', 'heatSinks'],
     },
   },
   {
@@ -564,7 +564,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1684,
     slots: {
-      torso: ['largeLaser', 'lrm5'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -593,7 +593,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1358,
     slots: {
-      torso: ['ppc', 'lrm5'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser', 'heatSinks'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -608,8 +608,8 @@ export const MECH_PRESETS = [
     bv: 1395,
     slots: {
       torso: ['ultraAC5', 'erSmallLaser'],
-      larm:  ['largeLaser', 'heatSinks'],
-      rarm:  ['largeLaser', 'heatSinks'],
+      larm:  ['largeLaser'],
+      rarm:  ['largeLaser'],
     },
   },
   {
@@ -649,8 +649,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1695,
     slots: {
-      torso: ['gaussRifle', 'lrm5'],
-      larm:  ['ppc', 'erSmallLaser'],
+      torso: ['gaussRifle'],
+      larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -677,8 +677,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1787,
     slots: {
-      torso: ['ppc', 'mediumLaser'],
-      larm:  ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
+      larm:  ['ppc'],
       rarm:  ['ultraAC5', 'heatSinks'],
     },
   },
@@ -691,7 +691,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1795,
     slots: {
-      torso: ['largePulseLaser', 'lrm5'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -705,7 +705,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1814,
     slots: {
-      torso: ['gaussRifle', 'erSmallLaser'],
+      torso: ['gaussRifle'],
       larm:  ['erMediumLaser', 'streakSRMRack'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -719,8 +719,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2231,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
-      larm:  ['ppc', 'heatSinks'],
+      torso: ['largeLaser'],
+      larm:  ['ppc'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
   },
@@ -735,8 +735,8 @@ export const MECH_PRESETS = [
     bv: 1631,
     slots: {
       torso: ['ultraAC5', 'lrm5', 'heatSinks'],
-      larm:  ['mediumLaser', 'extraArmor'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['mediumLaser', 'extraArmor', 'erSmallLaser'],
+      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -749,8 +749,8 @@ export const MECH_PRESETS = [
     bv: 1655,
     slots: {
       torso: ['lrm5', 'lrm5', 'mediumLaser'],
-      larm:  ['streakSRMRack', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['streakSRMRack', 'streakSRMRack', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -763,7 +763,7 @@ export const MECH_PRESETS = [
     bv: 1679,
     slots: {
       torso: ['ppc', 'streakSRMRack'],
-      larm:  ['mediumLaser', 'mediumLaser', 'heatSinks'],
+      larm:  ['mediumLaser', 'mediumLaser'],
       rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
@@ -777,7 +777,7 @@ export const MECH_PRESETS = [
     bv: 1717,
     slots: {
       torso: ['gaussRifle', 'erSmallLaser'],
-      larm:  ['erMediumLaser', 'heatSinks'],
+      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
   },
@@ -790,9 +790,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1812,
     slots: {
-      torso: ['ppc', 'ppc'],
-      larm:  ['erMediumLaser', 'heatSinks'],
-      rarm:  ['erSmallLaser', 'heatSinks'],
+      torso: ['ppc', 'erSmallLaser'],
+      larm:  ['ppc', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
   },
   {
@@ -804,9 +804,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1816,
     slots: {
-      torso: ['lrm5', 'lrm5', 'erSmallLaser'],
-      larm:  ['streakSRMRack', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'heatSinks'],
+      torso: ['lrm5', 'lrm5', 'streakSRMRack', 'heatSinks'],
+      larm:  ['streakSRMRack', 'erSmallLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'ultraAC2', 'ultraAC2'],
     },
   },
   {
@@ -820,7 +820,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'erMediumLaser'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['lrm5', 'lrm5', 'heatSinks'],
+      rarm:  ['lrm5', 'lrm5', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -832,9 +832,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2092,
     slots: {
-      torso: ['largeLaser', 'erMediumLaser'],
+      torso: ['largeLaser', 'erSmallLaser'],
       larm:  ['largeLaser', 'erSmallLaser'],
-      rarm:  ['mediumLaser', 'boostJets'],
+      rarm:  ['boostJets', 'heatSinks'],
     },
   },
   {
@@ -848,7 +848,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['autocannon20', 'lrm5'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -860,8 +860,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2286,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
-      larm:  ['gaussRifle', 'erSmallLaser', 'heatSinks'],
+      torso: ['gaussRifle', 'heatSinks'],
+      larm:  ['gaussRifle', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
@@ -889,7 +889,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 982,
     slots: {
-      torso: ['ppc', 'mediumLaser'],
+      torso: ['ppc'],
       larm:  ['boostJets'],
       rarm:  ['heatSinks'],
     },
@@ -931,7 +931,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1173,
     slots: {
-      torso: ['mediumLaser', 'lrm5', 'boostJets'],
+      torso: ['mediumLaser', 'boostJets'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'heatSinks'],
     },
@@ -960,7 +960,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 1440,
     slots: {
-      torso: ['erMediumLaser', 'mediumPulseLaser'],
+      torso: ['erMediumLaser', 'erSmallLaser'],
       larm:  ['erSmallLaser'],
       rarm:  ['boostJets'],
     },
@@ -974,7 +974,7 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 1731,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -989,9 +989,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1622,
     slots: {
-      torso: ['ultraAC2', 'ultraAC2', 'lrm5'],
-      larm:  ['ultraAC5', 'mediumLaser', 'heatSinks'],
-      rarm:  ['ultraAC5', 'mediumLaser', 'heatSinks'],
+      torso: ['ultraAC2', 'ultraAC2', 'lrm5', 'heatSinks'],
+      larm:  ['ultraAC5', 'mediumLaser'],
+      rarm:  ['ultraAC5', 'mediumLaser'],
     },
   },
   {
@@ -1003,9 +1003,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1811,
     slots: {
-      torso: ['lrm5', 'lrm5', 'mediumLaser'],
-      larm:  ['largeLaser', 'erSmallLaser'],
-      rarm:  ['largeLaser', 'heatSinks'],
+      torso: ['lrm5', 'lrm5', 'heatSinks'],
+      larm:  ['largeLaser'],
+      rarm:  ['largeLaser'],
     },
   },
   {
@@ -1017,7 +1017,7 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 2021,
     slots: {
-      torso: ['largePulseLaser', 'boostJets'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['erSmallLaser', 'heatSinks'],
     },
@@ -1031,8 +1031,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2033,
     slots: {
-      torso: ['ppc', 'streakSRMRack'],
-      larm:  ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
+      larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -1045,9 +1045,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2099,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
-      larm:  ['largeLaser', 'erSmallLaser'],
-      rarm:  ['largeLaser', 'heatSinks'],
+      torso: ['ppc'],
+      larm:  ['largeLaser'],
+      rarm:  ['largeLaser'],
     },
   },
   {
@@ -1059,9 +1059,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2346,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
-      larm:  ['ppc', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['ppc', 'erSmallLaser', 'heatSinks'],
+      torso: ['gaussRifle', 'heatSinks'],
+      larm:  ['ppc', 'erSmallLaser'],
+      rarm:  ['ppc', 'heatSinks'],
     },
   },
   {
@@ -1073,8 +1073,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2363,
     slots: {
-      torso: ['largeLaser', 'erMediumLaser'],
-      larm:  ['largeLaser', 'erSmallLaser', 'heatSinks'],
+      torso: ['largeLaser', 'erSmallLaser'],
+      larm:  ['largeLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
   },
@@ -1088,7 +1088,7 @@ export const MECH_PRESETS = [
     bv: 2658,
     slots: {
       torso: ['autocannon20', 'erSmallLaser'],
-      larm:  ['gaussRifle', 'erMediumLaser'],
+      larm:  ['gaussRifle', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
   },
@@ -1101,9 +1101,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2844,
     slots: {
-      torso: ['gaussRifle', 'largeLaser'],
-      larm:  ['gaussRifle', 'erMediumLaser'],
-      rarm:  ['largeLaser', 'erMediumLaser'],
+      torso: ['gaussRifle', 'erSmallLaser'],
+      larm:  ['gaussRifle', 'erSmallLaser'],
+      rarm:  ['largeLaser', 'heatSinks'],
     },
   },
   {
@@ -1115,9 +1115,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 585,
     slots: {
-      torso: ['ultraAC5', 'mediumLaser'],
-      larm:  ['heatSinks'],
-      rarm:  ['heatSinks'],
+      torso: ['ultraAC5', 'erSmallLaser'],
+      larm:  ['erMediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -1129,8 +1129,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 795,
     slots: {
-      torso: ['streakSRMRack', 'streakSRMRack'],
-      larm:  ['mediumLaser'],
+      torso: ['streakSRMRack', 'streakSRMRack', 'lrm5'],
+      larm:  ['erSmallLaser'],
       rarm:  ['heatSinks'],
     },
   },
@@ -1158,8 +1158,8 @@ export const MECH_PRESETS = [
     bv: 1192,
     slots: {
       torso: ['ultraAC5', 'erSmallLaser'],
-      larm:  ['largeLaser'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['erMediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -1171,7 +1171,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1225,
     slots: {
-      torso: ['ultraAC5', 'mediumLaser'],
+      torso: ['ultraAC5', 'erSmallLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'heatSinks'],
     },
@@ -1185,9 +1185,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1386,
     slots: {
-      torso: ['gaussRifle', 'erSmallLaser'],
+      torso: ['gaussRifle'],
       larm:  ['erMediumLaser'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -1199,7 +1199,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1465,
     slots: {
-      torso: ['erMediumLaser', 'mediumPulseLaser'],
+      torso: ['erMediumLaser', 'erSmallLaser'],
       larm:  ['erSmallLaser'],
       rarm:  ['boostJets'],
     },
@@ -1227,8 +1227,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1671,
     slots: {
-      torso: ['largeLaser', 'heatSinks'],
-      larm:  ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
+      larm:  ['largeLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -1241,7 +1241,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1760,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser', 'streakSRMRack'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -1255,7 +1255,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1935,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
+      torso: ['gaussRifle', 'erSmallLaser'],
       larm:  ['erSmallLaser', 'boostJets'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
@@ -1269,7 +1269,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2192,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -1283,9 +1283,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2263,
     slots: {
-      torso: ['gaussRifle', 'mediumLaser'],
-      larm:  ['ppc', 'erSmallLaser'],
-      rarm:  ['ppc', 'heatSinks'],
+      torso: ['gaussRifle'],
+      larm:  ['ppc'],
+      rarm:  ['ppc'],
     },
   },
   {
@@ -1297,8 +1297,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2423,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
-      larm:  ['ppc', 'erSmallLaser'],
+      torso: ['largeLaser'],
+      larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -1311,7 +1311,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2564,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
+      torso: ['gaussRifle', 'erSmallLaser'],
       larm:  ['autocannon20', 'heatSinks'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
@@ -1325,9 +1325,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2626,
     slots: {
-      torso: ['gaussRifle', 'largeLaser'],
+      torso: ['gaussRifle', 'lrm5'],
       larm:  ['erMediumLaser', 'lrm5', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'lrm5', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
   },
   {
@@ -1339,8 +1339,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 3170,
     slots: {
-      torso: ['gaussRifle', 'ppc'],
-      larm:  ['gaussRifle', 'ppc'],
+      torso: ['gaussRifle', 'heatSinks'],
+      larm:  ['gaussRifle', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
@@ -1353,7 +1353,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 401,
     slots: {
-      torso: ['mediumLaser'],
+      torso: ['mediumLaser', 'streakSRMRack'],
       larm:  ['streakSRMRack'],
       rarm:  ['heatSinks'],
     },
@@ -1367,7 +1367,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 672,
     slots: {
-      torso: ['erSmallLaser', 'erSmallLaser'],
+      torso: ['erSmallLaser', 'erSmallLaser', 'machineGunArray'],
       larm:  ['machineGunArray'],
       rarm:  ['heatSinks'],
     },
@@ -1423,7 +1423,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1288,
     slots: {
-      torso: ['ultraAC5', 'mediumLaser'],
+      torso: ['ultraAC5', 'lrm5'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'heatSinks'],
     },
@@ -1451,9 +1451,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1480,
     slots: {
-      torso: ['lrm5', 'lrm5', 'mediumLaser'],
-      larm:  ['streakSRMRack', 'mediumLaser', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'heatSinks'],
+      torso: ['lrm5', 'lrm5', 'heatSinks'],
+      larm:  ['mediumLaser', 'streakSRMRack'],
+      rarm:  ['streakSRMRack', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1479,7 +1479,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 1870,
     slots: {
-      torso: ['ppc', 'lrm5'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -1493,7 +1493,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 1999,
     slots: {
-      torso: ['largePulseLaser', 'erSmallLaser'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -1507,7 +1507,7 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 2021,
     slots: {
-      torso: ['largePulseLaser', 'erSmallLaser'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['erMediumLaser'],
     },
@@ -1521,9 +1521,9 @@ export const MECH_PRESETS = [
     tech: 'Clan Omni',
     bv: 2115,
     slots: {
-      torso: ['largePulseLaser', 'streakSRMRack'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser'],
-      rarm:  ['mediumPulseLaser', 'heatSinks'],
+      rarm:  ['mediumPulseLaser'],
     },
   },
   {
@@ -1535,8 +1535,8 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2715,
     slots: {
-      torso: ['ppc', 'ppc'],
-      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      torso: ['ppc', 'erSmallLaser'],
+      larm:  ['ppc', 'heatSinks'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
     },
   },
@@ -1549,7 +1549,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2750,
     slots: {
-      torso: ['largePulseLaser', 'mediumPulseLaser'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['erMediumLaser'],
     },
@@ -1563,9 +1563,9 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2756,
     slots: {
-      torso: ['largePulseLaser', 'erMediumLaser'],
-      larm:  ['largePulseLaser', 'erMediumLaser'],
-      rarm:  ['mediumPulseLaser', 'boostJets'],
+      torso: ['largePulseLaser', 'erSmallLaser'],
+      larm:  ['largePulseLaser', 'erSmallLaser'],
+      rarm:  ['boostJets', 'heatSinks'],
     },
   },
   {
@@ -1577,8 +1577,8 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2794,
     slots: {
-      torso: ['largePulseLaser', 'erSmallLaser'],
-      larm:  ['largePulseLaser', 'erSmallLaser'],
+      torso: ['largePulseLaser'],
+      larm:  ['largePulseLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -1591,7 +1591,7 @@ export const MECH_PRESETS = [
     tech: 'Clan',
     bv: 2941,
     slots: {
-      torso: ['largePulseLaser', 'mediumPulseLaser'],
+      torso: ['largePulseLaser'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
@@ -1605,7 +1605,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1390,
     slots: {
-      torso: ['ppc', 'lrm5'],
+      torso: ['ppc'],
       larm:  ['erSmallLaser', 'heatSinks'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -1633,7 +1633,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1547,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -1647,7 +1647,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1576,
     slots: {
-      torso: ['gaussRifle', 'erSmallLaser'],
+      torso: ['gaussRifle'],
       larm:  ['erMediumLaser'],
       rarm:  ['boostJets', 'heatSinks'],
     },
@@ -1661,7 +1661,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1870,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser'],
       rarm:  ['erMediumLaser'],
     },
@@ -1677,7 +1677,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'lrm5', 'heatSinks'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'streakSRMRack'],
+      rarm:  ['erMediumLaser', 'streakSRMRack', 'erSmallLaser'],
     },
   },
   {
@@ -1689,9 +1689,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2077,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
-      larm:  ['ultraAC5', 'erSmallLaser'],
-      rarm:  ['lrm5', 'lrm5', 'heatSinks'],
+      torso: ['gaussRifle', 'heatSinks'],
+      larm:  ['ultraAC5', 'erSmallLaser', 'erSmallLaser'],
+      rarm:  ['lrm5', 'lrm5', 'streakSRMRack', 'heatSinks'],
     },
   },
   {
@@ -1704,8 +1704,8 @@ export const MECH_PRESETS = [
     bv: 1421,
     slots: {
       torso: ['lrm5', 'lrm5', 'mediumLaser'],
-      larm:  ['streakSRMRack', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['streakSRMRack', 'streakSRMRack', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1717,7 +1717,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1555,
     slots: {
-      torso: ['largeLaser', 'lrm5'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser', 'heatSinks'],
       rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
@@ -1732,8 +1732,8 @@ export const MECH_PRESETS = [
     bv: 1597,
     slots: {
       torso: ['ultraAC5', 'lrm5'],
-      larm:  ['mediumLaser', 'mediumLaser', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'heatSinks'],
+      larm:  ['mediumLaser', 'streakSRMRack'],
+      rarm:  ['mediumLaser', 'erSmallLaser'],
     },
   },
   {
@@ -1745,7 +1745,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1844,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser', 'erSmallLaser'],
       rarm:  ['ultraAC5', 'heatSinks'],
     },
@@ -1759,9 +1759,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1872,
     slots: {
-      torso: ['lrm5', 'lrm5', 'erSmallLaser'],
+      torso: ['lrm5', 'lrm5', 'ultraAC5'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1774,7 +1774,7 @@ export const MECH_PRESETS = [
     bv: 1868,
     slots: {
       torso: ['ultraAC5', 'erSmallLaser'],
-      larm:  ['ppc', 'erSmallLaser'],
+      larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
@@ -1787,8 +1787,8 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2152,
     slots: {
-      torso: ['ppc', 'lrm5'],
-      larm:  ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
+      larm:  ['ppc'],
       rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
   },
@@ -1801,7 +1801,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1070,
     slots: {
-      torso: ['largeLaser', 'mediumLaser'],
+      torso: ['largeLaser'],
       larm:  ['streakSRMRack', 'heatSinks'],
       rarm:  ['erSmallLaser', 'heatSinks'],
     },
@@ -1816,8 +1816,8 @@ export const MECH_PRESETS = [
     bv: 1234,
     slots: {
       torso: ['ultraAC5', 'lrm5'],
-      larm:  ['mediumLaser', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks'],
+      larm:  ['mediumLaser'],
+      rarm:  ['mediumLaser'],
     },
   },
   {
@@ -1829,7 +1829,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1469,
     slots: {
-      torso: ['gaussRifle', 'mediumLaser'],
+      torso: ['gaussRifle'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'heatSinks'],
     },
@@ -1843,7 +1843,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1547,
     slots: {
-      torso: ['ppc', 'erSmallLaser'],
+      torso: ['ppc'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'heatSinks'],
     },
@@ -1857,7 +1857,7 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1770,
     slots: {
-      torso: ['largeLaser', 'erSmallLaser'],
+      torso: ['largeLaser'],
       larm:  ['erMediumLaser'],
       rarm:  ['streakSRMRack', 'boostJets'],
     },
@@ -1885,9 +1885,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2849,
     slots: {
-      torso: ['gaussRifle', 'largeLaser'],
-      larm:  ['ppc', 'erMediumLaser'],
-      rarm:  ['ppc', 'erSmallLaser', 'heatSinks'],
+      torso: ['gaussRifle', 'erSmallLaser'],
+      larm:  ['ppc', 'heatSinks'],
+      rarm:  ['ppc', 'erSmallLaser'],
     },
   },
   {
@@ -1899,9 +1899,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 2981,
     slots: {
-      torso: ['gaussRifle', 'erMediumLaser'],
-      larm:  ['gaussRifle', 'erMediumLaser'],
-      rarm:  ['largeLaser', 'erSmallLaser', 'heatSinks'],
+      torso: ['gaussRifle', 'erSmallLaser'],
+      larm:  ['gaussRifle', 'erSmallLaser'],
+      rarm:  ['largeLaser', 'heatSinks'],
     },
   },
 ];
