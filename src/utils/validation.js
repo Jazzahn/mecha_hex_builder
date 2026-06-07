@@ -10,6 +10,7 @@ import {
 
 const ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
 const REACTIVE_ARMOR_IDS = ['ballisticReinforcedArmor', 'laserReflectiveArmor', 'stealthArmor'];
+const ALL_ARMOR_IDS = ['reinforcedPlating', 'hardenedArmor', ...REACTIVE_ARMOR_IDS];
 
 export function calcUnitPoints(unit) {
   const unitType = UNIT_TYPES[unit.typeId];
@@ -98,13 +99,9 @@ export function validateUnit(unit, unitType) {
   errors.push(...checkSlotLimits(unit, unitType));
 
   const allAssigned = Object.values(unit.slots).flat();
-  const armorTaken = ARMOR_IDS.filter(id => allAssigned.includes(id));
+  const armorTaken = ALL_ARMOR_IDS.filter(id => allAssigned.includes(id));
   if (armorTaken.length > 1) {
-    errors.push('Only one armor upgrade (Extra Armor / Reinforced Plating / Hardened Armor) may be equipped at a time.');
-  }
-  const reactiveArmorTaken = REACTIVE_ARMOR_IDS.filter(id => allAssigned.includes(id));
-  if (reactiveArmorTaken.length > 1) {
-    errors.push('Only one reactive armor upgrade (Ballistic-Reinforced / Laser-Reflective / Stealth Armor) may be equipped at a time.');
+    errors.push('Only one armor upgrade may be equipped at a time (Reinforced Plating, Hardened Armor, Ballistic-Reinforced Armor, Laser-Reflective Armor, and Stealth Armor are mutually exclusive).');
   }
 
   const counts = {};
@@ -134,8 +131,7 @@ export function canAddToZone(unit, location, upgradeId) {
   const max = slotsMax(unit, location);
   if (used + cost > max) return false;
   const allAssigned = Object.values(unit.slots).flat();
-  if (ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
-  if (REACTIVE_ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => REACTIVE_ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
+  if (ALL_ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => ALL_ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
   const count = allAssigned.filter(id => id === upgradeId).length;
   if (upgrade.isWeapon && count >= 2) return false;
   const upgradeMax = upgradeId === 'heatSinks' ? 2 : 1;
