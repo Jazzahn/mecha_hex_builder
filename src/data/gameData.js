@@ -118,13 +118,21 @@ export const UPGRADES = {
     slotCost: { light: 1, medium: 1, heavy: 2, assault: 3 },
     description: 'This model may Jump when taking a Walk action.',
   },
-  experimentalArmor: {
-    id: 'experimentalArmor',
-    name: 'Experimental Armor',
+  ballisticReinforcedArmor: {
+    id: 'ballisticReinforcedArmor',
+    name: 'Ballistic-Reinforced Armor',
     isWeapon: false,
     mechaOnly: false,
-    slotCost: 2,
-    description: 'When taking a point of damage roll one die, on 5+ the damage is ignored.',
+    slotCost: 1,
+    description: 'When taking a point of damage from a Ballistic weapon, roll one die — on 5+ the damage is ignored. Mutually exclusive with other reactive armor upgrades.',
+  },
+  laserReflectiveArmor: {
+    id: 'laserReflectiveArmor',
+    name: 'Laser-Reflective Armor',
+    isWeapon: false,
+    mechaOnly: false,
+    slotCost: 1,
+    description: 'When taking a point of damage from an Energy weapon, roll one die — on 5+ the damage is ignored. Mutually exclusive with other reactive armor upgrades.',
   },
   extraArmor: {
     id: 'extraArmor',
@@ -174,29 +182,22 @@ export const UPGRADES = {
     slotCost: 1,
     description: 'Deals +1 damage when ramming or being rammed.',
   },
-  reinforcedFrame: {
-    id: 'reinforcedFrame',
-    name: 'Reinforced Frame',
+  antiMissileSystem: {
+    id: 'antiMissileSystem',
+    name: 'Anti-Missile System',
     isWeapon: false,
-    mechaOnly: true,
+    mechaOnly: false,
     slotCost: 1,
-    description: 'Take -1 damage when ramming or being rammed.',
+    special: ['Ammo Box'],
+    description: 'Reduces the number of successful hits from Missile weapons by 1.',
   },
-  reinforcedHydraulics: {
-    id: 'reinforcedHydraulics',
-    name: 'Reinforced Hydraulics',
-    isWeapon: false,
-    mechaOnly: true,
-    slotCost: 1,
-    description: 'Enemy models are pushed by +1 hex when rammed by this model.',
-  },
-  ramArmor: {
-    id: 'ramArmor',
-    name: 'RAM Armor',
+  stealthArmor: {
+    id: 'stealthArmor',
+    name: 'Stealth Armor',
     isWeapon: false,
     mechaOnly: false,
     slotCost: 2,
-    description: 'The model always counts as being in cover when targeted from over 6 hexes away.',
+    description: 'The model always counts as being in cover when targeted from over 6 hexes away. Mutually exclusive with other reactive armor upgrades.',
   },
 };
 

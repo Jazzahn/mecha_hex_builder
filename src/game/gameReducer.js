@@ -1,4 +1,12 @@
 import { UNIT_TYPES, ALL_UPGRADES } from '../data/gameData';
+
+// Returns true if the unit has a reactive armor that applies to the given weapon's category
+function hasReactiveArmor(armyUnit, slotDamage, weapon) {
+  const specials = weapon?.special ?? [];
+  if (specials.includes('Ballistic') && hasActiveUpgrade(armyUnit, slotDamage, 'ballisticReinforcedArmor')) return true;
+  if (specials.includes('Energy')    && hasActiveUpgrade(armyUnit, slotDamage, 'laserReflectiveArmor'))    return true;
+  return false;
+}
 import { hexKey, hexDistance, isDeployZone, hexNeighborAt, hexNeighbors, inBounds, BOARD_COLS, BOARD_ROWS } from './hexMath';
 import {
   getEquippedWeapons, canWeaponTarget, rollDice,
@@ -945,7 +953,7 @@ export function gameReducer(state, action) {
       }
 
       const logMsg = `${target.name} blocks [${pc.blockRolls.join(', ')}] — ${blocks}/${pc.hits} saved. ${weapon.name} deals ${totalDamage} damage.`;
-      if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor')) {
+      if (hasReactiveArmor(target.armyUnit, target.slotDamage, weapon)) {
         return addLog(
           { ...state, pendingCombat: { ...pc, step: 'exp-armor-roll', blocks, netDamage: totalDamage, remainingDamage: totalDamage, blastTargetIds, expArmorRolls: [], expArmorNextStep: 'damage-assign' } },
           logMsg
@@ -979,7 +987,7 @@ export function gameReducer(state, action) {
       const saveLabel = saves > 0 ? `${saves} saved` : 'none saved';
 
       if (pc.expArmorNextStep === 'damage-assign') {
-        const logText = `${expTarget?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        const logText = `${expTarget?.name}'s Reactive Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
         if (netDamage <= 0) {
           return checkAnnihilation(transitionOrOverheat(addLog(state, logText), { remainingDamage: 0, netDamage: 0 }));
         }
@@ -990,11 +998,11 @@ export function gameReducer(state, action) {
       }
 
       if (pc.expArmorNextStep === 'ram-damage-target') {
-        const logText = `${expTarget?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        const logText = `${expTarget?.name}'s Reactive Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
         if (netDamage <= 0) {
           const rammerUnit = state.units.find(u => u.id === pc.rammerId);
           if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
-            const hasRammerExp = hasActiveUpgrade(rammerUnit.armyUnit, rammerUnit.slotDamage, 'experimentalArmor');
+            const hasRammerExp = false; // reactive armor doesn't apply to ram damage
             const newPc = hasRammerExp
               ? { ...pc, step: 'exp-armor-roll', remainingDamage: pc.rammerTakes, expArmorRolls: [], expArmorNextStep: 'ram-damage-rammer', lockedUpgradeKey: null }
               : { ...pc, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null };
@@ -1009,7 +1017,7 @@ export function gameReducer(state, action) {
       }
 
       if (pc.expArmorNextStep === 'ram-damage-rammer') {
-        const logText = `${expRammer?.name}'s Experimental Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
+        const logText = `${expRammer?.name}'s Reactive Armor: [${pc.expArmorRolls.join(', ')}] — ${saveLabel}. ${netDamage} damage gets through.`;
         if (netDamage <= 0) {
           return startRamPushOrEnd(addLog(state, logText), pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes);
         }
@@ -1075,7 +1083,7 @@ export function gameReducer(state, action) {
         if (!isRammer) {
           const rammerUnit = afterCheck.units.find(u => u.id === pc.rammerId);
           if (pc.rammerTakes > 0 && rammerUnit && !rammerUnit.destroyed) {
-            const hasRammerExp = hasActiveUpgrade(rammerUnit.armyUnit, rammerUnit.slotDamage, 'experimentalArmor');
+            const hasRammerExp = false; // reactive armor doesn't apply to ram damage
             if (hasRammerExp) {
               return { ...afterCheck, pendingCombat: { ...afterCheck.pendingCombat, step: 'exp-armor-roll', remainingDamage: pc.rammerTakes, expArmorRolls: [], expArmorNextStep: 'ram-damage-rammer', lockedUpgradeKey: null } };
             }
@@ -1190,8 +1198,9 @@ export function gameReducer(state, action) {
       }
 
       // Defender (target) assigns damage first, then rammer takes self-inflicted damage
-      const targetHasExpArmor = targetTakes > 0 && hasActiveUpgrade(target.armyUnit, target.slotDamage, 'experimentalArmor');
-      const rammerHasExpArmor = targetTakes === 0 && rammerTakes > 0 && hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'experimentalArmor');
+      // Reactive armor doesn't apply to ram damage (no weapon type)
+      const targetHasExpArmor = false;
+      const rammerHasExpArmor = false;
       const firstRemaining = targetTakes > 0 ? targetTakes : rammerTakes;
       const firstStep = targetHasExpArmor ? 'exp-armor-roll'
         : targetTakes > 0                 ? 'ram-damage-target'

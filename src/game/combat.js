@@ -63,7 +63,7 @@ export function hasActiveUpgrade(armyUnit, slotDamage, upgradeId) {
 export function getCoverPenalty(target, _attacker, terrain) {
   if (target.hasJumped) return 1;
   if (terrain[hexKey(target.q, target.r)]?.type === 'cover') return 1;
-  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'ramArmor')) return 1;
+  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'stealthArmor')) return 1;
   return 0;
 }
 
@@ -152,8 +152,8 @@ export function calcRamDamage(rammer, target) {
 
   if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'meleeOptimized'))  targetTakes++;
   if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'meleeOptimized'))  rammerTakes++;
-  if (hasActiveUpgrade(rammer.armyUnit, rammer.slotDamage, 'reinforcedFrame') || rammer.hasJumped) rammerTakes = Math.max(0, rammerTakes - 1);
-  if (hasActiveUpgrade(target.armyUnit, target.slotDamage, 'reinforcedFrame') || target.hasJumped) targetTakes = Math.max(0, targetTakes - 1);
+  if (rammer.hasJumped) rammerTakes = Math.max(0, rammerTakes - 1);
+  if (target.hasJumped) targetTakes = Math.max(0, targetTakes - 1);
 
   if (isVehicle(target)) rammerTakes = 0;
 

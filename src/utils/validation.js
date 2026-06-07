@@ -9,6 +9,7 @@ import {
 } from '../data/gameData';
 
 const ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
+const REACTIVE_ARMOR_IDS = ['ballisticReinforcedArmor', 'laserReflectiveArmor', 'stealthArmor'];
 
 export function calcUnitPoints(unit) {
   const unitType = UNIT_TYPES[unit.typeId];
@@ -101,6 +102,10 @@ export function validateUnit(unit, unitType) {
   if (armorTaken.length > 1) {
     errors.push('Only one armor upgrade (Extra Armor / Reinforced Plating / Hardened Armor) may be equipped at a time.');
   }
+  const reactiveArmorTaken = REACTIVE_ARMOR_IDS.filter(id => allAssigned.includes(id));
+  if (reactiveArmorTaken.length > 1) {
+    errors.push('Only one reactive armor upgrade (Ballistic-Reinforced / Laser-Reflective / Stealth Armor) may be equipped at a time.');
+  }
 
   const counts = {};
   allAssigned.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
@@ -130,6 +135,7 @@ export function canAddToZone(unit, location, upgradeId) {
   if (used + cost > max) return false;
   const allAssigned = Object.values(unit.slots).flat();
   if (ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
+  if (REACTIVE_ARMOR_IDS.includes(upgradeId) && allAssigned.some(id => REACTIVE_ARMOR_IDS.includes(id) && id !== upgradeId)) return false;
   const count = allAssigned.filter(id => id === upgradeId).length;
   if (upgrade.isWeapon && count >= 2) return false;
   const upgradeMax = upgradeId === 'heatSinks' ? 2 : 1;
