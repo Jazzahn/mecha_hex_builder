@@ -209,7 +209,7 @@ export const WEAPONS = {
     att: 3,
     str: 0,
     slotCost: 1,
-    special: ['Deadly'],
+    special: ['Energy', 'Deadly'],
   },
   mediumLaser: {
     id: 'mediumLaser',
@@ -219,7 +219,7 @@ export const WEAPONS = {
     att: 3,
     str: 1,
     slotCost: 2,
-    special: ['Deadly'],
+    special: ['Energy', 'Deadly'],
   },
   largeLaser: {
     id: 'largeLaser',
@@ -229,7 +229,7 @@ export const WEAPONS = {
     att: 3,
     str: 2,
     slotCost: 3,
-    special: ['Overheating', 'Deadly'],
+    special: ['Energy', 'Overheating', 'Deadly'],
   },
   smallPulseLaser: {
     id: 'smallPulseLaser',
@@ -239,7 +239,7 @@ export const WEAPONS = {
     att: 4,
     str: 0,
     slotCost: 1,
-    special: ['Accurate'],
+    special: ['Energy', 'Accurate'],
   },
   mediumPulseLaser: {
     id: 'mediumPulseLaser',
@@ -249,7 +249,7 @@ export const WEAPONS = {
     att: 4,
     str: 1,
     slotCost: 2,
-    special: ['Overheating', 'Accurate'],
+    special: ['Energy', 'Overheating', 'Accurate'],
   },
   largePulseLaser: {
     id: 'largePulseLaser',
@@ -259,7 +259,7 @@ export const WEAPONS = {
     att: 4,
     str: 2,
     slotCost: 3,
-    special: ['Overheating', 'Accurate'],
+    special: ['Energy', 'Overheating', 'Accurate'],
   },
   erSmallLaser: {
     id: 'erSmallLaser',
@@ -269,7 +269,7 @@ export const WEAPONS = {
     att: 2,
     str: 1,
     slotCost: 1,
-    special: ['Overheating', 'Deadly'],
+    special: ['Energy', 'Overheating', 'Deadly'],
   },
   erMediumLaser: {
     id: 'erMediumLaser',
@@ -279,7 +279,7 @@ export const WEAPONS = {
     att: 3,
     str: 1,
     slotCost: 2,
-    special: ['Overheating', 'Deadly'],
+    special: ['Energy', 'Overheating', 'Deadly'],
   },
   streakSRMRack: {
     id: 'streakSRMRack',
@@ -289,7 +289,7 @@ export const WEAPONS = {
     att: 3,
     str: 0,
     slotCost: 1,
-    special: ['Ammo Box', 'Deadly'],
+    special: ['Missile', 'Ammo Box', 'Deadly'],
   },
   lrm5: {
     id: 'lrm5',
@@ -300,7 +300,7 @@ export const WEAPONS = {
     str: 0,
     minRange: 2,
     slotCost: 1,
-    special: ['Ammo Box', 'Indirect'],
+    special: ['Missile', 'Ammo Box', 'Indirect'],
   },
   lrm10: {
     id: 'lrm10',
@@ -311,7 +311,7 @@ export const WEAPONS = {
     str: 0,
     minRange: 2,
     slotCost: 2,
-    special: ['Ammo Box', 'Indirect'],
+    special: ['Missile', 'Ammo Box', 'Indirect'],
   },
   lrm20: {
     id: 'lrm20',
@@ -322,7 +322,7 @@ export const WEAPONS = {
     str: 0,
     minRange: 2,
     slotCost: 3,
-    special: ['Ammo Box', 'Indirect'],
+    special: ['Missile', 'Ammo Box', 'Indirect'],
   },
   autocannon2: {
     id: 'autocannon2',
@@ -333,7 +333,7 @@ export const WEAPONS = {
     str: 1,
     minRange: 2,
     slotCost: 1,
-    special: ['Ammo Box'],
+    special: ['Ballistic', 'Ammo Box'],
   },
   autocannon10: {
     id: 'autocannon10',
@@ -343,7 +343,7 @@ export const WEAPONS = {
     att: 4,
     str: 2,
     slotCost: 2,
-    special: ['Ammo Box'],
+    special: ['Ballistic', 'Ammo Box'],
   },
   autocannon20: {
     id: 'autocannon20',
@@ -353,7 +353,7 @@ export const WEAPONS = {
     att: 6,
     str: 3,
     slotCost: 4,
-    special: ['Ammo Box', 'Deadly', 'Overheating'],
+    special: ['Ballistic', 'Ammo Box', 'Deadly', 'Overheating'],
   },
   ultraAC2: {
     id: 'ultraAC2',
@@ -364,7 +364,7 @@ export const WEAPONS = {
     str: 0,
     minRange: 1,
     slotCost: 1,
-    special: ['Ammo Box', 'Relentless'],
+    special: ['Ballistic', 'Ammo Box', 'Relentless'],
   },
   ultraAC5: {
     id: 'ultraAC5',
@@ -374,7 +374,7 @@ export const WEAPONS = {
     att: 6,
     str: 1,
     slotCost: 2,
-    special: ['Ammo Box', 'Relentless'],
+    special: ['Ballistic', 'Ammo Box', 'Relentless'],
   },
   ultraAC10: {
     id: 'ultraAC10',
@@ -384,7 +384,7 @@ export const WEAPONS = {
     att: 8,
     str: 2,
     slotCost: 3,
-    special: ['Ammo Box', 'Relentless'],
+    special: ['Ballistic', 'Ammo Box', 'Relentless'],
   },
   lb2xAC: {
     id: 'lb2xAC',
@@ -395,7 +395,7 @@ export const WEAPONS = {
     str: 0,
     minRange: 2,
     slotCost: 1,
-    special: ['Ammo Box'],
+    special: ['Ballistic', 'Ammo Box'],
   },
   lb5xAC: {
     id: 'lb5xAC',
@@ -405,7 +405,7 @@ export const WEAPONS = {
     att: 6,
     str: 0,
     slotCost: 2,
-    special: ['Ammo Box'],
+    special: ['Ballistic', 'Ammo Box'],
   },
   lb10xAC: {
     id: 'lb10xAC',
@@ -415,7 +415,7 @@ export const WEAPONS = {
     att: 10,
     str: 0,
     slotCost: 3,
-    special: ['Ammo Box'],
+    special: ['Ballistic', 'Ammo Box'],
   },
   machineGunArray: {
     id: 'machineGunArray',
@@ -425,7 +425,7 @@ export const WEAPONS = {
     att: 8,
     str: 0,
     slotCost: 1,
-    special: ['Ammo Box', 'Relentless', 'Light Arms'],
+    special: ['Ballistic', 'Ammo Box', 'Relentless', 'Light Arms'],
   },
   arrowIVArtillery: {
     id: 'arrowIVArtillery',
@@ -436,7 +436,7 @@ export const WEAPONS = {
     str: 2,
     minRange: 3,
     slotCost: 4,
-    special: ['Ammo Box', 'Indirect', 'Blast'],
+    special: ['Missile', 'Ammo Box', 'Indirect', 'Blast'],
   },
   ppc: {
     id: 'ppc',
@@ -447,7 +447,7 @@ export const WEAPONS = {
     str: 3,
     minRange: 1,
     slotCost: 3,
-    special: ['Overheating', 'Deadly'],
+    special: ['Energy', 'Overheating', 'Deadly'],
   },
   gaussRifle: {
     id: 'gaussRifle',
@@ -458,7 +458,7 @@ export const WEAPONS = {
     str: 2,
     minRange: 1,
     slotCost: 4,
-    special: ['Ammo Box', 'Deadly'],
+    special: ['Ballistic', 'Ammo Box', 'Deadly'],
   },
 };
 
@@ -514,6 +514,9 @@ export function getSlotCost(upgradeId, unitTypeId) {
 }
 
 export const KEYWORDS = {
+  'Energy':       'This weapon is an energy weapon (laser, PPC). No ammunition required.',
+  'Ballistic':    'This weapon is a ballistic weapon (autocannon, gauss, machine gun). Uses physical ammunition.',
+  'Missile':      'This weapon is a missile weapon (LRM, SRM). Uses guided ammunition.',
   'Accurate':     'Each hit counts as 2 hits before the block roll.',
   'Ammo Box':     'The first time in a round that a model assigns damage to an upgrade with Ammo Box, assign +1 damage.',
   'Blast':        'If the target is hit, all models within 2 hexes are also hit (friendly or enemy).',
