@@ -2,6 +2,76 @@
 
 ---
 
+## v0.8.0 — Balance Pass II
+*2026-06-07*
+
+### Unit Slots — Expanded
+All mecha and Heavy Vehicles gain additional loadout slots, opening up more diverse and interesting builds.
+
+| Unit | Old Slots (T/L/R) | New Slots (T/L/R) | Total |
+|---|---|---|---|
+| Light Mecha | 3/1/1 | 3/2/2 | 7 |
+| Medium Mecha | 3/2/2 | 4/3/3 | 10 |
+| Heavy Mecha | 4/3/3 | 5/4/4 | 13 |
+| Assault Mecha | 5/4/4 | 6/5/5 | 16 |
+| Heavy Vehicle | 2 (single) | 3 (single) | 3 |
+
+### Weapons — Slot Costs
+Three weapons move to 4 slots to reflect their battlefield dominance:
+
+| Weapon | Old Cost | New Cost |
+|---|---|---|
+| Autocannon/20 | 3 | 4 |
+| Gauss Rifle | 3 | 4 |
+| Arrow IV Artillery | 3 | 4 |
+
+### Weapons — Range Adjustments
+Ranges rebalanced to create clearer range tiers and reduce laser dominance at long range.
+
+| Weapon | Old Range | New Range |
+|---|---|---|
+| Small Laser | 3 | 2 |
+| Medium Laser | 6 | 4 |
+| Large Laser | 9 | 6 |
+| Small Pulse Laser | 3 | 2 |
+| Medium Pulse Laser | 6 | 3 |
+| Large Pulse Laser | 9 | 5 |
+| ER Small Laser | 6 | 3 |
+| ER Medium Laser | 9 | 5 |
+| Streak SRM Rack | 3 | 4 |
+| LRM-5 / LRM-10 / LRM-20 | 9 | 8 |
+| PPC | 9 | 7 |
+| Ultra AC/5 | 9 | 8 |
+| Ultra AC/10 | 6 | 7 |
+| Autocannon/10 | 6 | 7 |
+| LB 5-X AC | 9 | 8 |
+| LB 10-X AC | 6 | 7 |
+| Machine Gun Array | 3 | 2 |
+
+### Weapons — Attack Dice
+| Weapon | Old Att | New Att |
+|---|---|---|
+| Medium Laser | 4 | 3 |
+| Large Laser | 4 | 3 |
+| Medium Pulse Laser | 6 | 4 |
+| Large Pulse Laser | 6 | 4 |
+| Gauss Rifle | 2 | 4 |
+
+### Weapons — Keywords
+- **Medium Laser:** loses Overheating — now a reliable no-downside mid-range option
+- **Autocannon/20:** loses Relentless, gains Overheating — powerful but risky at close range
+- **Streak SRM Rack:** loses Accurate — still Deadly, no longer double-dipping on hit conversion
+- **Autocannon/2, AC/10, AC/20, LB 2-X, LB 5-X, LB 10-X:** lose Relentless — split fire reserved for Ultra ACs and Machine Gun Array
+
+### Sim Tooling
+- **test-balance.js:** fixed `expectedDamage` to correctly model Accurate (doubles hits before block roll) and Deadly (flat +1 if any hits land) per actual game rules
+- **test-balance.js:** added `ED/slot/range` column — damage efficiency weighted by range coverage
+- **test-balance.js:** added `stats` scenario — prints all weapon stats as currently patched
+- **sim-game.js:** fixed `weaponED` AI targeting function to match corrected rules
+- **sim-game.js:** fully updated roster builds to use new slot counts; added new army archetypes (Missile Boat, Iron Defense variants)
+
+---
+
 ## v0.7.0 — Single Player Bot
 *2026-05-18*
 
