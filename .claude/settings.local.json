@@ -34,7 +34,8 @@
       "Bash(python3)",
       "PowerShell(python --version)",
       "Bash(python)",
-      "Bash(xargs grep -l \"weapon\\\\|weapon\\\\|upgrade\")"
+      "Bash(xargs grep -l \"weapon\\\\|weapon\\\\|upgrade\")",
+      "Bash(xargs grep -l \"aiStep\\\\|simulation\\\\|runGame\\\\|bot\")"
     ]
   }
 }

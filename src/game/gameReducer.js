@@ -7,7 +7,7 @@ function hasReactiveArmor(armyUnit, slotDamage, weapon) {
   if (specials.includes('Energy')    && hasActiveUpgrade(armyUnit, slotDamage, 'laserReflectiveArmor'))    return true;
   return false;
 }
-import { hexKey, hexDistance, isDeployZone, hexNeighborAt, hexNeighbors, inBounds, BOARD_COLS, BOARD_ROWS } from './hexMath';
+import { hexKey, hexDistance, isDeployZone, hexNeighborAt, hexNeighbors, inBounds, BOARD_COLS, BOARD_ROWS, inFrontArc } from './hexMath';
 import {
   getEquippedWeapons, canWeaponTarget, rollDice,
   countSuccesses, countOverheats, parseStatValue,
@@ -893,10 +893,20 @@ export function gameReducer(state, action) {
       const pc = state.pendingCombat;
       if (!pc || pc.step !== 'hit-roll' || pc.hitRolls.length === 0) return state;
       const target = state.units.find(u => u.id === pc.targetId);
+      const attacker = state.units.find(u => u.id === pc.attackerId);
       const weapon = pc.weaponList[pc.selectedWeaponIdx].weapon;
       const _isAccurate = weapon.special?.includes('Accurate');
       const evaThreshold = parseStatValue(UNIT_TYPES[target.typeId].eva);
-      const hits = countSuccesses(pc.hitRolls, evaThreshold) * (_isAccurate ? 2 : 1);
+      let hits = countSuccesses(pc.hitRolls, evaThreshold) * (_isAccurate ? 2 : 1);
+
+      if (weapon.special?.includes('Missile') && hits > 0
+          && hasActiveUpgrade(target.armyUnit, target.slotDamage, 'antiMissileSystem')
+          && inFrontArc(target.q, target.r, target.facing, attacker.q, attacker.r)) {
+        const before = hits;
+        hits = Math.max(0, hits - 1);
+        state = addLog(state, `${target.name} Anti-Missile System intercepts: ${before} → ${hits} hits.`);
+      }
+
       if (hits === 0) {
         return transitionOrOverheat(
           addLog(state, `${weapon.name} misses ${target.name}! (0 hits)`),
