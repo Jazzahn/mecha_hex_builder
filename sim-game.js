@@ -31,37 +31,11 @@ import { getEquippedWeapons, canWeaponTarget, hasActiveUpgrade,
 //   assault:    { tou: '5+' }         buff assault toughness
 //   light:      { eva: '3+' }         buff light evasion
 
-const WEAPON_PATCHES = {
-  // PPC/Gauss nerfs
-  ppc:        { att: 2, range: 9 },
-  gaussRifle: { att: 2, range: 9 },
-  // Arrow IV: remove Deadly — Blast+Indirect at R12 is already strong enough
-  arrowIVArtillery: { special: ['Ammo Box', 'Indirect', 'Blast'] },
-  // Autocannon rebalance — higher caliber = more Str but shorter range (BT faithful)
-  // AC/2:  long-range sniper    AC/10: mid-range workhorse    AC/20: close brawler
-  autocannon2:  { range: 10, att: 2, str: 1 },
-  autocannon10: { range:  6, att: 4, str: 2 },
-  autocannon20: { range:  4, att: 6, str: 3, special: ['Ammo Box', 'Relentless', 'Deadly'] },
-  // Ultra ACs: burst fire — same range as standard, more att dice
-  ultraAC2:  { range: 10, att: 3, str: 0 },
-  ultraAC5:  { range:  9, att: 6, str: 1 },
-  ultraAC10: { range:  6, att: 8, str: 2 },
-  // LB-X ACs: cluster/scatter — same range tiers, high att, Str 0
-  lb2xAC:  { range: 10, att: 3, str: 0 },
-  lb5xAC:  { range:  9, att: 6, str: 0 },
-  lb10xAC: { range:  6, att: 10, str: 0 },
-};
+const WEAPON_PATCHES = {};
 
-const UNIT_PATCHES = {
-  light: { slots: { torso: 3, larm: 1, rarm: 1 }, totalSlots: 5 },
-};
+const UNIT_PATCHES = {};
 
-// Rule patches — change how mechanics work.
-// deadly:   'once'    Deadly adds +1 flat if any damage landed (instead of +1 per hit)
-// accurate: 'double'  Each hit counts as 2 before blocks (replaces -1 eva threshold)
-const RULE_PATCHES = {
-  accurate: 'double',
-};
+const RULE_PATCHES = {};
 
 function applyPatches() {
   const lines = [];
@@ -331,48 +305,85 @@ const ARMIES = {
 };
 
 // ─── Unit roster & budget-tier armies ────────────────────────────────────────
-// Slot capacity:  assault 5/4/4  heavy 4/3/3  medium 3/2/2  light 3/1/1
-//                 groundVehicle single/1   heavyVehicle single/2
-// Unit pts:       assault 100  heavy 80  medium 60  light 40  gv 10  hv 20
+// Slot capacity (patched):  assault 6/5/5  heavy 5/4/4  medium 4/3/3  light 3/2/2
+//                           groundVehicle single/1   heavyVehicle single/2
+// Weapon slot costs (patched): autocannon20=4, gaussRifle=4, arrowIV=4, all others unchanged
+// Unit pts: assault 100  heavy 80  medium 60  light 40  groundVehicle 15  heavyVehicle 25
 
 const ROSTER = {
-  // ── Assault (100 pts) ──────────────────────────────────────────────────
-  asr_laser:     unit('assault', 'Pyro',     { torso: ['largePulseLaser','heatSinks','heatSinks'],     larm: ['mediumPulseLaser','mediumLaser'],          rarm: ['mediumPulseLaser','mediumLaser'] }),
-  asr_ballistic: unit('assault', 'Bastion',  { torso: ['ultraAC10','extraArmor','extraArmor'],         larm: ['autocannon10','extraArmor','lb2xAC'],       rarm: ['autocannon10','extraArmor','lb2xAC'] }),
-  asr_gauss:     unit('assault', 'Headshot', { torso: ['ppc','heatSinks','lb2xAC'],                    larm: ['gaussRifle','lb2xAC'],                     rarm: ['gaussRifle','lb2xAC'] }),
-  asr_indirect:  unit('assault', 'Typhoon',  { torso: ['arrowIVArtillery','lrm5','lrm5'],              larm: ['lrm10','autocannon10'],                    rarm: ['lrm10','autocannon10'] }),
-  asr_brawler:   unit('assault', 'Bruiser',  { torso: ['autocannon20','extraArmor','lb2xAC'],          larm: ['autocannon10','streakSRMRack','lb2xAC'],   rarm: ['autocannon10','streakSRMRack','lb2xAC'] }),
+  // ── Assault (100 pts) — torso:6  larm:5  rarm:5 ───────────────────────
+  // Pyro: layered laser threat — ER medium for range, pulse for brawling
+  asr_laser:     unit('assault', 'Pyro',      { torso: ['largePulseLaser','heatSinks','erMediumLaser','heatSinks'],     larm: ['erMediumLaser','mediumPulseLaser','heatSinks','lb2xAC','lb2xAC'], rarm: ['erMediumLaser','mediumPulseLaser','heatSinks','lb2xAC','lb2xAC'] }),
+  // Bastion: armored ballistic fortress
+  asr_ballistic: unit('assault', 'Bastion',   { torso: ['ultraAC10','extraArmor','extraArmor','lb2xAC','lb2xAC'],      larm: ['autocannon10','extraArmor','lb2xAC','lb2xAC','lb2xAC'],           rarm: ['autocannon10','extraArmor','lb2xAC','lb2xAC','lb2xAC'] }),
+  // Headshot: long-range precision — dual gauss + PPC
+  asr_gauss:     unit('assault', 'Headshot',  { torso: ['ppc','heatSinks','lb2xAC','lb2xAC','lb2xAC'],                 larm: ['gaussRifle','lb2xAC'],                                            rarm: ['gaussRifle','lb2xAC'] }),
+  // Typhoon: indirect fire platform
+  asr_indirect:  unit('assault', 'Typhoon',   { torso: ['arrowIVArtillery','lrm5','lrm5'],                             larm: ['lrm10','autocannon10','lb2xAC','ultraAC2'],                       rarm: ['lrm10','autocannon10','lb2xAC','ultraAC2'] }),
+  // Bruiser: close-range demolisher, AC20 + support weapons
+  asr_brawler:   unit('assault', 'Bruiser',   { torso: ['autocannon20','extraArmor','lb2xAC'],                         larm: ['autocannon10','streakSRMRack','lb2xAC','lb2xAC','machineGunArray'], rarm: ['autocannon10','streakSRMRack','lb2xAC','lb2xAC','machineGunArray'] }),
+  // Overlord: mixed long-range — LRMs + ultra ACs
+  asr_mixed:     unit('assault', 'Overlord',  { torso: ['lrm20','ultraAC5','lb2xAC'],                                  larm: ['ultraAC10','lrm5','lb2xAC'],                                      rarm: ['ultraAC10','lrm5','lb2xAC'] }),
+  // Ironclad: reinforced armor + steady sustained fire
+  asr_tank:      unit('assault', 'Ironclad',  { torso: ['ultraAC10','hardenedArmor','lb2xAC'],                         larm: ['autocannon10','extraArmor','lb2xAC','lb2xAC'],                    rarm: ['autocannon10','extraArmor','lb2xAC','lb2xAC'] }),
 
-  // ── Heavy (80 pts) ─────────────────────────────────────────────────────
-  hvy_laser:     unit('heavy',   'Torch',    { torso: ['largePulseLaser','heatSinks'],                 larm: ['mediumPulseLaser','erSmallLaser'],          rarm: ['mediumPulseLaser','erSmallLaser'] }),
-  hvy_ballistic: unit('heavy',   'Grinder',  { torso: ['ultraAC10','machineGunArray'],                 larm: ['lb5xAC','machineGunArray'],                rarm: ['lb5xAC','machineGunArray'] }),
-  hvy_ultra:     unit('heavy',   'Rampart',  { torso: ['lb5xAC','lb2xAC','lb2xAC'],                   larm: ['ultraAC5','lb2xAC'],                       rarm: ['ultraAC5','lb2xAC'] }),
-  hvy_mixed:     unit('heavy',   'Adapter',  { torso: ['ppc','heatSinks'],                            larm: ['autocannon10','streakSRMRack'],             rarm: ['autocannon10','streakSRMRack'] }),
-  hvy_lrm:       unit('heavy',   'Warcloud', { torso: ['lrm20','machineGunArray'],                     larm: ['ultraAC10'],                               rarm: ['ultraAC10'] }),
+  // ── Heavy (80 pts) — torso:5  larm:4  rarm:4 ──────────────────────────
+  // Torch: ER lasers for reach, pulse for close work
+  hvy_laser:     unit('heavy',   'Torch',     { torso: ['largePulseLaser','heatSinks','erMediumLaser'],                 larm: ['erMediumLaser','mediumPulseLaser','heatSinks','lb2xAC'],          rarm: ['erMediumLaser','mediumPulseLaser','heatSinks','lb2xAC'] }),
+  // Grinder: sustained ballistic fire, stripped Relentless so just raw volume
+  hvy_ballistic: unit('heavy',   'Grinder',   { torso: ['ultraAC10','lb2xAC','machineGunArray'],                        larm: ['lb5xAC','lb2xAC','machineGunArray'],                              rarm: ['lb5xAC','lb2xAC','machineGunArray'] }),
+  // Rampart: LB-X cluster barrage
+  hvy_ultra:     unit('heavy',   'Rampart',   { torso: ['lb5xAC','lb2xAC','lb2xAC','lb2xAC'],                          larm: ['ultraAC5','lb2xAC','lb2xAC'],                                    rarm: ['ultraAC5','lb2xAC','lb2xAC'] }),
+  // Adapter: versatile mid-range PPC + autocannons
+  hvy_mixed:     unit('heavy',   'Adapter',   { torso: ['ppc','heatSinks','lb2xAC'],                                   larm: ['autocannon10','streakSRMRack','lb2xAC'],                          rarm: ['autocannon10','streakSRMRack','lb2xAC'] }),
+  // Warcloud: LRM saturation + ultraAC backup
+  hvy_lrm:       unit('heavy',   'Warcloud',  { torso: ['lrm20','lrm5','machineGunArray'],                              larm: ['ultraAC10','lrm5'],                                               rarm: ['ultraAC10','lrm5'] }),
+  // Stalker: gauss + streaks, patient long-range hunter
+  hvy_gauss:     unit('heavy',   'Stalker',   { torso: ['gaussRifle','lb2xAC'],                                        larm: ['lrm10','streakSRMRack','lb2xAC'],                                 rarm: ['lrm10','streakSRMRack','lb2xAC'] }),
+  // Anvil: heavily armored defensive platform
+  hvy_tank:      unit('heavy',   'Anvil',     { torso: ['ultraAC10','hardenedArmor'],                                  larm: ['autocannon10','extraArmor','lb2xAC','lb2xAC'],                    rarm: ['autocannon10','extraArmor','lb2xAC','lb2xAC'] }),
 
-  // ── Medium (60 pts) ────────────────────────────────────────────────────
-  med_pulse:     unit('medium',  'Harrier',  { torso: ['boostJets','mediumPulseLaser'],                larm: ['heatSinks','streakSRMRack'],               rarm: ['lb2xAC','streakSRMRack'] }),
-  med_ballistic: unit('medium',  'Wedge',    { torso: ['autocannon10','streakSRMRack'],                larm: ['autocannon2','streakSRMRack'],             rarm: ['autocannon2','streakSRMRack'] }),
-  med_lrm:       unit('medium',  'Squall',   { torso: ['lrm10','autocannon2'],                         larm: ['lrm5','erSmallLaser'],                     rarm: ['lrm5','erSmallLaser'] }),
-  med_boost:     unit('medium',  'Blitz',    { torso: ['highTunedEngine','lb5xAC'],                    larm: ['autocannon10','autocannon2'],              rarm: ['autocannon10','autocannon2'] }),
+  // ── Medium (60 pts) — torso:4  larm:3  rarm:3 ─────────────────────────
+  // Harrier: jump + ER medium reach, pulse for close
+  med_pulse:     unit('medium',  'Harrier',   { torso: ['boostJets','erMediumLaser','heatSinks'],                       larm: ['mediumPulseLaser','erSmallLaser','lb2xAC'],                       rarm: ['mediumPulseLaser','erSmallLaser','lb2xAC'] }),
+  // Wedge: autocannon generalist
+  med_ballistic: unit('medium',  'Wedge',     { torso: ['autocannon10','lb2xAC','lb2xAC'],                             larm: ['autocannon2','streakSRMRack','lb2xAC'],                           rarm: ['autocannon2','streakSRMRack','lb2xAC'] }),
+  // Squall: LRM support
+  med_lrm:       unit('medium',  'Squall',    { torso: ['lrm10','lrm5','autocannon2'],                                 larm: ['lrm5','erSmallLaser','lb2xAC'],                                   rarm: ['lrm5','erSmallLaser','lb2xAC'] }),
+  // Blitz: speed + firepower, high-tuned engine
+  med_boost:     unit('medium',  'Blitz',     { torso: ['highTunedEngine','lb5xAC'],                                   larm: ['autocannon10','autocannon2','lb2xAC'],                            rarm: ['autocannon10','autocannon2','lb2xAC'] }),
+  // Viper: streak missile boat
+  med_streak:    unit('medium',  'Viper',     { torso: ['streakSRMRack','streakSRMRack','lb2xAC'],                     larm: ['streakSRMRack','erSmallLaser','lb2xAC'],                          rarm: ['streakSRMRack','erSmallLaser','lb2xAC'] }),
+  // Phantom: jump + ER lasers for hit-and-run
+  med_er:        unit('medium',  'Phantom',   { torso: ['boostJets','erMediumLaser','heatSinks'],                      larm: ['erMediumLaser','erSmallLaser','lb2xAC'],                          rarm: ['erMediumLaser','erSmallLaser','lb2xAC'] }),
 
-  // ── Light (40 pts) ─────────────────────────────────────────────────────
-  lgt_fast:      unit('light',   'Kestrel',  { torso: ['boostJets','heatSinks','smallPulseLaser'],     larm: ['streakSRMRack'],                           rarm: ['streakSRMRack'] }),
-  lgt_lb:        unit('light',   'Picket',   { torso: ['lb2xAC','erSmallLaser','extraArmor'],          larm: ['lb2xAC'],                                  rarm: ['lb2xAC'] }),
-  lgt_streak:    unit('light',   'Sprint',   { torso: ['streakSRMRack','smallPulseLaser','erSmallLaser'], larm: ['streakSRMRack'],                        rarm: ['lb2xAC'] }),
-  lgt_lrm:       unit('light',   'Drizzle',  { torso: ['lrm5','smallPulseLaser','ultraAC2'],           larm: ['lrm5'],                                    rarm: ['streakSRMRack'] }),
+  // ── Light (40 pts) — torso:3  larm:2  rarm:2 ──────────────────────────
+  // Kestrel: jump + SRM harasser
+  lgt_fast:      unit('light',   'Kestrel',   { torso: ['boostJets','smallPulseLaser'],                                larm: ['streakSRMRack','erSmallLaser'],                                   rarm: ['streakSRMRack','erSmallLaser'] }),
+  // Picket: long-range scout with LB-X
+  lgt_lb:        unit('light',   'Picket',    { torso: ['lb2xAC','extraArmor'],                                        larm: ['lb2xAC','ultraAC2'],                                              rarm: ['lb2xAC','ultraAC2'] }),
+  // Sprint: mixed short-range brawler
+  lgt_streak:    unit('light',   'Sprint',    { torso: ['streakSRMRack','erSmallLaser'],                               larm: ['streakSRMRack','lb2xAC'],                                         rarm: ['lb2xAC','ultraAC2'] }),
+  // Drizzle: LRM spotter
+  lgt_lrm:       unit('light',   'Drizzle',   { torso: ['lrm5','ultraAC2'],                                            larm: ['lrm5','erSmallLaser'],                                            rarm: ['ultraAC2','erSmallLaser'] }),
+  // Dart: ER laser skirmisher with jump
+  lgt_er:        unit('light',   'Dart',      { torso: ['boostJets','erSmallLaser'],                                   larm: ['erSmallLaser','ultraAC2'],                                        rarm: ['erSmallLaser','ultraAC2'] }),
+  // Hornet: MGA + streaks, swarm skirmisher
+  lgt_mga:       unit('light',   'Hornet',    { torso: ['machineGunArray','streakSRMRack'],                             larm: ['streakSRMRack','lb2xAC'],                                         rarm: ['machineGunArray','lb2xAC'] }),
 
-  // ── Ground Vehicle (10 pts, single slot) ──────────────────────────────
-  gv_lrm:        unit('groundVehicle', 'LRM Buggy',   { single: ['lrm5'] }),
-  gv_streak:     unit('groundVehicle', 'SRM Scout',   { single: ['streakSRMRack'] }),
-  gv_ac:         unit('groundVehicle', 'AC Scout',    { single: ['autocannon2'] }),
-  gv_laser:      unit('groundVehicle', 'Laser Scout', { single: ['smallPulseLaser'] }),
+  // ── Ground Vehicle (15 pts, single/1 slot) ────────────────────────────
+  gv_lrm:        unit('groundVehicle', 'LRM Buggy',    { single: ['lrm5'] }),
+  gv_streak:     unit('groundVehicle', 'SRM Scout',    { single: ['streakSRMRack'] }),
+  gv_ac:         unit('groundVehicle', 'AC Scout',     { single: ['autocannon2'] }),
+  gv_laser:      unit('groundVehicle', 'Laser Scout',  { single: ['smallPulseLaser'] }),
+  gv_mga:        unit('groundVehicle', 'MGA Buggy',    { single: ['machineGunArray'] }),
 
-  // ── Heavy Vehicle (20 pts, 2 slots) ──────────────────────────────────
-  hv_ac:         unit('heavyVehicle', 'Gun Tank',     { single: ['autocannon10'] }),
-  hv_lrm:        unit('heavyVehicle', 'LRM Tank',     { single: ['lrm10'] }),
-  hv_streak:     unit('heavyVehicle', 'SRM Tank',     { single: ['streakSRMRack','streakSRMRack'] }),
-  hv_laser:      unit('heavyVehicle', 'Laser Tank',   { single: ['mediumPulseLaser'] }),
+  // ── Heavy Vehicle (25 pts, single/2 slots) ────────────────────────────
+  hv_ac:         unit('heavyVehicle', 'Gun Tank',      { single: ['autocannon10', 'lb2xAC'] }),
+  hv_lrm:        unit('heavyVehicle', 'LRM Tank',      { single: ['lrm10', 'lrm5'] }),
+  hv_streak:     unit('heavyVehicle', 'SRM Tank',      { single: ['streakSRMRack', 'streakSRMRack', 'lb2xAC'] }),
+  hv_laser:      unit('heavyVehicle', 'Laser Tank',    { single: ['mediumPulseLaser', 'erSmallLaser'] }),
+  hv_ultra:      unit('heavyVehicle', 'Ultra Tank',    { single: ['ultraAC5', 'lb2xAC'] }),
 };
 
 // Helper: point cost of an army
@@ -382,35 +393,43 @@ function armyPts(a) { return a.units.reduce((s, u) => s + (UNIT_PTS[u.typeId] ??
 const R = ROSTER; // shorthand
 const TIER_ARMIES = {
   200: [
-    //                             pts  composition
-    army('Laser Spike',      [R.asr_laser,     R.med_pulse,     R.lgt_fast]),                                             // 200: 100+60+40
-    army('Iron Defense',     [R.asr_ballistic, R.med_ballistic, R.hv_ac,       R.gv_ac]),                                 // 200: 100+60+25+15
-    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.lgt_streak]),                                           // 200: 80+80+40
-    army('Indirect Barrage', [R.asr_indirect,  R.med_lrm,       R.lgt_lrm]),                                              // 200: 100+60+40
-    army('Speed Blitz',      [R.hvy_ultra,     R.med_boost,     R.lgt_fast,    R.gv_ac]),                                 // 200: 80+60+40+15 = 195
-    army('Gauss Sniper',     [R.asr_gauss,     R.med_lrm,       R.lgt_lrm]),                                              // 200: 100+60+40
-    army('Vehicle Swarm',    [R.lgt_fast,      R.lgt_streak,    R.lgt_lb,      R.lgt_lrm,   R.hv_lrm,  R.gv_streak]),    // 200: 40+40+40+40+25+15 (4 mechs, 1 HV+1 GV)
-    army('Close Brawler',    [R.asr_brawler,   R.med_ballistic, R.lgt_streak]),                                           // 200: 100+60+40
+    //                              pts   composition
+    // Laser Spike: mobile close-range lasers, jump to close fast
+    army('Laser Spike',       [R.asr_laser,     R.med_pulse,     R.lgt_fast]),                                           // 100+60+40 = 200
+    // Iron Defense: armored assault + ballistic support + cheap vehicles
+    army('Iron Defense',      [R.asr_tank,      R.med_ballistic, R.hv_ac,      R.gv_ac]),                                // 100+60+25+15 = 200
+    // Ballistic Wall: two heavies saturate with cluster/ultra fire
+    army('Ballistic Wall',    [R.hvy_ballistic, R.hvy_ultra,     R.lgt_streak]),                                         // 80+80+40 = 200
+    // Indirect Barrage: arrow IV + LRM denial zone
+    army('Indirect Barrage',  [R.asr_indirect,  R.med_lrm,       R.lgt_lrm]),                                            // 100+60+40 = 200
+    // Speed Blitz: fast mechs close and overwhelm before enemy sets up
+    army('Speed Blitz',       [R.hvy_ultra,     R.med_boost,     R.lgt_fast,   R.gv_ac]),                                // 80+60+40+15 = 195
+    // Gauss Sniper: long-range precision with gauss + PPC
+    army('Gauss Sniper',      [R.asr_gauss,     R.med_lrm,       R.lgt_lrm]),                                            // 100+60+40 = 200
+    // Vehicle Swarm: many cheap activations, harassment and attrition
+    army('Vehicle Swarm',     [R.lgt_fast,      R.lgt_streak,    R.lgt_lb,     R.lgt_lrm,  R.hv_lrm, R.gv_streak]),     // 40+40+40+40+25+15 = 200
+    // Missile Boat: streak missiles from all angles, Deadly on every shot
+    army('Missile Boat',      [R.asr_brawler,   R.med_streak,    R.lgt_streak]),                                         // 100+60+40 = 200
   ],
   250: [
-    army('Laser Spike',      [R.asr_laser,     R.hvy_laser,     R.lgt_fast,    R.gv_laser,  R.gv_laser]),                 // 250: 100+80+40+15+15
-    army('Iron Defense',     [R.asr_ballistic, R.hvy_ultra,     R.lgt_lb,      R.gv_ac,     R.gv_ac]),                    // 250: 100+80+40+15+15
-    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.lgt_lb,      R.hv_ac,     R.hv_ac]),                    // 250: 80+80+40+25+25
-    army('Indirect Barrage', [R.asr_indirect,  R.hvy_lrm,       R.lgt_lrm,     R.gv_lrm,    R.gv_lrm]),                  // 250: 100+80+40+15+15
-    army('Speed Blitz',      [R.hvy_ultra,     R.med_boost,     R.lgt_fast,    R.lgt_streak, R.gv_laser, R.gv_laser]),    // 250: 80+60+40+40+15+15
-    army('Gauss Sniper',     [R.asr_gauss,     R.hvy_mixed,     R.lgt_lrm,     R.gv_lrm,    R.gv_lrm]),                  // 250: 100+80+40+15+15
-    army('Vehicle Swarm',    [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.gv_streak, R.gv_streak]),              // 250: 80+80+60+15+15
-    army('Close Brawler',    [R.asr_brawler,   R.hvy_ballistic, R.lgt_streak,  R.gv_streak, R.gv_streak]),                // 250: 100+80+40+15+15
+    army('Laser Spike',       [R.asr_laser,     R.hvy_laser,     R.lgt_fast,   R.gv_laser, R.gv_laser]),                 // 100+80+40+15+15 = 250
+    army('Iron Defense',      [R.asr_tank,      R.hvy_tank,      R.lgt_lb,     R.gv_ac,    R.gv_ac]),                    // 100+80+40+15+15 = 250
+    army('Ballistic Wall',    [R.hvy_ballistic, R.hvy_ultra,     R.lgt_lb,     R.hv_ac,    R.hv_ac]),                    // 80+80+40+25+25 = 250
+    army('Indirect Barrage',  [R.asr_indirect,  R.hvy_lrm,       R.lgt_lrm,    R.gv_lrm,   R.gv_lrm]),                  // 100+80+40+15+15 = 250
+    army('Speed Blitz',       [R.hvy_ultra,     R.med_boost,     R.lgt_fast,   R.lgt_er,   R.gv_ac,   R.gv_ac]),         // 80+60+40+40+15+15 = 250
+    army('Gauss Sniper',      [R.asr_gauss,     R.hvy_gauss,     R.lgt_lrm,    R.gv_lrm,   R.gv_lrm]),                  // 100+80+40+15+15 = 250
+    army('Vehicle Swarm',     [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.gv_streak, R.gv_streak]),            // 80+80+60+15+15 = 250
+    army('Missile Boat',      [R.asr_brawler,   R.hvy_mixed,     R.lgt_streak, R.gv_streak, R.gv_streak]),               // 100+80+40+15+15 = 250
   ],
   300: [
-    army('Laser Spike',      [R.asr_laser,     R.hvy_laser,     R.med_pulse,   R.lgt_fast,   R.gv_laser]),                // 300: 100+80+60+40+15 = 295
-    army('Iron Defense',     [R.asr_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_lb,   R.gv_ac]),                   // 300: 100+80+60+40+15 = 295
-    army('Ballistic Wall',   [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_streak, R.hv_ac]),                 // 300: 80+80+60+40+25 = 285
-    army('Indirect Barrage', [R.asr_indirect,  R.hvy_lrm,       R.med_lrm,     R.lgt_lrm,    R.gv_lrm]),                 // 300: 100+80+60+40+15 = 295
-    army('Speed Blitz',      [R.hvy_ultra,     R.hvy_ballistic, R.med_boost,   R.lgt_fast,   R.lgt_streak]),              // 300: 80+80+60+40+40
-    army('Gauss Sniper',     [R.asr_gauss,     R.hvy_mixed,     R.med_lrm,     R.lgt_lrm,    R.gv_lrm]),                  // 300: 100+80+60+40+15 = 295
-    army('Vehicle Swarm',    [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_lb,   R.hv_lrm]),                  // 300: 80+80+60+40+25 = 285
-    army('Close Brawler',    [R.asr_brawler,   R.hvy_ballistic, R.med_ballistic, R.lgt_streak, R.gv_streak]),             // 300: 100+80+60+40+15 = 295
+    army('Laser Spike',       [R.asr_laser,     R.hvy_laser,     R.med_pulse,  R.lgt_fast,  R.gv_laser]),                // 100+80+60+40+15 = 295
+    army('Iron Defense',      [R.asr_tank,      R.hvy_tank,      R.med_ballistic, R.lgt_lb, R.gv_ac]),                   // 100+80+60+40+15 = 295
+    army('Ballistic Wall',    [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_streak, R.hv_ac]),               // 80+80+60+40+25 = 285
+    army('Indirect Barrage',  [R.asr_indirect,  R.hvy_lrm,       R.med_lrm,    R.lgt_lrm,   R.gv_lrm]),                 // 100+80+60+40+15 = 295
+    army('Speed Blitz',       [R.hvy_ultra,     R.hvy_ballistic, R.med_boost,  R.lgt_fast,  R.lgt_er]),                  // 80+80+60+40+40 = 300
+    army('Gauss Sniper',      [R.asr_gauss,     R.hvy_gauss,     R.med_lrm,    R.lgt_lrm,   R.gv_lrm]),                  // 100+80+60+40+15 = 295
+    army('Vehicle Swarm',     [R.hvy_ballistic, R.hvy_ultra,     R.med_ballistic, R.lgt_lb, R.hv_ultra]),                // 80+80+60+40+25 = 285
+    army('Missile Boat',      [R.asr_brawler,   R.hvy_mixed,     R.med_streak, R.lgt_streak, R.gv_streak]),              // 100+80+60+40+15 = 295
   ],
 };
 
@@ -432,16 +451,20 @@ for (const [budget, armies] of Object.entries(TIER_ARMIES)) {
 
 function weaponED(weapon, target, dist = 99) {
   const isAccurate = weapon.special?.includes('Accurate');
+  const isDeadly   = weapon.special?.includes('Deadly');
   const light      = weapon.special?.includes('Light Arms') ? 1 : 0;
-  const accurateDoubles = isAccurate && globalThis.__simRules?.accurate === 'double';
-  const eva   = Math.max(2, parseStatValue(UNIT_TYPES[target.typeId].eva) - (isAccurate && !accurateDoubles ? 1 : 0));
-  const blk   = Math.max(2, parseStatValue(UNIT_TYPES[target.typeId].tou) + weapon.str - light);
-  const hitR  = Math.max(0, (7 - eva) / 6);
-  const blkR  = Math.max(0, (7 - blk) / 6);
-  const hitMult = accurateDoubles ? 2 : 1;
+  const eva  = Math.max(2, parseStatValue(UNIT_TYPES[target.typeId].eva));
+  const blk  = Math.max(2, parseStatValue(UNIT_TYPES[target.typeId].tou) + weapon.str - light);
+  const hitR = Math.max(0, (7 - eva) / 6);
+  const blkR = Math.max(0, (7 - blk) / 6);
   const minRangePenalty = weapon.minRange && dist <= weapon.minRange ? weapon.minRange - dist + 1 : 0;
   const effectiveAtt = Math.max(1, weapon.att - minRangePenalty);
-  return effectiveAtt * hitR * hitMult * (1 - blkR) * damagePerHit(weapon);
+  // Accurate doubles hits before block roll (actual rule)
+  const expectedHits = effectiveAtt * hitR * (isAccurate ? 2 : 1);
+  const expectedNetHits = expectedHits * (1 - blkR);
+  // Deadly: flat +1 if any hits land — P(at least 1 net hit) ≈ 1 - (1-hitR*(1-blkR))^att
+  const pAnyNetHit = isDeadly ? 1 - Math.pow(Math.max(0, 1 - hitR * (1 - blkR)), effectiveAtt) : 0;
+  return expectedNetHits + pAnyNetHit;
 }
 
 // ─── AI: slot damage helper ────────────────────────────────────────────────────

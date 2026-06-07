@@ -10,26 +10,35 @@
 import { WEAPONS, UNIT_TYPES } from './src/data/gameData.js';
 import { rollDice, countSuccesses, damagePerHit, parseStatValue } from './src/game/combat.js';
 
+// ── Balance patches — add entries here to test changes without editing gameData.js ──
+const WEAPON_PATCHES = {};
+
+for (const [id, overrides] of Object.entries(WEAPON_PATCHES)) {
+  if (WEAPONS[id]) Object.assign(WEAPONS[id], overrides);
+}
+
 const ITERS = 50_000;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function expectedDamage(weapon, targetTypeId, iters = ITERS) {
   const t = UNIT_TYPES[targetTypeId];
-  const evaBase  = parseStatValue(t.eva);
-  const touBase  = parseStatValue(t.tou);
-  const accurate  = weapon.special?.includes('Accurate')   ? 1 : 0;
-  const lightArms = weapon.special?.includes('Light Arms') ? 1 : 0;
-  const evaThresh   = evaBase  - accurate;
-  const blockThresh = touBase  + weapon.str - lightArms;
-  const dpH = damagePerHit(weapon);
+  const evaThresh   = parseStatValue(t.eva);
+  const blockThresh = parseStatValue(t.tou) + weapon.str - (weapon.special?.includes('Light Arms') ? 1 : 0);
+  const isAccurate  = weapon.special?.includes('Accurate');
+  const isDeadly    = weapon.special?.includes('Deadly');
 
   let total = 0;
   for (let i = 0; i < iters; i++) {
-    const hits   = countSuccesses(rollDice(weapon.att), evaThresh);
+    // Accurate doubles hits before the block roll (actual rule: each hit counts as 2)
+    const rawHits = countSuccesses(rollDice(weapon.att), evaThresh);
+    const hits = isAccurate ? rawHits * 2 : rawHits;
     if (!hits) continue;
-    const blocks = countSuccesses(rollDice(hits), blockThresh);
-    total += Math.max(0, hits - blocks) * dpH;
+    const blocks  = countSuccesses(rollDice(hits), blockThresh);
+    const netHits = Math.max(0, hits - blocks);
+    if (!netHits) continue;
+    // Deadly adds flat +1 to whole attack if any hit lands (not +1 per hit)
+    total += isDeadly ? netHits + 1 : netHits;
   }
   return total / iters;
 }
@@ -39,10 +48,17 @@ function pad(s, w) { return String(s).padEnd(w); }
 
 // ── scenario: weapons table ───────────────────────────────────────────────────
 
+// Range score: linear 0→1 over [0, 12], scaled by effective range minus half minRange penalty.
+// Captures that longer range = more board coverage even at equal damage output.
+function rangeScore(w) {
+  const effective = w.range - (w.minRange ?? 0) * 0.5;
+  return Math.min(1, Math.max(0, effective / 12));
+}
+
 function scenarioWeapons() {
   const targets = ['assault','heavy','medium','light'];
-  const header  = ['Weapon','Sl','Rng','Kw','Asslt','Heavy','Med','Light','ED/sl'];
-  const COL = [28, 3, 4, 28, 6, 6, 6, 6, 6];
+  const header  = ['Weapon','Sl','Rng','Kw','Asslt','Heavy','Med','Light','ED/sl','ED/sl/rng'];
+  const COL = [28, 3, 4, 28, 6, 6, 6, 6, 6, 9];
 
   const row = (cols) => cols.map((c, i) => pad(c, COL[i])).join(' ');
   console.log(row(header));
@@ -53,19 +69,21 @@ function scenarioWeapons() {
     const eds = targets.map(t => expectedDamage(w, t));
     const avgED = eds.reduce((a, b) => a + b, 0) / eds.length;
     const edPerSlot = avgED / w.slotCost;
-    rows.push({ w, eds, avgED, edPerSlot });
+    const edPerSlotRange = edPerSlot * rangeScore(w);
+    rows.push({ w, eds, avgED, edPerSlot, edPerSlotRange });
   }
 
-  // Sort by slot cost then avg ED desc
-  rows.sort((a, b) => a.w.slotCost - b.w.slotCost || b.avgED - a.avgED);
+  // Sort by slot cost then ED/sl/rng desc
+  rows.sort((a, b) => a.w.slotCost - b.w.slotCost || b.edPerSlotRange - a.edPerSlotRange);
 
-  for (const { w, eds, edPerSlot } of rows) {
+  for (const { w, eds, edPerSlot, edPerSlotRange } of rows) {
     const kw = (w.special ?? []).join(', ');
     console.log(row([
       w.name, w.slotCost, w.range,
       kw.length > 27 ? kw.slice(0, 25) + '..' : kw,
       ...eds.map(fmt),
       fmt(edPerSlot),
+      fmt(edPerSlotRange),
     ]));
   }
 }
@@ -144,10 +162,28 @@ function scenarioArmy(rounds = 6, iters = 5_000) {
   console.log('  Avg damage dealt per round: ' + simArmy(ARMY_B, ARMY_A, iters).toFixed(2));
 }
 
+// ── scenario: stats list ─────────────────────────────────────────────────────
+
+function scenarioStats() {
+  const header = ['Weapon', 'Sl', 'Rng', 'MinRng', 'Att', 'Str', 'Keywords'];
+  const COL    = [28, 3, 4, 7, 4, 4, 0];
+  const row = (cols) => cols.map((c, i) => COL[i] ? pad(c, COL[i]) : c).join(' ');
+  console.log(row(header));
+  console.log('-'.repeat(75));
+  const sorted = Object.values(WEAPONS).slice().sort((a, b) => a.slotCost - b.slotCost || a.name.localeCompare(b.name));
+  for (const w of sorted) {
+    console.log(row([
+      w.name, w.slotCost, w.range, w.minRange ?? '-',
+      w.att, w.str, (w.special ?? []).join(', '),
+    ]));
+  }
+}
+
 // ── entry point ───────────────────────────────────────────────────────────────
 
 const [,, scenario = 'weapons', arg] = process.argv;
 if (scenario === 'weapons')       scenarioWeapons();
 else if (scenario === 'weapon')   scenarioWeapon(arg);
 else if (scenario === 'army')     scenarioArmy();
+else if (scenario === 'stats')    scenarioStats();
 else { console.error('Unknown scenario:', scenario); process.exit(1); }
