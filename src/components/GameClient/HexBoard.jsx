@@ -615,7 +615,7 @@ export default function HexBoard({
             return (
               <image
                 key={exp.id}
-                href={explosionGif}
+                href={`${explosionGif}?t=${exp.id}`}
                 x={x - sz / 2} y={y - sz / 2}
                 width={sz} height={sz}
                 style={{ pointerEvents: 'none' }}

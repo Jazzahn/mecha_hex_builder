@@ -35,7 +35,8 @@
       "PowerShell(python --version)",
       "Bash(python)",
       "Bash(xargs grep -l \"weapon\\\\|weapon\\\\|upgrade\")",
-      "Bash(xargs grep -l \"aiStep\\\\|simulation\\\\|runGame\\\\|bot\")"
+      "Bash(xargs grep -l \"aiStep\\\\|simulation\\\\|runGame\\\\|bot\")",
+      "Bash(node sim-presets.js 100)"
     ]
   }
 }
