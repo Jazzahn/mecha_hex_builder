@@ -15,8 +15,8 @@ export const MECH_PRESETS = [
     bv: 522,
     slots: {
       torso: ['erSmallLaser', 'erSmallLaser', 'boostJets'],
-      larm:  ['heatSinks', 'erSmallLaser'],
-      rarm:  ['erSmallLaser', 'erSmallLaser'],
+      larm:  ['heatSinks'],
+      rarm:  [],
     },
   },
   {
@@ -30,7 +30,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'boostJets'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -58,7 +58,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'erSmallLaser'],
       larm:  ['erSmallLaser', 'heatSinks'],
-      rarm:  ['boostJets', 'erSmallLaser'],
+      rarm:  ['boostJets'],
     },
   },
   {
@@ -71,8 +71,8 @@ export const MECH_PRESETS = [
     bv: 1132,
     slots: {
       torso: ['machineGunArray', 'machineGunArray', 'erSmallLaser'],
-      larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      larm:  ['erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -186,8 +186,8 @@ export const MECH_PRESETS = [
     bv: 2110,
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'erSmallLaser'],
-      larm:  ['erMediumLaser', 'erSmallLaser', 'erSmallLaser'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'erSmallLaser'],
+      larm:  ['erMediumLaser'],
+      rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
   {
@@ -201,7 +201,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['autocannon20', 'lrm5', 'erSmallLaser'],
       larm:  ['largeLaser', 'extraArmor', 'erSmallLaser'],
-      rarm:  ['streakSRMRack', 'streakSRMRack', 'machineGunArray', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['streakSRMRack', 'streakSRMRack', 'machineGunArray', 'heatSinks'],
     },
   },
   {
@@ -229,7 +229,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['largeLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
   {
@@ -257,7 +257,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largePulseLaser', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['largePulseLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
   // ── Scrapyard Sales — Light ─────────────────────────────────
@@ -314,7 +314,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['mediumLaser', 'boostJets'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -328,7 +328,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'boostJets'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -370,7 +370,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'streakSRMRack'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -384,7 +384,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'boostJets'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -582,7 +582,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC2', 'ultraAC2', 'heatSinks', 'erSmallLaser'],
       larm:  ['ultraAC5', 'heatSinks'],
-      rarm:  ['mediumLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['mediumLaser', 'erSmallLaser'],
     },
   },
   {
@@ -596,7 +596,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['erMediumLaser', 'heatSinks', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'boostJets', 'erSmallLaser'],
+      rarm:  ['streakSRMRack', 'boostJets'],
     },
   },
   {
@@ -610,7 +610,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'erSmallLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['largeLaser', 'heatSinks'],
-      rarm:  ['largeLaser', 'heatSinks'],
+      rarm:  ['largeLaser'],
     },
   },
   {
@@ -624,7 +624,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['lrm5', 'lrm5', 'erSmallLaser', 'antiMissileSystem'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['erMediumLaser', 'heatSinks'],
     },
   },
   {
@@ -666,7 +666,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['lrm5', 'lrm5', 'heatSinks', 'antiMissileSystem'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'streakSRMRack'],
     },
   },
   {
@@ -680,7 +680,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['ultraAC5', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['ultraAC5', 'heatSinks'],
     },
   },
   {
@@ -693,7 +693,7 @@ export const MECH_PRESETS = [
     bv: 1795,
     slots: {
       torso: ['largePulseLaser', 'erSmallLaser', 'erSmallLaser'],
-      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      larm:  ['erMediumLaser', 'heatSinks'],
       rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
     },
   },
@@ -722,7 +722,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'boostJets', 'erSmallLaser'],
+      rarm:  ['streakSRMRack', 'boostJets'],
     },
   },
   // ── Scrapyard Sales — Assault ───────────────────────────────
@@ -736,8 +736,8 @@ export const MECH_PRESETS = [
     bv: 1631,
     slots: {
       torso: ['ultraAC5', 'lrm5', 'heatSinks', 'erSmallLaser', 'antiMissileSystem'],
-      larm:  ['mediumLaser', 'extraArmor', 'erSmallLaser', 'erSmallLaser'],
-      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
+      larm:  ['mediumLaser', 'extraArmor', 'erSmallLaser'],
+      rarm:  ['mediumLaser', 'heatSinks'],
     },
   },
   {
@@ -749,9 +749,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1655,
     slots: {
-      torso: ['lrm5', 'lrm5', 'mediumLaser', 'antiMissileSystem', 'antiMissileSystem'],
+      torso: ['lrm5', 'lrm5', 'mediumLaser', 'antiMissileSystem'],
       larm:  ['streakSRMRack', 'streakSRMRack', 'erSmallLaser', 'heatSinks', 'extraArmor'],
-      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -765,7 +765,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'streakSRMRack', 'erSmallLaser', 'heatSinks'],
       larm:  ['mediumLaser', 'mediumLaser', 'erSmallLaser'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'extraArmor'],
+      rarm:  ['erMediumLaser', 'heatSinks', 'extraArmor'],
     },
   },
   {
@@ -779,7 +779,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['gaussRifle', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'boostJets'],
-      rarm:  ['streakSRMRack', 'boostJets', 'erSmallLaser'],
+      rarm:  ['streakSRMRack', 'erSmallLaser'],
     },
   },
   {
@@ -792,8 +792,8 @@ export const MECH_PRESETS = [
     bv: 1812,
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks', 'heatSinks'],
-      larm:  ['ppc', 'heatSinks', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'erSmallLaser'],
+      larm:  ['ppc'],
+      rarm:  ['erMediumLaser', 'streakSRMRack', 'erSmallLaser'],
     },
   },
   {
@@ -806,8 +806,8 @@ export const MECH_PRESETS = [
     bv: 1816,
     slots: {
       torso: ['lrm5', 'lrm5', 'streakSRMRack', 'heatSinks', 'antiMissileSystem'],
-      larm:  ['streakSRMRack', 'erSmallLaser', 'erSmallLaser', 'heatSinks', 'antiMissileSystem'],
-      rarm:  ['erMediumLaser', 'ultraAC2', 'ultraAC2', 'heatSinks'],
+      larm:  ['streakSRMRack', 'erSmallLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'ultraAC2', 'ultraAC2'],
     },
   },
   {
@@ -821,7 +821,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'erMediumLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['lrm5', 'lrm5', 'erSmallLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['lrm5', 'lrm5', 'antiMissileSystem'],
     },
   },
   {
@@ -835,7 +835,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'boostJets'],
       larm:  ['largeLaser', 'erSmallLaser', 'extraArmor'],
-      rarm:  ['boostJets', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks', 'erSmallLaser'],
     },
   },
   {
@@ -849,7 +849,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['autocannon20', 'lrm5', 'heatSinks'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'extraArmor'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'antiMissileSystem'],
     },
   },
   {
@@ -863,7 +863,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['gaussRifle', 'heatSinks', 'erSmallLaser'],
       larm:  ['gaussRifle', 'extraArmor'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   // ── Clan Sea Fox A (continued) ──────────────────────────────
@@ -948,7 +948,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'lrm5', 'erSmallLaser', 'antiMissileSystem'],
       larm:  ['mediumLaser', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['mediumLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['mediumLaser', 'heatSinks'],
     },
   },
   // ── Clan Sea Fox B (continued) ──────────────────────────────
@@ -963,7 +963,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'erSmallLaser'],
       larm:  ['erSmallLaser', 'heatSinks'],
-      rarm:  ['boostJets', 'erSmallLaser'],
+      rarm:  ['boostJets'],
     },
   },
   {
@@ -976,7 +976,7 @@ export const MECH_PRESETS = [
     bv: 1731,
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'erSmallLaser'],
-      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      larm:  ['erMediumLaser', 'heatSinks'],
       rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
     },
   },
@@ -1006,7 +1006,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['lrm5', 'lrm5', 'heatSinks', 'antiMissileSystem'],
       larm:  ['largeLaser', 'heatSinks'],
-      rarm:  ['largeLaser', 'heatSinks'],
+      rarm:  ['largeLaser'],
     },
   },
   {
@@ -1034,7 +1034,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
   },
   {
@@ -1061,8 +1061,8 @@ export const MECH_PRESETS = [
     bv: 2346,
     slots: {
       torso: ['gaussRifle', 'heatSinks', 'erSmallLaser'],
-      larm:  ['ppc', 'heatSinks', 'heatSinks'],
-      rarm:  ['ppc', 'heatSinks', 'erSmallLaser'],
+      larm:  ['ppc', 'heatSinks'],
+      rarm:  ['ppc', 'erSmallLaser'],
     },
   },
   {
@@ -1076,7 +1076,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['largeLaser', 'heatSinks', 'laserReflectiveArmor'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'streakSRMRack'],
     },
   },
   {
@@ -1201,7 +1201,7 @@ export const MECH_PRESETS = [
     bv: 1465,
     slots: {
       torso: ['erMediumLaser', 'erSmallLaser'],
-      larm:  ['erSmallLaser', 'erSmallLaser'],
+      larm:  ['erSmallLaser'],
       rarm:  ['boostJets', 'heatSinks'],
     },
   },
@@ -1216,7 +1216,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'lrm5', 'erSmallLaser', 'antiMissileSystem'],
       larm:  ['erMediumLaser', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'ballisticReinforcedArmor'],
+      rarm:  ['erMediumLaser', 'ballisticReinforcedArmor'],
     },
   },
   {
@@ -1230,7 +1230,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['largeLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1244,7 +1244,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['erMediumLaser', 'antiMissileSystem'],
     },
   },
   {
@@ -1257,7 +1257,7 @@ export const MECH_PRESETS = [
     bv: 1935,
     slots: {
       torso: ['gaussRifle', 'erSmallLaser', 'heatSinks'],
-      larm:  ['erSmallLaser', 'boostJets', 'erSmallLaser'],
+      larm:  ['erSmallLaser', 'boostJets'],
       rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'extraArmor'],
     },
   },
@@ -1272,7 +1272,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1300,7 +1300,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1328,7 +1328,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['gaussRifle', 'lrm5', 'heatSinks'],
       larm:  ['erMediumLaser', 'lrm5', 'heatSinks', 'antiMissileSystem'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['erMediumLaser', 'streakSRMRack'],
     },
   },
   {
@@ -1342,7 +1342,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['gaussRifle', 'heatSinks', 'erSmallLaser'],
       larm:  ['gaussRifle', 'ballisticReinforcedArmor'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1369,8 +1369,8 @@ export const MECH_PRESETS = [
     bv: 672,
     slots: {
       torso: ['erSmallLaser', 'erSmallLaser', 'machineGunArray'],
-      larm:  ['machineGunArray', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      larm:  ['machineGunArray'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -1384,7 +1384,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'boostJets'],
       larm:  ['erSmallLaser', 'erSmallLaser'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -1398,7 +1398,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'erSmallLaser'],
       larm:  ['erSmallLaser', 'heatSinks'],
-      rarm:  ['heatSinks', 'erSmallLaser'],
+      rarm:  ['heatSinks'],
     },
   },
   {
@@ -1440,7 +1440,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['erMediumLaser', 'erSmallLaser', 'erSmallLaser'],
       larm:  ['erMediumLaser', 'heatSinks'],
-      rarm:  ['erSmallLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['heatSinks', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1454,7 +1454,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['lrm5', 'lrm5', 'heatSinks', 'antiMissileSystem'],
       larm:  ['mediumLaser', 'streakSRMRack', 'heatSinks'],
-      rarm:  ['streakSRMRack', 'erSmallLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['streakSRMRack', 'erSmallLaser'],
     },
   },
   {
@@ -1482,7 +1482,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1537,8 +1537,8 @@ export const MECH_PRESETS = [
     bv: 2715,
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks', 'heatSinks'],
-      larm:  ['ppc', 'heatSinks', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'laserReflectiveArmor'],
+      larm:  ['ppc'],
+      rarm:  ['erMediumLaser', 'streakSRMRack', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1566,7 +1566,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largePulseLaser', 'boostJets'],
       larm:  ['largePulseLaser', 'heatSinks', 'heatSinks'],
-      rarm:  ['boostJets', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['laserReflectiveArmor'],
     },
   },
   {
@@ -1580,7 +1580,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largePulseLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['largePulseLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1594,7 +1594,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largePulseLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'laserReflectiveArmor'],
+      rarm:  ['erMediumLaser', 'laserReflectiveArmor'],
     },
   },
   {
@@ -1677,8 +1677,8 @@ export const MECH_PRESETS = [
     bv: 2029,
     slots: {
       torso: ['ultraAC5', 'lrm5', 'heatSinks', 'erSmallLaser', 'antiMissileSystem'],
-      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'antiMissileSystem'],
+      larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'streakSRMRack'],
     },
   },
   {
@@ -1691,7 +1691,7 @@ export const MECH_PRESETS = [
     bv: 2077,
     slots: {
       torso: ['gaussRifle', 'heatSinks', 'erSmallLaser'],
-      larm:  ['ultraAC5', 'erSmallLaser', 'erSmallLaser', 'ballisticReinforcedArmor'],
+      larm:  ['ultraAC5', 'erSmallLaser', 'ballisticReinforcedArmor'],
       rarm:  ['lrm5', 'lrm5', 'streakSRMRack', 'heatSinks', 'antiMissileSystem'],
     },
   },
@@ -1704,9 +1704,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1421,
     slots: {
-      torso: ['lrm5', 'lrm5', 'mediumLaser', 'antiMissileSystem', 'antiMissileSystem'],
+      torso: ['lrm5', 'lrm5', 'mediumLaser', 'antiMissileSystem'],
       larm:  ['streakSRMRack', 'streakSRMRack', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['mediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1720,7 +1720,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'heatSinks', 'extraArmor'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
   },
   {
@@ -1748,7 +1748,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
-      rarm:  ['ultraAC5', 'heatSinks', 'ballisticReinforcedArmor'],
+      rarm:  ['ultraAC5', 'ballisticReinforcedArmor'],
     },
   },
   {
@@ -1760,9 +1760,9 @@ export const MECH_PRESETS = [
     tech: 'IS',
     bv: 1872,
     slots: {
-      torso: ['lrm5', 'lrm5', 'ultraAC5', 'antiMissileSystem', 'antiMissileSystem'],
+      torso: ['lrm5', 'lrm5', 'ultraAC5', 'antiMissileSystem'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
     },
   },
   {
@@ -1776,7 +1776,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ultraAC5', 'erSmallLaser', 'heatSinks', 'erSmallLaser'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'heatSinks', 'erSmallLaser'],
+      rarm:  ['erMediumLaser'],
     },
   },
   {
@@ -1790,7 +1790,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['ppc', 'erSmallLaser', 'heatSinks'],
       larm:  ['ppc', 'heatSinks'],
-      rarm:  ['erMediumLaser', 'erSmallLaser', 'heatSinks'],
+      rarm:  ['erMediumLaser', 'erSmallLaser'],
     },
   },
   {
@@ -1804,7 +1804,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['largeLaser', 'erSmallLaser'],
       larm:  ['streakSRMRack', 'heatSinks', 'erSmallLaser'],
-      rarm:  ['erSmallLaser', 'heatSinks', 'extraArmor'],
+      rarm:  ['heatSinks', 'extraArmor'],
     },
   },
   {
@@ -1874,7 +1874,7 @@ export const MECH_PRESETS = [
     slots: {
       torso: ['autocannon20', 'erSmallLaser', 'heatSinks'],
       larm:  ['erMediumLaser', 'streakSRMRack', 'heatSinks', 'ballisticReinforcedArmor'],
-      rarm:  ['erMediumLaser', 'lrm5', 'heatSinks', 'antiMissileSystem'],
+      rarm:  ['erMediumLaser', 'lrm5', 'antiMissileSystem'],
     },
   },
   {
@@ -1887,8 +1887,8 @@ export const MECH_PRESETS = [
     bv: 2849,
     slots: {
       torso: ['gaussRifle', 'erSmallLaser', 'heatSinks'],
-      larm:  ['ppc', 'heatSinks', 'heatSinks'],
-      rarm:  ['ppc', 'heatSinks', 'ballisticReinforcedArmor'],
+      larm:  ['ppc', 'heatSinks'],
+      rarm:  ['ppc', 'ballisticReinforcedArmor'],
     },
   },
   {
