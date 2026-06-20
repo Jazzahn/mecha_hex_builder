@@ -30,6 +30,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
     if (!pendingCombat) return null;
     switch (pendingCombat.step) {
       case 'block-roll': case 'damage-assign': return combatTarget?.playerIndex ?? 0;
+      case 'location-roll': return combatAttacker?.playerIndex ?? 0;
       case 'exp-armor-roll':
         return pendingCombat.expArmorNextStep === 'ram-damage-rammer' ? (combatRammer?.playerIndex ?? 0) : (combatTarget?.playerIndex ?? 0);
       case 'overheat-assign': case 'overheat-result': return combatAttacker?.playerIndex ?? 0;
@@ -41,7 +42,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
   })();
   const isCombatController = localPlayerIndex === null || combatStepController === null || localPlayerIndex === combatStepController;
 
-  const MODAL_W = 240;
+  const MODAL_W = pendingCombat ? 370 : 240;
   const hexW = position.hexScreenW ?? 60;
   const GAP = hexW * 1.5;
   const bw = boardWidth ?? 800;

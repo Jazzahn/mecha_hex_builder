@@ -162,6 +162,8 @@ function combatStepController(state) {
   switch (pc.step) {
     case 'block-roll': case 'damage-assign':
       return target?.playerIndex ?? 0;
+    case 'location-roll':
+      return attacker?.playerIndex ?? 0;
     case 'exp-armor-roll':
       return pc.expArmorNextStep === 'ram-damage-rammer'
         ? (rammer?.playerIndex ?? 0)

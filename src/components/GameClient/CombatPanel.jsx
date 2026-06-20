@@ -251,7 +251,6 @@ function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch
 
   const BUFFER_ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
   const allSlots = getAllSlots(unit.armyUnit, unit.slotDamage);
-  // Effective damage = committed slotDamage + pending-but-not-yet-applied
   const effDmg = effectiveSlotDamage(unit, pendingDamage);
   const { lockedUpgradeKey, lockedLocation } = pc;
 
@@ -260,7 +259,6 @@ function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch
     : lockedLocation === 'rarm' ? 'Right Arm'
     : lockedLocation === 'buffer' ? 'Armor' : null;
 
-  // A slot is eligible if it matches the location constraint and isn't already full (including pending)
   const isEligible = (s) => {
     if ((effDmg[s.key] ?? 0) >= s.threshold) return false;
     if (lockedLocation === 'buffer') return BUFFER_ARMOR_IDS.includes(s.upgradeId);
@@ -269,6 +267,54 @@ function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch
   };
 
   const hasAvailable = allSlots.some(s => isEligible(s));
+  const isMech = ['larm', 'torso', 'rarm'].some(loc => allSlots.some(s => s.location === loc));
+  const MECH_COLS = [
+    { key: 'larm',  label: 'L.Arm' },
+    { key: 'torso', label: 'Torso' },
+    { key: 'rarm',  label: 'R.Arm' },
+  ];
+  const mechLocKeys = new Set(['larm', 'torso', 'rarm']);
+  const otherSlots = allSlots.filter(s => !mechLocKeys.has(s.location));
+
+  function SlotBtn({ s }) {
+    const effSlotDmg = effDmg[s.key] ?? 0;
+    const effFull = effSlotDmg >= s.threshold;
+    const eligible = isEligible(s);
+    const isLocked = lockedUpgradeKey === s.key;
+    const isBlocked = !effFull && (!eligible || (lockedUpgradeKey && !isLocked));
+    const clickable = isController && eligible && !isBlocked;
+    return (
+      <button
+        key={s.key}
+        className={[
+          'combat-slot-btn',
+          effFull ? 'combat-slot-btn--disabled' : '',
+          isLocked ? 'combat-slot-btn--locked' : '',
+          isBlocked || (!isController && !effFull) ? 'combat-slot-btn--blocked' : '',
+        ].filter(Boolean).join(' ')}
+        onClick={() => clickable && dispatch({ type: 'ASSIGN_DAMAGE', slotKey: s.key })}
+        disabled={!clickable}
+      >
+        <div className="dup-header">
+          <span className="slot-name">{s.upgrade.name}</span>
+          {effFull && <span className="slot-destroyed-tag">✗</span>}
+          {isLocked && <span className="slot-locked-tag">▶</span>}
+        </div>
+        <div className="dup-slots">
+          {Array.from({ length: s.threshold }).map((_, boxIdx) => (
+            <span
+              key={boxIdx}
+              className={[
+                'dup-slot',
+                boxIdx < s.dmg ? 'dup-slot--damaged' : '',
+                boxIdx >= s.dmg && boxIdx < effSlotDmg ? 'dup-slot--pending' : '',
+              ].filter(Boolean).join(' ')}
+            />
+          ))}
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div className="combat-step">
@@ -283,49 +329,32 @@ function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch
 
       {!hasAvailable ? (
         <div className="combat-no-slots">No slots remaining — damage will resolve at end of round.</div>
+      ) : isMech ? (
+        <>
+          <div className="combat-slot-columns">
+            {MECH_COLS.map(col => {
+              const colSlots = allSlots.filter(s => s.location === col.key);
+              const colActive = !lockedLocation || lockedLocation === col.key || lockedLocation === 'buffer';
+              return (
+                <div key={col.key} className={`combat-slot-col${!colActive ? ' combat-slot-col--inactive' : ''}`}>
+                  <div className="combat-slot-col-label">{col.label}</div>
+                  {colSlots.length === 0
+                    ? <div className="combat-slot-col-empty">—</div>
+                    : colSlots.map(s => <SlotBtn key={s.key} s={s} />)
+                  }
+                </div>
+              );
+            })}
+          </div>
+          {otherSlots.length > 0 && (
+            <div className="combat-slot-list">
+              {otherSlots.map(s => <SlotBtn key={s.key} s={s} />)}
+            </div>
+          )}
+        </>
       ) : (
         <div className="combat-slot-list">
-          {allSlots.map(s => {
-            const effSlotDmg = effDmg[s.key] ?? 0;
-            const effFull = effSlotDmg >= s.threshold;
-            const hasPending = effSlotDmg > s.dmg;
-            const eligible = isEligible(s);
-            const isLocked = lockedUpgradeKey === s.key;
-            const isBlocked = !effFull && (!eligible || (lockedUpgradeKey && !isLocked));
-            const clickable = isController && eligible && !isBlocked;
-            return (
-              <button
-                key={s.key}
-                className={[
-                  'combat-slot-btn',
-                  effFull ? 'combat-slot-btn--disabled' : '',
-                  isLocked ? 'combat-slot-btn--locked' : '',
-                  isBlocked || (!isController && !effFull) ? 'combat-slot-btn--blocked' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => clickable && dispatch({ type: 'ASSIGN_DAMAGE', slotKey: s.key })}
-                disabled={!clickable}
-              >
-                <div className="dup-header">
-                  <span className="slot-name">{s.upgrade.name}</span>
-                  <span className="slot-loc">[{s.location}]</span>
-                  {effFull && <span className="slot-destroyed-tag">✗ Pending destruction</span>}
-                  {isLocked && <span className="slot-locked-tag">assign here</span>}
-                </div>
-                <div className="dup-slots">
-                  {Array.from({ length: s.threshold }).map((_, boxIdx) => (
-                    <span
-                      key={boxIdx}
-                      className={[
-                        'dup-slot',
-                        boxIdx < s.dmg ? 'dup-slot--damaged' : '',
-                        boxIdx >= s.dmg && boxIdx < effSlotDmg ? 'dup-slot--pending' : '',
-                      ].filter(Boolean).join(' ')}
-                    />
-                  ))}
-                </div>
-              </button>
-            );
-          })}
+          {allSlots.map(s => <SlotBtn key={s.key} s={s} />)}
         </div>
       )}
     </div>
@@ -416,9 +445,10 @@ export function CombatPanelInner({ pendingCombat, units, pendingDamage = [], dis
   const stepControllerIndex = (() => {
     switch (pc.step) {
       case 'block-roll':
-      case 'location-roll':
       case 'damage-assign':
         return target?.playerIndex ?? 0;
+      case 'location-roll':
+        return attacker?.playerIndex ?? 0;
       case 'exp-armor-roll':
         return pc.expArmorNextStep === 'ram-damage-rammer' ? (rammer?.playerIndex ?? 0) : (target?.playerIndex ?? 0);
       case 'overheat-assign':

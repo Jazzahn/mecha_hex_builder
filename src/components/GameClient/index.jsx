@@ -414,8 +414,10 @@ function PlayingView() {
           const combatRammer   = units.find(u => u.id === pc.rammerId);
           let stepController;
           switch (pc.step) {
-            case 'block-roll': case 'damage-assign': case 'location-roll':
+            case 'block-roll': case 'damage-assign':
               stepController = combatTarget?.playerIndex ?? 0; break;
+            case 'location-roll':
+              stepController = combatAttacker?.playerIndex ?? 0; break;
             case 'exp-armor-roll':
               stepController = pc.expArmorNextStep === 'ram-damage-rammer' ? (combatRammer?.playerIndex ?? 0) : (combatTarget?.playerIndex ?? 0); break;
             case 'overheat-assign': case 'overheat-result':
