@@ -1,6 +1,7 @@
 import { useGame } from '../../store/gameContext';
 import { UNIT_TYPES } from '../../data/gameData';
 import { getAllSlots } from '../../game/combat';
+import { effectiveSlotDamage } from '../../game/gameReducer';
 
 export default function UnitTooltip({ unitId, position }) {
   const { gameState } = useGame();
@@ -11,6 +12,7 @@ export default function UnitTooltip({ unitId, position }) {
 
   const unitType = UNIT_TYPES[unit.typeId];
   const slots = getAllSlots(unit.armyUnit, unit.slotDamage);
+  const effDmg = effectiveSlotDamage(unit, gameState.pendingDamage ?? []);
   const isMech = ['light', 'medium', 'heavy', 'assault'].includes(unit.typeId);
 
   const COLS = [
@@ -21,12 +23,21 @@ export default function UnitTooltip({ unitId, position }) {
   const otherSlots = slots.filter(s => !['larm', 'torso', 'rarm'].includes(s.location));
 
   function SlotRow({ s }) {
+    const committed = s.dmg;
+    const effective = effDmg[s.key] ?? 0;
     return (
       <div className={`unit-tooltip-slot${s.disabled ? ' unit-tooltip-slot--destroyed' : ''}`}>
         <span className="unit-tooltip-slot-name">{s.upgrade.name}</span>
         <div className="unit-tooltip-slot-boxes">
           {Array.from({ length: s.threshold }).map((_, i) => (
-            <span key={i} className={`unit-tooltip-box${i < s.dmg ? ' unit-tooltip-box--hit' : ''}`} />
+            <span
+              key={i}
+              className={[
+                'unit-tooltip-box',
+                i < committed ? 'unit-tooltip-box--hit' : '',
+                i >= committed && i < effective ? 'unit-tooltip-box--pending' : '',
+              ].filter(Boolean).join(' ')}
+            />
           ))}
         </div>
       </div>

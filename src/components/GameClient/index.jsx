@@ -121,10 +121,13 @@ function PlayingView() {
       u.destroyed && !prev.find(p => p.id === u.id)?.destroyed
     );
     if (newlyDestroyed.length > 0) {
-      const added = newlyDestroyed.map(u => ({ id: `${u.id}-${Date.now()}`, q: u.q, r: u.r }));
-      setExplosions(cur => [...cur, ...added]);
-      added.forEach(exp => {
-        setTimeout(() => setExplosions(cur => cur.filter(e => e.id !== exp.id)), 1500);
+      newlyDestroyed.forEach((u, i) => {
+        const delay = Math.floor(Math.random() * 400) + i * 80;
+        const exp = { id: `${u.id}-${Date.now()}-${i}`, q: u.q, r: u.r };
+        setTimeout(() => {
+          setExplosions(cur => [...cur, exp]);
+          setTimeout(() => setExplosions(cur => cur.filter(e => e.id !== exp.id)), 1800);
+        }, delay);
       });
     }
     prevUnitsRef.current = units;

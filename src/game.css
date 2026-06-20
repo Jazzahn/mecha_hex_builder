@@ -1590,6 +1590,12 @@
   border-color: #ef5350;
 }
 
+.unit-tooltip-box--pending {
+  background: transparent;
+  border-color: #ef5350;
+  border-style: dashed;
+}
+
 /* ── Morale overlay ──────────────────────────────────────── */
 .morale-overlay {
   position: absolute;
