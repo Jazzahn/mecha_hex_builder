@@ -982,7 +982,7 @@ export function gameReducer(state, action) {
           && inFrontArc(target.q, target.r, target.facing, attacker.q, attacker.r)) {
         const before = hits;
         hits = Math.max(0, hits - 1);
-        state = addLog(state, `${target.name} Anti-Missile System intercepts: ${before} → ${hits} hits.`);
+        state = addLog(state, `${target.name} AMS intercepts: ${before} → ${hits} hits.`);
       }
 
       if (hits === 0) {
@@ -1261,6 +1261,25 @@ export function gameReducer(state, action) {
       }
 
       return { ...afterAssign, pendingCombat: { ...afterAssign.pendingCombat, remainingDamage: newRemaining, lockedUpgradeKey: newLocked, step: 'damage-assign' } };
+    }
+
+    case 'SKIP_REMAINING_DAMAGE': {
+      const pc = state.pendingCombat;
+      if (!pc) return state;
+      if (pc.step === 'damage-assign' || pc.step === 'ram-damage-rammer' || pc.step === 'ram-damage-target') {
+        const logMsg = `${state.units.find(u => u.id === pc.targetId)?.name ?? 'Target'} has no slots remaining — ${pc.remainingDamage} damage absorbed.`;
+        if (pc.step === 'ram-damage-target' && pc.rammerTakes > 0) {
+          return addLog({ ...state, pendingCombat: { ...pc, step: 'ram-damage-rammer', remainingDamage: pc.rammerTakes, lockedUpgradeKey: null } }, logMsg);
+        }
+        if (pc.step === 'ram-damage-rammer') {
+          return addLog(startRamPushOrEnd(state, pc.rammerId, pc.targetId, pc.targetTypeId, pc.rammerTakes, pc.targetTakes), logMsg);
+        }
+        return addLog(transitionOrOverheat(state, { remainingDamage: 0 }), logMsg);
+      }
+      if (pc.step === 'overheat-assign') {
+        return addLog(transitionOrOverheat(state, { remainingDamage: 0 }), `Attacker has no slots for overheat — ${pc.overheatRemaining} wounds absorbed.`);
+      }
+      return state;
     }
 
     case 'FINISH_COMBAT': {

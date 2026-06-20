@@ -328,7 +328,14 @@ function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch
       )}
 
       {!hasAvailable ? (
-        <div className="combat-no-slots">No slots remaining — damage will resolve at end of round.</div>
+        <>
+          <div className="combat-no-slots">No slots remaining — {remaining} damage absorbed.</div>
+          {isController && (
+            <button className="combat-roll-btn" onClick={() => dispatch({ type: 'SKIP_REMAINING_DAMAGE' })}>
+              Continue →
+            </button>
+          )}
+        </>
       ) : isMech ? (
         <>
           <div className="combat-slot-columns">

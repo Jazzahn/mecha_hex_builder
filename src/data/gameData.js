@@ -120,7 +120,7 @@ export const UPGRADES = {
   },
   ballisticReinforcedArmor: {
     id: 'ballisticReinforcedArmor',
-    name: 'Ballistic-Reinforced Armor',
+    name: 'Ballistic Armor',
     isWeapon: false,
     mechaOnly: false,
     slotCost: 1,
@@ -128,7 +128,7 @@ export const UPGRADES = {
   },
   laserReflectiveArmor: {
     id: 'laserReflectiveArmor',
-    name: 'Laser-Reflective Armor',
+    name: 'Laser Armor',
     isWeapon: false,
     mechaOnly: false,
     slotCost: 1,
@@ -184,7 +184,7 @@ export const UPGRADES = {
   },
   antiMissileSystem: {
     id: 'antiMissileSystem',
-    name: 'Anti-Missile System',
+    name: 'AMS',
     isWeapon: false,
     mechaOnly: false,
     slotCost: 1,
@@ -204,7 +204,7 @@ export const UPGRADES = {
 export const WEAPONS = {
   smallLaser: {
     id: 'smallLaser',
-    name: 'Small Laser',
+    name: 'Sm Laser',
     isWeapon: true,
     range: 2,
     att: 3,
@@ -214,7 +214,7 @@ export const WEAPONS = {
   },
   mediumLaser: {
     id: 'mediumLaser',
-    name: 'Medium Laser',
+    name: 'Md Laser',
     isWeapon: true,
     range: 4,
     att: 3,
@@ -224,7 +224,7 @@ export const WEAPONS = {
   },
   largeLaser: {
     id: 'largeLaser',
-    name: 'Large Laser',
+    name: 'Lg Laser',
     isWeapon: true,
     range: 6,
     att: 3,
@@ -234,7 +234,7 @@ export const WEAPONS = {
   },
   smallPulseLaser: {
     id: 'smallPulseLaser',
-    name: 'Small Pulse Laser',
+    name: 'Sm Pulse Laser',
     isWeapon: true,
     range: 2,
     att: 4,
@@ -244,7 +244,7 @@ export const WEAPONS = {
   },
   mediumPulseLaser: {
     id: 'mediumPulseLaser',
-    name: 'Medium Pulse Laser',
+    name: 'Md Pulse Laser',
     isWeapon: true,
     range: 3,
     att: 4,
@@ -254,7 +254,7 @@ export const WEAPONS = {
   },
   largePulseLaser: {
     id: 'largePulseLaser',
-    name: 'Large Pulse Laser',
+    name: 'Lg Pulse Laser',
     isWeapon: true,
     range: 5,
     att: 4,
@@ -264,7 +264,7 @@ export const WEAPONS = {
   },
   erSmallLaser: {
     id: 'erSmallLaser',
-    name: 'ER Small Laser',
+    name: 'ER Sm Laser',
     isWeapon: true,
     range: 3,
     att: 2,
@@ -274,7 +274,7 @@ export const WEAPONS = {
   },
   erMediumLaser: {
     id: 'erMediumLaser',
-    name: 'ER Medium Laser',
+    name: 'ER Md Laser',
     isWeapon: true,
     range: 5,
     att: 3,
@@ -284,7 +284,7 @@ export const WEAPONS = {
   },
   streakSRMRack: {
     id: 'streakSRMRack',
-    name: 'Streak SRM Rack',
+    name: 'Streak SRM',
     isWeapon: true,
     range: 4,
     att: 3,
@@ -327,7 +327,7 @@ export const WEAPONS = {
   },
   autocannon2: {
     id: 'autocannon2',
-    name: 'Autocannon/2 (AC/2)',
+    name: 'A/C 2',
     isWeapon: true,
     range: 10,
     att: 2,
@@ -338,7 +338,7 @@ export const WEAPONS = {
   },
   autocannon10: {
     id: 'autocannon10',
-    name: 'Autocannon/10 (AC/10)',
+    name: 'A/C 10',
     isWeapon: true,
     range: 7,
     att: 4,
@@ -348,7 +348,7 @@ export const WEAPONS = {
   },
   autocannon20: {
     id: 'autocannon20',
-    name: 'Autocannon/20 (AC/20)',
+    name: 'A/C 20',
     isWeapon: true,
     range: 4,
     att: 6,
@@ -358,7 +358,7 @@ export const WEAPONS = {
   },
   ultraAC2: {
     id: 'ultraAC2',
-    name: 'Ultra AC/2',
+    name: 'UA/C 2',
     isWeapon: true,
     range: 10,
     att: 3,
@@ -369,7 +369,7 @@ export const WEAPONS = {
   },
   ultraAC5: {
     id: 'ultraAC5',
-    name: 'Ultra AC/5',
+    name: 'UA/C 5',
     isWeapon: true,
     range: 8,
     att: 6,
@@ -379,7 +379,7 @@ export const WEAPONS = {
   },
   ultraAC10: {
     id: 'ultraAC10',
-    name: 'Ultra AC/10',
+    name: 'UA/C 10',
     isWeapon: true,
     range: 7,
     att: 8,
@@ -389,7 +389,7 @@ export const WEAPONS = {
   },
   lb2xAC: {
     id: 'lb2xAC',
-    name: 'LB 2-X AC',
+    name: 'LB-X A/C 2',
     isWeapon: true,
     range: 10,
     att: 3,
@@ -400,7 +400,7 @@ export const WEAPONS = {
   },
   lb5xAC: {
     id: 'lb5xAC',
-    name: 'LB 5-X AC',
+    name: 'LB-X A/C 5',
     isWeapon: true,
     range: 8,
     att: 6,
@@ -410,7 +410,7 @@ export const WEAPONS = {
   },
   lb10xAC: {
     id: 'lb10xAC',
-    name: 'LB 10-X AC',
+    name: 'LB-X A/C 10',
     isWeapon: true,
     range: 7,
     att: 10,
@@ -420,7 +420,7 @@ export const WEAPONS = {
   },
   machineGunArray: {
     id: 'machineGunArray',
-    name: 'Machine Gun Array',
+    name: 'MG Array',
     isWeapon: true,
     range: 2,
     att: 8,
@@ -430,7 +430,7 @@ export const WEAPONS = {
   },
   arrowIVArtillery: {
     id: 'arrowIVArtillery',
-    name: 'Arrow IV Artillery',
+    name: 'Arrow IV',
     isWeapon: true,
     range: 12,
     att: 3,

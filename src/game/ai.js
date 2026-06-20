@@ -241,19 +241,19 @@ export function aiStep(state, botPlayerIndex) {
       case 'damage-assign': {
         const target = state.units.find(u => u.id === pc.targetId);
         const key = pickDamageSlot(target, state.pendingDamage, pc.lockedUpgradeKey, pc.lockedLocation);
-        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        if (!key) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-damage-target': {
         const target = state.units.find(u => u.id === pc.targetId);
         const key = pickDamageSlot(target, state.pendingDamage, pc.lockedUpgradeKey, null);
-        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        if (!key) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-damage-rammer': {
         const rammer = state.units.find(u => u.id === pc.rammerId);
         const key = pickDamageSlot(rammer, state.pendingDamage, pc.lockedUpgradeKey, null);
-        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        if (!key) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-push': {

@@ -280,19 +280,21 @@ function aiStep(state) {
         }
         pool.sort((a, b) => ((eff[b.key] ?? 0) / b.threshold) - ((eff[a.key] ?? 0) / a.threshold));
         const key = pool[0]?.key ?? allSlots[0]?.key;
-        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        if (!key) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-damage-target': {
         const target = state.units.find(u => u.id === pc.targetId);
         const key = pickDamageSlot(target, state.pendingDamage, pc.lockedUpgradeKey);
         const fb = getAllSlots(target.armyUnit, target.slotDamage).filter(s => (effectiveSlotDamage(target, state.pendingDamage)[s.key] ?? 0) < s.threshold)[0]?.key;
+        if (!(key ?? fb)) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key ?? fb });
       }
       case 'ram-damage-rammer': {
         const rammer = state.units.find(u => u.id === pc.rammerId);
         const key = pickDamageSlot(rammer, state.pendingDamage, pc.lockedUpgradeKey);
         const fb = getAllSlots(rammer.armyUnit, rammer.slotDamage).filter(s => (effectiveSlotDamage(rammer, state.pendingDamage)[s.key] ?? 0) < s.threshold)[0]?.key;
+        if (!(key ?? fb)) return gameReducer(state, { type: 'SKIP_REMAINING_DAMAGE' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key ?? fb });
       }
       case 'ram-push': {
