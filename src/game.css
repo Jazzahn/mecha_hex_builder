@@ -1011,6 +1011,7 @@
   font-weight: 600;
 }
 .combat-assign-header strong { color: #ff5722; font-size: 1em; }
+.combat-location-label { color: #FFA128; margin-left: 0.3em; font-weight: 700; letter-spacing: 0.03em; }
 
 .combat-slot-list {
   display: flex;
@@ -1064,6 +1065,11 @@
 .dup-slot--damaged {
   background: #c62828;
   border-color: #ef5350;
+}
+.dup-slot--pending {
+  background: #e65100;
+  border-color: #ff6d00;
+  opacity: 0.75;
 }
 
 /* Done / result */

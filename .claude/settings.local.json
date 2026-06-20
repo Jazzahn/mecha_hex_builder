@@ -36,7 +36,8 @@
       "Bash(python)",
       "Bash(xargs grep -l \"weapon\\\\|weapon\\\\|upgrade\")",
       "Bash(xargs grep -l \"aiStep\\\\|simulation\\\\|runGame\\\\|bot\")",
-      "Bash(node sim-presets.js 100)"
+      "Bash(node sim-presets.js 100)",
+      "Bash(node test-sim-debug.mjs)"
     ]
   }
 }

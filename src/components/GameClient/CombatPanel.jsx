@@ -1,5 +1,6 @@
 import { UNIT_TYPES } from '../../data/gameData';
 import { parseStatValue, getAllSlots, getMinRangePenalty } from '../../game/combat';
+import { effectiveSlotDamage } from '../../game/gameReducer';
 
 function DieBadge({ value, success }) {
   return (
@@ -221,7 +222,7 @@ function ExpArmorRoll({ pc, units, dispatch, isController }) {
   );
 }
 
-function SlotAssign({ unitId, remaining, pc, units, dispatch, isController, overheatPause = false }) {
+function SlotAssign({ unitId, remaining, pc, units, pendingDamage = [], dispatch, isController, overheatPause = false }) {
   const unit = units.find(u => u.id === unitId);
   if (!unit) return null;
 
@@ -248,14 +249,32 @@ function SlotAssign({ unitId, remaining, pc, units, dispatch, isController, over
     );
   }
 
-  const slots = getAllSlots(unit.armyUnit, unit.slotDamage);
-  const hasAvailable = slots.some(s => !s.disabled);
-  const { lockedUpgradeKey } = pc;
+  const BUFFER_ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
+  const allSlots = getAllSlots(unit.armyUnit, unit.slotDamage);
+  // Effective damage = committed slotDamage + pending-but-not-yet-applied
+  const effDmg = effectiveSlotDamage(unit, pendingDamage);
+  const { lockedUpgradeKey, lockedLocation } = pc;
+
+  const locLabel = lockedLocation === 'larm' ? 'Left Arm'
+    : lockedLocation === 'torso' ? 'Torso'
+    : lockedLocation === 'rarm' ? 'Right Arm'
+    : lockedLocation === 'buffer' ? 'Armor' : null;
+
+  // A slot is eligible if it matches the location constraint and isn't already full (including pending)
+  const isEligible = (s) => {
+    if ((effDmg[s.key] ?? 0) >= s.threshold) return false;
+    if (lockedLocation === 'buffer') return BUFFER_ARMOR_IDS.includes(s.upgradeId);
+    if (lockedLocation) return s.location === lockedLocation;
+    return true;
+  };
+
+  const hasAvailable = allSlots.some(s => isEligible(s));
 
   return (
     <div className="combat-step">
       <div className="combat-assign-header">
         Assign <strong>{remaining}</strong> damage to {unit.name}
+        {locLabel && <span className="combat-location-label"> — {locLabel}</span>}
       </div>
 
       {!isController && (
@@ -263,22 +282,25 @@ function SlotAssign({ unitId, remaining, pc, units, dispatch, isController, over
       )}
 
       {!hasAvailable ? (
-        <div className="combat-no-slots">No slots remaining — unit will be destroyed.</div>
+        <div className="combat-no-slots">No slots remaining — damage will resolve at end of round.</div>
       ) : (
         <div className="combat-slot-list">
-          {slots.map(s => {
+          {allSlots.map(s => {
+            const effSlotDmg = effDmg[s.key] ?? 0;
+            const effFull = effSlotDmg >= s.threshold;
+            const hasPending = effSlotDmg > s.dmg;
+            const eligible = isEligible(s);
             const isLocked = lockedUpgradeKey === s.key;
-            const isBlocked = !s.disabled && lockedUpgradeKey && !isLocked;
-            const clickable = isController && !s.disabled && !isBlocked;
+            const isBlocked = !effFull && (!eligible || (lockedUpgradeKey && !isLocked));
+            const clickable = isController && eligible && !isBlocked;
             return (
               <button
                 key={s.key}
                 className={[
                   'combat-slot-btn',
-                  s.disabled ? 'combat-slot-btn--disabled' : '',
+                  effFull ? 'combat-slot-btn--disabled' : '',
                   isLocked ? 'combat-slot-btn--locked' : '',
-                  isBlocked ? 'combat-slot-btn--blocked' : '',
-                  !isController && !s.disabled ? 'combat-slot-btn--blocked' : '',
+                  isBlocked || (!isController && !effFull) ? 'combat-slot-btn--blocked' : '',
                 ].filter(Boolean).join(' ')}
                 onClick={() => clickable && dispatch({ type: 'ASSIGN_DAMAGE', slotKey: s.key })}
                 disabled={!clickable}
@@ -286,14 +308,18 @@ function SlotAssign({ unitId, remaining, pc, units, dispatch, isController, over
                 <div className="dup-header">
                   <span className="slot-name">{s.upgrade.name}</span>
                   <span className="slot-loc">[{s.location}]</span>
-                  {s.disabled && <span className="slot-destroyed-tag">✗ Destroyed</span>}
+                  {effFull && <span className="slot-destroyed-tag">✗ Pending destruction</span>}
                   {isLocked && <span className="slot-locked-tag">assign here</span>}
                 </div>
                 <div className="dup-slots">
                   {Array.from({ length: s.threshold }).map((_, boxIdx) => (
                     <span
                       key={boxIdx}
-                      className={`dup-slot${boxIdx < s.dmg ? ' dup-slot--damaged' : ''}`}
+                      className={[
+                        'dup-slot',
+                        boxIdx < s.dmg ? 'dup-slot--damaged' : '',
+                        boxIdx >= s.dmg && boxIdx < effSlotDmg ? 'dup-slot--pending' : '',
+                      ].filter(Boolean).join(' ')}
                     />
                   ))}
                 </div>
@@ -302,6 +328,26 @@ function SlotAssign({ unitId, remaining, pc, units, dispatch, isController, over
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+const LOC_NAMES = { larm: 'Left Arm', torso: 'Torso', rarm: 'Right Arm' };
+
+function LocationRoll({ pc, units, dispatch, isController }) {
+  const target = units.find(u => u.id === pc.targetId);
+  return (
+    <div className="combat-step">
+      <div className="combat-assign-header">
+        Roll hit location for {target?.name}
+      </div>
+      <div className="combat-instruction">
+        1–2 Left Arm &nbsp;·&nbsp; 3–4 Torso &nbsp;·&nbsp; 5–6 Right Arm
+      </div>
+      {isController
+        ? <button className="combat-roll-btn" onClick={() => dispatch({ type: 'ROLL_LOCATION_DICE' })}>Roll Location →</button>
+        : <div className="combat-waiting">Waiting for {target?.name}'s player to roll…</div>
+      }
     </div>
   );
 }
@@ -356,7 +402,7 @@ function CombatDone({ pc, units, dispatch }) {
   );
 }
 
-export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onWeaponHover, localPlayerIndex = null }) {
+export function CombatPanelInner({ pendingCombat, units, pendingDamage = [], dispatch, hasMoved, onWeaponHover, localPlayerIndex = null }) {
   if (!pendingCombat) return null;
   const pc = pendingCombat;
   const isRamStep = pc.step.startsWith('ram-');
@@ -370,6 +416,7 @@ export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onW
   const stepControllerIndex = (() => {
     switch (pc.step) {
       case 'block-roll':
+      case 'location-roll':
       case 'damage-assign':
         return target?.playerIndex ?? 0;
       case 'exp-armor-roll':
@@ -402,9 +449,10 @@ export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onW
         {pc.step === 'hit-roll'         && <HitRoll      pc={pc} units={units} dispatch={dispatch} hasMoved={hasMoved} />}
         {pc.step === 'block-roll'       && <BlockRoll    pc={pc} units={units} dispatch={dispatch} isController={isController} />}
         {pc.step === 'exp-armor-roll'   && <ExpArmorRoll pc={pc} units={units} dispatch={dispatch} isController={isController} />}
+        {pc.step === 'location-roll'    && <LocationRoll pc={pc} units={units} dispatch={dispatch} isController={isController} />}
         {(pc.step === 'overheat-result' || pc.step === 'overheat-assign') && (
           <SlotAssign unitId={pc.attackerId} remaining={pc.overheatRemaining}
-            pc={pc} units={units} dispatch={dispatch}
+            pc={pc} units={units} pendingDamage={pendingDamage} dispatch={dispatch}
             isController={isController}
             overheatPause={pc.step === 'overheat-result'} />
         )}
@@ -414,7 +462,7 @@ export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onW
           <SlotAssign
             unitId={pc.step === 'ram-damage-rammer' ? pc.rammerId : pc.targetId}
             remaining={pc.remainingDamage}
-            pc={pc} units={units} dispatch={dispatch} isController={isController} />
+            pc={pc} units={units} pendingDamage={pendingDamage} dispatch={dispatch} isController={isController} />
         )}
         {pc.step === 'done'     && <CombatDone pc={pc} units={units} dispatch={dispatch} />}
         {pc.step === 'ram-push' && <RamPush    pc={pc} units={units} isChooser={isChooser} />}
@@ -423,11 +471,11 @@ export function CombatPanelInner({ pendingCombat, units, dispatch, hasMoved, onW
   );
 }
 
-export default function CombatPanel({ pendingCombat, units, dispatch, hasMoved, onWeaponHover }) {
+export default function CombatPanel({ pendingCombat, units, pendingDamage = [], dispatch, hasMoved, onWeaponHover }) {
   if (!pendingCombat) return null;
   return (
     <div className="combat-overlay">
-      <CombatPanelInner pendingCombat={pendingCombat} units={units} dispatch={dispatch} hasMoved={hasMoved} onWeaponHover={onWeaponHover} />
+      <CombatPanelInner pendingCombat={pendingCombat} units={units} pendingDamage={pendingDamage} dispatch={dispatch} hasMoved={hasMoved} onWeaponHover={onWeaponHover} />
     </div>
   );
 }

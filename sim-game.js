@@ -658,6 +658,9 @@ function aiStep(state) {
         if (!pc.expArmorRolls.length) return gameReducer(state, { type: 'ROLL_EXP_ARMOR_DICE' });
         return gameReducer(state, { type: 'ADVANCE_EXP_ARMOR' });
 
+      case 'location-roll':
+        return gameReducer(state, { type: 'ROLL_LOCATION_DICE' });
+
       case 'overheat-result':
         return gameReducer(state, { type: 'ADVANCE_OVERHEAT' });
 
@@ -670,8 +673,21 @@ function aiStep(state) {
 
       case 'damage-assign': {
         const target = state.units.find(u => u.id === pc.targetId);
-        const key = pickDamageSlot(target, pc.lockedUpgradeKey);
-        if (!key) return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: getAllSlots(target.armyUnit, target.slotDamage).find(s => !s.disabled)?.key });
+        const BUFFER_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
+        const allSlots = getAllSlots(target.armyUnit, target.slotDamage).filter(s => !s.disabled);
+        const eligible = pc.lockedLocation === 'buffer'
+          ? allSlots.filter(s => BUFFER_IDS.includes(s.upgradeId))
+          : pc.lockedLocation
+          ? allSlots.filter(s => s.location === pc.lockedLocation)
+          : allSlots;
+        const pool = eligible.length > 0 ? eligible : allSlots;
+        if (pc.lockedUpgradeKey) {
+          const locked = pool.find(s => s.key === pc.lockedUpgradeKey);
+          if (locked) return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: locked.key });
+        }
+        pool.sort((a, b) => (b.dmg / b.threshold) - (a.dmg / a.threshold));
+        const key = pool[0]?.key ?? allSlots[0]?.key;
+        if (!key) return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: allSlots[0]?.key });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
 

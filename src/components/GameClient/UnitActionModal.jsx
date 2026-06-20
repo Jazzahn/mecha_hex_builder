@@ -7,7 +7,7 @@ import { CombatPanelInner } from './CombatPanel';
 
 export default function UnitActionModal({ position, boardWidth, onWeaponHover }) {
   const { gameState, dispatch, localPlayerIndex } = useGame();
-  const { selectedUnitId, units, pendingAction, pendingCombat, activePlayer, playerNames, phaseIndex } = gameState;
+  const { selectedUnitId, units, pendingAction, pendingCombat, pendingDamage, activePlayer, playerNames, phaseIndex } = gameState;
 
   const selectedUnit = units.find(u => u.id === selectedUnitId);
 
@@ -119,6 +119,7 @@ export default function UnitActionModal({ position, boardWidth, onWeaponHover })
         <CombatPanelInner
           pendingCombat={pendingCombat}
           units={units}
+          pendingDamage={pendingDamage ?? []}
           dispatch={dispatch}
           hasMoved={hasMoved}
           onWeaponHover={onWeaponHover}
