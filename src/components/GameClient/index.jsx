@@ -8,6 +8,7 @@ import ObjectiveSetup from './ObjectiveSetup';
 import DeployPhase from './DeployPhase';
 import HexBoard from './HexBoard';
 import UnitActionModal from './UnitActionModal';
+import CombatPanel from './CombatPanel';
 import UnitTooltip from './UnitTooltip';
 import { hexKey, hexDistance, hexNeighborAt, inBounds, inFrontArc, BOARD_COLS, BOARD_ROWS, PLAYER_COLORS } from '../../game/hexMath';
 import { checkLOS, unitHeight } from '../../game/combat';
@@ -100,7 +101,7 @@ function MoralePanel({ pendingMorale, playerNames, dispatch }) {
 function PlayingView() {
   const { gameState, dispatch, localPlayerIndex } = useGame();
   const {
-    selectedUnitId, units, pendingAction, pendingCombat, pendingMorale, terrain,
+    selectedUnitId, units, pendingAction, pendingCombat, pendingDamage, pendingMorale, terrain,
     phaseIndex, playerNames, activePlayer, round, log,
   } = gameState;
 
@@ -404,6 +405,41 @@ function PlayingView() {
           explosions={explosions}
         />
         {hoveredHexInfo && <TerrainTooltip info={hoveredHexInfo} playerNames={playerNames} />}
+        {pendingCombat && (() => {
+          // Show board-level overlay when the player controls this combat step
+          // but the selected unit belongs to the opponent (bot's attack on player).
+          const pc = pendingCombat;
+          const combatAttacker = units.find(u => u.id === pc.attackerId);
+          const combatTarget   = units.find(u => u.id === pc.targetId);
+          const combatRammer   = units.find(u => u.id === pc.rammerId);
+          let stepController;
+          switch (pc.step) {
+            case 'block-roll': case 'damage-assign': case 'location-roll':
+              stepController = combatTarget?.playerIndex ?? 0; break;
+            case 'exp-armor-roll':
+              stepController = pc.expArmorNextStep === 'ram-damage-rammer' ? (combatRammer?.playerIndex ?? 0) : (combatTarget?.playerIndex ?? 0); break;
+            case 'overheat-assign': case 'overheat-result':
+              stepController = combatAttacker?.playerIndex ?? 0; break;
+            case 'ram-damage-rammer': stepController = combatRammer?.playerIndex ?? 0; break;
+            case 'ram-damage-target': stepController = combatTarget?.playerIndex ?? 0; break;
+            case 'ram-push': stepController = pc.pushChooserIndex ?? 0; break;
+            default: stepController = combatAttacker?.playerIndex ?? (combatRammer?.playerIndex ?? 0);
+          }
+          const playerIsController = localPlayerIndex === null || localPlayerIndex === stepController;
+          // Only show if player controls this step AND the selected unit is NOT the player's own
+          // (if player's unit is selected, UnitActionModal will show combat inside the modal)
+          const selectedUnit = units.find(u => u.id === selectedUnitId);
+          const modalHandlesIt = selectedUnit && selectedUnit.playerIndex === localPlayerIndex;
+          return playerIsController && !modalHandlesIt;
+        })() && (
+          <CombatPanel
+            pendingCombat={pendingCombat}
+            units={units}
+            pendingDamage={pendingDamage ?? []}
+            dispatch={dispatch}
+            localPlayerIndex={localPlayerIndex}
+          />
+        )}
         <UnitActionModal
           position={unitModalPos}
           boardWidth={boardAreaRef.current?.offsetWidth}

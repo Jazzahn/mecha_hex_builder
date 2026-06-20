@@ -1,7 +1,7 @@
 import { UNIT_TYPES } from '../data/gameData';
 import { hexDistance, hexKey, hexNeighborAt, inBounds, isDeployZone, BOARD_COLS, BOARD_ROWS, vectorToFacing } from './hexMath';
 import { getEquippedWeapons, canWeaponTarget, hasActiveUpgrade, getAllSlots, parseStatValue, damagePerHit } from './combat';
-import { gameReducer, PLAY_PHASES } from './gameReducer';
+import { gameReducer, PLAY_PHASES, effectiveSlotDamage } from './gameReducer';
 
 function weaponED(weapon, target, dist = 99) {
   const isAccurate = weapon.special?.includes('Accurate');
@@ -36,14 +36,23 @@ function pickShot(attacker, weaponList, enemies, terrain) {
   return best;
 }
 
-function pickDamageSlot(unit, lockedKey) {
-  const slots = getAllSlots(unit.armyUnit, unit.slotDamage).filter(s => !s.disabled);
+const BUFFER_ARMOR_IDS = ['extraArmor', 'reinforcedPlating', 'hardenedArmor'];
+
+function pickDamageSlot(unit, pendingDamage, lockedKey, lockedLocation) {
+  const eff = effectiveSlotDamage(unit, pendingDamage ?? []);
+  const all = getAllSlots(unit.armyUnit, unit.slotDamage).filter(s => (eff[s.key] ?? 0) < s.threshold);
+  const pool = lockedLocation === 'buffer'
+    ? all.filter(s => BUFFER_ARMOR_IDS.includes(s.upgradeId))
+    : lockedLocation
+    ? all.filter(s => s.location === lockedLocation)
+    : all;
+  const candidates = pool.length > 0 ? pool : all;
   if (lockedKey) {
-    const locked = slots.find(s => s.key === lockedKey);
+    const locked = candidates.find(s => s.key === lockedKey);
     if (locked) return locked.key;
   }
-  slots.sort((a, b) => (b.dmg / b.threshold) - (a.dmg / a.threshold));
-  return slots[0]?.key ?? null;
+  candidates.sort((a, b) => ((eff[b.key] ?? 0) / b.threshold) - ((eff[a.key] ?? 0) / a.threshold));
+  return candidates[0]?.key ?? null;
 }
 
 function aiDeploy(state) {
@@ -219,29 +228,31 @@ export function aiStep(state, botPlayerIndex) {
         return gameReducer(state, { type: 'ADVANCE_EXP_ARMOR' });
       case 'overheat-result':
         return gameReducer(state, { type: 'ADVANCE_OVERHEAT' });
+      case 'location-roll':
+        return gameReducer(state, { type: 'ROLL_LOCATION_DICE' });
       case 'overheat-assign': {
         const attacker = state.units.find(u => u.id === pc.attackerId);
-        const key = pickDamageSlot(attacker, pc.lockedUpgradeKey);
+        const key = pickDamageSlot(attacker, state.pendingDamage, pc.lockedUpgradeKey, null);
         if (!key) return gameReducer(state, { type: 'ADVANCE_OVERHEAT' });
         return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'damage-assign': {
         const target = state.units.find(u => u.id === pc.targetId);
-        const key = pickDamageSlot(target, pc.lockedUpgradeKey);
-        const fallback = getAllSlots(target.armyUnit, target.slotDamage).find(s => !s.disabled)?.key;
-        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key ?? fallback });
+        const key = pickDamageSlot(target, state.pendingDamage, pc.lockedUpgradeKey, pc.lockedLocation);
+        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-damage-target': {
         const target = state.units.find(u => u.id === pc.targetId);
-        const key = pickDamageSlot(target, pc.lockedUpgradeKey);
-        const fallback = getAllSlots(target.armyUnit, target.slotDamage).find(s => !s.disabled)?.key;
-        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key ?? fallback });
+        const key = pickDamageSlot(target, state.pendingDamage, pc.lockedUpgradeKey, null);
+        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-damage-rammer': {
         const rammer = state.units.find(u => u.id === pc.rammerId);
-        const key = pickDamageSlot(rammer, pc.lockedUpgradeKey);
-        const fallback = getAllSlots(rammer.armyUnit, rammer.slotDamage).find(s => !s.disabled)?.key;
-        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key ?? fallback });
+        const key = pickDamageSlot(rammer, state.pendingDamage, pc.lockedUpgradeKey, null);
+        if (!key) return gameReducer(state, { type: 'CANCEL_SHOOT' });
+        return gameReducer(state, { type: 'ASSIGN_DAMAGE', slotKey: key });
       }
       case 'ram-push': {
         const pushHex = pc.validPushHexes?.[0];

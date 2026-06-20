@@ -471,11 +471,11 @@ export function CombatPanelInner({ pendingCombat, units, pendingDamage = [], dis
   );
 }
 
-export default function CombatPanel({ pendingCombat, units, pendingDamage = [], dispatch, hasMoved, onWeaponHover }) {
+export default function CombatPanel({ pendingCombat, units, pendingDamage = [], dispatch, hasMoved, onWeaponHover, localPlayerIndex }) {
   if (!pendingCombat) return null;
   return (
     <div className="combat-overlay">
-      <CombatPanelInner pendingCombat={pendingCombat} units={units} pendingDamage={pendingDamage} dispatch={dispatch} hasMoved={hasMoved} onWeaponHover={onWeaponHover} />
+      <CombatPanelInner pendingCombat={pendingCombat} units={units} pendingDamage={pendingDamage} dispatch={dispatch} hasMoved={hasMoved} onWeaponHover={onWeaponHover} localPlayerIndex={localPlayerIndex} />
     </div>
   );
 }
